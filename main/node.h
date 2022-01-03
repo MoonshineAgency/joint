@@ -3,8 +3,6 @@
 
 #include "common.h"
 
-esp_err_t normal_mode_start();
-
 esp_err_t node_init();
 
 esp_err_t node_online();

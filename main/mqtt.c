@@ -13,10 +13,12 @@ static void handler(void *event_handler_arg, esp_event_base_t event_base, int32_
     {
         case MQTT_EVENT_CONNECTED:
             connected = true;
+            ESP_LOGI(TAG, "Connected to MQTT broker");
             bus_send_event(EVENT_MQTT_CONNECTED, NULL, 0);
             break;
         case MQTT_EVENT_DISCONNECTED:
             connected = false;
+            ESP_LOGI(TAG, "Disconnected from MQTT broker");
             bus_send_event(EVENT_MQTT_DISCONNECTED, NULL, 0);
             break;
         default:
@@ -36,11 +38,6 @@ esp_err_t mqtt_init()
             .username = settings.mqtt.username,
             .password = settings.mqtt.password,
     };
-    ESP_LOGI(TAG, "--------------------------------------------------");
-    ESP_LOGI(TAG, "URI: %s", config.uri);
-    ESP_LOGI(TAG, "Client ID: %s", config.client_id);
-    ESP_LOGI(TAG, "User: %s", config.username);
-    ESP_LOGI(TAG, "Password: %s", config.password);
 
     client = esp_mqtt_client_init(&config);
     return esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, handler, NULL);
@@ -48,9 +45,13 @@ esp_err_t mqtt_init()
 
 esp_err_t mqtt_connect()
 {
-    return mqtt_is_connected()
-        ? ESP_OK
-        : esp_mqtt_client_start(client);
+    if (mqtt_is_connected())
+        return ESP_OK;
+
+    ESP_LOGI(TAG, "Connecting to MQTT broker [%s]...", settings.mqtt.uri);
+    ESP_LOGI(TAG, "MQTT Client ID: [%s], Username: [%s]", SYSTEM_ID, settings.mqtt.username);
+
+    return esp_mqtt_client_start(client);
 }
 
 bool mqtt_is_connected()
@@ -60,7 +61,10 @@ bool mqtt_is_connected()
 
 esp_err_t mqtt_disconnect()
 {
-    return mqtt_is_connected()
-           ? esp_mqtt_client_stop(client)
-           : ESP_OK;
+    if (!mqtt_is_connected())
+        return ESP_OK;
+
+    ESP_LOGI(TAG, "Disconnecting from MQTT broker [%s]...", settings.mqtt.uri);
+
+    return esp_mqtt_client_stop(client);
 }

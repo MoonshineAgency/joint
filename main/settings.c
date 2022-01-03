@@ -110,7 +110,7 @@ static esp_err_t storage_save(const char *storage_name, const void *source, size
 
 esp_err_t settings_init()
 {
-    ESP_LOGW(TAG, "Initializing NVS storage...");
+    ESP_LOGI(TAG, "Initializing NVS storage...");
     esp_err_t res = nvs_flash_init();
     if (res == ESP_ERR_NVS_NO_FREE_PAGES || res == ESP_ERR_NVS_NEW_VERSION_FOUND)
     {
