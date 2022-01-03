@@ -1,0 +1,15 @@
+idf_component_register(
+    SRCS
+        common.c
+        system.c
+        settings.c
+        bus.c
+        wifi.c
+        network.c
+        node.c
+        safemode.c
+        main.c
+        mqtt.c
+    INCLUDE_DIRS
+        .
+)

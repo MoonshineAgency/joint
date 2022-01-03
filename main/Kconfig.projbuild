@@ -1,0 +1,92 @@
+menu "*** iot-node configuration ***"
+
+    menu "System configuration"
+
+        config NODE_SYS_ID
+            string "System ID template"
+            default "NODE_%02X%02X%02X%02X%02X%02X"
+
+    endmenu
+
+	menu "Default WiFi configuration"
+		
+		choice WIFI_MODE_C
+			prompt "Default WiFi mode"
+			default NODE_WIFI_MODE_AP
+
+			config NODE_WIFI_MODE_AP
+				bool "Access point"
+
+			config NODE_WIFI_MODE_STA
+				bool "Station"
+
+		endchoice
+
+		menu "Access point mode"
+		
+			config NODE_WIFI_AP_SSID
+				string "SSID"
+				default "EvLamp"
+				
+			config NODE_WIFI_AP_PASSWD
+				string "Password"
+				default ""
+	
+			config NODE_WIFI_AP_CHANNEL
+				int "Channel"
+				range 0 13
+				default 6
+
+		endmenu
+
+		menu "Station mode"
+		
+			config NODE_WIFI_STA_SSID
+				string "SSID"
+				default "MyHomeWIFI"
+				
+			config NODE_WIFI_STA_PASSWD
+				string "Password"
+				default "MyPassword"
+	
+		endmenu
+
+		config NODE_WIFI_DHCP
+			bool "Enable DHCP"
+			default y
+			
+		config NODE_WIFI_IP
+			string "IP address"
+			default "192.168.1.1"
+
+		config NODE_WIFI_NETMASK
+			string "Netmask"
+			default "255.255.255.0"
+
+		config NODE_WIFI_GATEWAY
+			string "Gateway"
+			default "192.168.1.1"
+			
+		config NODE_WIFI_DNS
+			string "DNS server"
+			default "192.168.1.1"
+
+	endmenu
+	
+    menu "MQTT"
+
+        config NODE_MQTT_URI
+            string "MQTT Server URI"
+            default "mqtt://192.168.88.1:1883"
+
+        config NODE_MQTT_USERNAME
+            string "Username"
+            default "node"
+
+        config NODE_MQTT_PASSWORD
+            string "Password"
+            default "node"
+
+    endmenu
+
+endmenu
