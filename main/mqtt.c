@@ -2,9 +2,8 @@
 #include "bus.h"
 #include "settings.h"
 #include "system.h"
-#include <mqtt_client.h>
 
-static esp_mqtt_client_handle_t client = NULL;
+esp_mqtt_client_handle_t mqtt_client = NULL;
 static bool connected = false;
 
 static void handler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
@@ -39,8 +38,8 @@ esp_err_t mqtt_init()
             .password = settings.mqtt.password,
     };
 
-    client = esp_mqtt_client_init(&config);
-    return esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, handler, NULL);
+    mqtt_client = esp_mqtt_client_init(&config);
+    return esp_mqtt_client_register_event(mqtt_client, ESP_EVENT_ANY_ID, handler, NULL);
 }
 
 esp_err_t mqtt_connect()
@@ -51,7 +50,7 @@ esp_err_t mqtt_connect()
     ESP_LOGI(TAG, "Connecting to MQTT broker [%s]...", settings.mqtt.uri);
     ESP_LOGI(TAG, "MQTT Client ID: [%s], Username: [%s]", SYSTEM_ID, settings.mqtt.username);
 
-    return esp_mqtt_client_start(client);
+    return esp_mqtt_client_start(mqtt_client);
 }
 
 bool mqtt_is_connected()
@@ -66,5 +65,5 @@ esp_err_t mqtt_disconnect()
 
     ESP_LOGI(TAG, "Disconnecting from MQTT broker [%s]...", settings.mqtt.uri);
 
-    return esp_mqtt_client_stop(client);
+    return esp_mqtt_client_stop(mqtt_client);
 }

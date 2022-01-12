@@ -3,6 +3,10 @@
 
 #include <esp_err.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
     MODE_BOOT = 0,
     MODE_SAFE,
@@ -28,5 +32,9 @@ system_mode_t system_mode();
             ESP_ERROR_CHECK(__);                                                \
         }                                                                       \
     } while (0)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //ESP_IOT_NODE_PLUS_SYSTEM_H

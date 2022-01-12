@@ -16,6 +16,10 @@
 
 #include "config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern const char *TAG;
 extern const char *SYSTEM_ID;
 
@@ -48,5 +52,9 @@ extern const char *SYSTEM_ID;
             ESP_LOGW(TAG, msg, ## __VA_ARGS__); \
         } \
     } while (0)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* MAIN_COMMON_H_ */

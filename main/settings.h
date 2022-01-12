@@ -4,6 +4,10 @@
 #include "common.h"
 #include <cJSON.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct
 {
     struct {
@@ -43,5 +47,9 @@ esp_err_t settings_reset();
 esp_err_t settings_load();
 
 esp_err_t settings_save();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* MAIN_SETTINGS_H_ */

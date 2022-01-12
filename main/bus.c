@@ -1,7 +1,7 @@
 #include "bus.h"
 #include <string.h>
 
-static QueueHandle_t bus;
+static QueueHandle_t bus = NULL;
 
 esp_err_t bus_init()
 {

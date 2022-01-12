@@ -6,10 +6,14 @@ idf_component_register(
         bus.c
         wifi.c
         network.c
-        node.c
         safemode.c
         main.c
         mqtt.c
+        node.c
+
+        iot.cpp
+
+        test.cpp
     INCLUDE_DIRS
         .
 )
