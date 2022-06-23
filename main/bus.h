@@ -1,26 +1,30 @@
-#ifndef MAIN_BUS_H_
-#define MAIN_BUS_H_
+#ifndef ESP_IOT_NODE_PLUS_BUS_H_
+#define ESP_IOT_NODE_PLUS_BUS_H_
 
 #include "common.h"
 
-typedef enum {
-    EVENT_NETWORK_UP = 0,
-    EVENT_NETWORK_DOWN,
-    EVENT_MQTT_CONNECTED,
-    EVENT_MQTT_DISCONNECTED,
-    EVENT_MODE_SET,
-} event_type_t;
+namespace bus {
 
-typedef struct
+enum event_type_t {
+    NETWORK_UP = 0,
+    NETWORK_DOWN,
+    MQTT_CONNECTED,
+    MQTT_DISCONNECTED,
+    MODE_SET,
+};
+
+struct event_t
 {
     event_type_t type;
-    uint8_t data[BUS_EVENT_DATA_SIZE];
-} event_t;
+    uint8_t data[BUS_EVENT_DATA_SIZE] = { 0 };
+};
 
-esp_err_t bus_init();
+esp_err_t init();
 
-esp_err_t bus_send_event(event_type_t type, void *data, size_t size);
+esp_err_t send_event(event_type_t type, void *data, size_t size);
 
-esp_err_t bus_receive_event(event_t *e, size_t timeout_ms);
+esp_err_t receive_event(event_t *e, size_t timeout_ms);
 
-#endif /* MAIN_BUS_H_ */
+} // namespace bus
+
+#endif // ESP_IOT_NODE_PLUS_BUS_H_

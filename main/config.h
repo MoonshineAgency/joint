@@ -50,4 +50,10 @@
 #define HTTPD_STACK_SIZE 32768
 #define MAX_POST_SIZE 4096
 
+////////////////////////////////////////////////////////////////////////////////
+/// Streams
+
+#define OSTREAM_QUEUE_LEN 5
+#define OSTREAM_NAME_LEN 64
+
 #endif /* MAIN_CONFIG_H_ */

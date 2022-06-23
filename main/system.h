@@ -1,28 +1,29 @@
-#ifndef ESP_IOT_NODE_PLUS_SYSTEM_H
-#define ESP_IOT_NODE_PLUS_SYSTEM_H
+#ifndef ESP_IOT_NODE_PLUS_SYSTEM_H_
+#define ESP_IOT_NODE_PLUS_SYSTEM_H_
 
 #include <esp_err.h>
+#include <esp_log.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace sys {
 
-typedef enum {
-    MODE_BOOT = 0,
+typedef enum
+{
+    MODE_INIT = 0,
+    MODE_BOOT,
     MODE_SAFE,
     MODE_OFFLINE,
     MODE_ONLINE,
 
     MODE_MAX
-} system_mode_t;
+} mode_t;
 
-esp_err_t system_init();
+esp_err_t init();
 
-void system_set_mode(system_mode_t mode);
+void set_mode(mode_t mode);
 
-const char *system_mode_name(system_mode_t val);
+const char *mode_name(mode_t val);
 
-system_mode_t system_mode();
+mode_t mode();
 
 #define SYSTEM_CHECK(x)                                                         \
     do {                                                                        \
@@ -33,8 +34,6 @@ system_mode_t system_mode();
         }                                                                       \
     } while (0)
 
-#ifdef __cplusplus
-}
-#endif
+} // namespace sys
 
-#endif //ESP_IOT_NODE_PLUS_SYSTEM_H
+#endif // ESP_IOT_NODE_PLUS_SYSTEM_H_

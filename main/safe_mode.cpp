@@ -1,26 +1,33 @@
-#include "safemode.h"
+#include "safe_mode.h"
 #include "system.h"
 #include "bus.h"
-#include "network.h"
+#include "wifi.h"
+#include "webserver.h"
 
 static void task(void *arg)
 {
     ESP_LOGI(TAG, "Safe mode task started");
+    sys::set_mode(sys::MODE_SAFE);
 
-    ESP_ERROR_CHECK(network_init());
+    esp_err_t res;
 
-    event_t e;
-    while (1)
+    ESP_ERROR_CHECK(wifi::init());
+
+    bus::event_t e;
+    while (true)
     {
-        if (bus_receive_event(&e, 1000) != ESP_OK)
+        if (bus::receive_event(&e, 1000) != ESP_OK)
             continue;
         switch (e.type)
         {
-            case EVENT_NETWORK_DOWN:
+            case bus::NETWORK_DOWN:
                 ESP_LOGW(TAG, "Network is down");
                 break;
-            case EVENT_NETWORK_UP:
+            case bus::NETWORK_UP:
                 ESP_LOGI(TAG, "Network is up");
+                res = webserver_restart();
+                if (res != ESP_OK)
+                    ESP_LOGW(TAG, "Could not restart webserver");
                 break;
             default:
                 break;
@@ -30,12 +37,11 @@ static void task(void *arg)
 
 esp_err_t safe_mode_start()
 {
-    system_set_mode(MODE_SAFE);
+    sys::set_mode(sys::MODE_BOOT);
     ESP_LOGI(TAG, "Booting in safe mode...");
 
     // Create safe_mode task
-    if (xTaskCreate(task, "__safemode__", SAFEMODE_TASK_STACK_SIZE,
-                    NULL, SAFEMODE_TASK_PRIORITY, NULL) != pdPASS)
+    if (xTaskCreate(task, "__safemode__", SAFEMODE_TASK_STACK_SIZE, nullptr, SAFEMODE_TASK_PRIORITY, nullptr) != pdPASS)
     {
         ESP_LOGE(TAG, "Could not create safe mode main task");
         ESP_ERROR_CHECK(ESP_FAIL);

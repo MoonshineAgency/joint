@@ -1,10 +1,9 @@
-#ifndef MAIN_COMMON_H_
-#define MAIN_COMMON_H_
+#ifndef ESP_IOT_NODE_PLUS_COMMON_H_
+#define ESP_IOT_NODE_PLUS_COMMON_H_
 
-#include <stddef.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include <cstddef>
+#include <cstdlib>
+#include <cstdio>
 #include <esp_log.h>
 #include <esp_err.h>
 #include <esp_wifi.h>
@@ -15,10 +14,6 @@
 #include <freertos/event_groups.h>
 
 #include "config.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 extern const char *TAG;
 extern const char *SYSTEM_ID;
@@ -53,8 +48,4 @@ extern const char *SYSTEM_ID;
         } \
     } while (0)
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* MAIN_COMMON_H_ */
+#endif // ESP_IOT_NODE_PLUS_COMMON_H_

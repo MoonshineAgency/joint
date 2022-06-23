@@ -1,35 +1,34 @@
 #include "system.h"
 #include "common.h"
-#include "settings.h"
 #include "bus.h"
 #include <esp_ota_ops.h>
+#include <esp_mac.h>
+
+namespace sys {
 
 static const char *const mode_names[] = {
-        [MODE_BOOT]    = "BOOT",
-        [MODE_SAFE]    = "SAFE MODE",
-        [MODE_OFFLINE] = "OFFLINE",
-        [MODE_ONLINE]  = "ONLINE",
+    "INIT", "BOOT", "SAFE MODE", "OFFLINE", "ONLINE"
 };
 
-static system_mode_t cur_mode = MODE_BOOT;
-static system_mode_t prev_mode = MODE_BOOT;
+static mode_t cur_mode = sys::MODE_INIT;
+static mode_t prev_mode = sys::MODE_INIT;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const char *system_mode_name(system_mode_t val)
+const char *mode_name(mode_t val)
 {
-    return val < MODE_MAX ? mode_names[val] : NULL;
+    return val < sys::MODE_MAX ? mode_names[val] : nullptr;
 }
 
-esp_err_t system_init()
+esp_err_t init()
 {
     const esp_app_desc_t *app = esp_ota_get_app_description();
 
-    cur_mode = prev_mode = MODE_BOOT;
+    cur_mode = prev_mode = sys::MODE_INIT;
 
     ESP_LOGI(TAG, "%s v.%s built %s", app->project_name, app->version, app->date);
 
-    SYSTEM_ID = calloc(1, SYSTEM_ID_LEN);
+    SYSTEM_ID = static_cast<const char *>(calloc(1, SYSTEM_ID_LEN));
     if (!SYSTEM_ID)
     {
         ESP_LOGE(TAG, "Out of memory at boot");
@@ -47,7 +46,7 @@ esp_err_t system_init()
     return ESP_OK;
 }
 
-void system_set_mode(system_mode_t mode)
+void set_mode(mode_t mode)
 {
     if (mode == cur_mode)
         return;
@@ -55,13 +54,15 @@ void system_set_mode(system_mode_t mode)
     prev_mode = cur_mode;
     cur_mode = mode;
 
-    ESP_LOGW(TAG, "Switching from mode %s to %s", system_mode_name(prev_mode), system_mode_name(cur_mode));
+    ESP_LOGW(TAG, "Switching from mode %s to %s", mode_name(prev_mode), mode_name(cur_mode));
 
-    CHECK_LOGW(bus_send_event(EVENT_MODE_SET, NULL, 0),
+    CHECK_LOGW(bus::send_event(bus::MODE_SET, nullptr, 0),
                "Error sending event");
 }
 
-system_mode_t system_mode()
+mode_t mode()
 {
     return cur_mode;
 }
+
+} // namespace sys

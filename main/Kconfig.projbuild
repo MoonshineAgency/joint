@@ -10,23 +10,11 @@ menu "*** iot-node configuration ***"
 
 	menu "Default WiFi configuration"
 		
-		choice WIFI_MODE_C
-			prompt "Default WiFi mode"
-			default NODE_WIFI_MODE_AP
-
-			config NODE_WIFI_MODE_AP
-				bool "Access point"
-
-			config NODE_WIFI_MODE_STA
-				bool "Station"
-
-		endchoice
-
 		menu "Access point mode"
 		
 			config NODE_WIFI_AP_SSID
 				string "SSID"
-				default "EvLamp"
+				default "iot-node"
 				
 			config NODE_WIFI_AP_PASSWD
 				string "Password"

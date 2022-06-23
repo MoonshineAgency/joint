@@ -1,14 +1,12 @@
-#ifndef MAIN_SETTINGS_H_
-#define MAIN_SETTINGS_H_
+#ifndef ESP_IOT_NODE_PLUS_SETTINGS_H_
+#define ESP_IOT_NODE_PLUS_SETTINGS_H_
 
 #include "common.h"
-#include <cJSON.h>
+#include "basic_settings.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace settings {
 
-typedef struct
+struct data_t
 {
     struct {
         bool safe_mode;
@@ -36,20 +34,22 @@ typedef struct
         wifi_ap_config_t ap;
         wifi_sta_config_t sta;
     } wifi;
-} settings_t;
+};
 
-extern settings_t settings;
+class settings_t : public basic_settings_t<data_t>
+{
+protected:
+    esp_err_t _on_reset() override;
 
-esp_err_t settings_init();
+public:
+    settings_t(const char *name, uint32_t magic, const data_t *defaults)
+        : basic_settings_t<data_t>(name, magic, defaults)
+    {}
+};
 
-esp_err_t settings_reset();
+void create(const char *name, uint32_t magic);
+extern settings_t *get();
 
-esp_err_t settings_load();
+} // namespace settings
 
-esp_err_t settings_save();
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* MAIN_SETTINGS_H_ */
+#endif // ESP_IOT_NODE_PLUS_SETTINGS_H_

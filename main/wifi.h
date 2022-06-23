@@ -1,11 +1,13 @@
-#ifndef MAIN_WIFI_H_
-#define MAIN_WIFI_H_
+#ifndef ESP_IOT_NODE_PLUS_WIFI_H_
+#define ESP_IOT_NODE_PLUS_WIFI_H_
 
-#include "common.h"
+#include <esp_err.h>
 #include <esp_wifi.h>
 
-esp_err_t wifi_init();
+namespace wifi {
 
-esp_err_t wifi_start();
+esp_err_t init();
 
-#endif /* MAIN_WIFI_H_ */
+} // namespace wifi
+
+#endif // ESP_IOT_NODE_PLUS_WIFI_H_
