@@ -7,6 +7,9 @@ static const char *ltag = "aht_driver_t";
 
 esp_err_t aht_driver_t::init()
 {
+    if (!_config["stack_size"])
+        _config["stack_size"] = CONFIG_AHT_DRIVER_DEFAULT_STACK_SIZE;
+
     CHECK(periodic_driver_t::init());
 
     int dev_count = _config["devices"];

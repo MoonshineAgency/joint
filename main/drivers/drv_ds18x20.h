@@ -5,8 +5,6 @@
 #include <array>
 #include <ds18x20.h>
 
-#define CONFIG_DS18X20_MAX_SENSORS 64
-
 class ds18x20_driver_t : public periodic_driver_t
 {
     using periodic_driver_t::periodic_driver_t;
@@ -17,7 +15,6 @@ private:
     gpio_num_t _gpio;
     size_t _rescan = 0;
     size_t _sensors_found = 0;
-    size_t _loop_no = 0;
 
 protected:
     void loop() override;

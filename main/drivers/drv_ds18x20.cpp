@@ -43,6 +43,7 @@ void ds18x20_driver_t::loop()
         }
         if (_sensors_found > _sensors.size())
             _sensors_found = _sensors.size();
+        ESP_LOGI(ltag, "Found %d sensors", _sensors_found);
     }
 
     r = ds18x20_measure_and_read_multi(_gpio, _sensors.data(), _sensors_found, _results.data());

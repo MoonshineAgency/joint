@@ -11,6 +11,7 @@
 namespace node {
 
 static std::vector<driver_t *> drivers;
+static bool initialized = false;
 
 esp_err_t init()
 {
@@ -47,10 +48,6 @@ esp_err_t init()
             ESP_LOGW(TAG, "Error initializing driver: %d (%s)", r, esp_err_to_name(r));
             continue;
         }
-
-        r = drv->start();
-        if (r != ESP_OK)
-            ESP_LOGW(TAG, "Error starting driver': %d (%s)", r, esp_err_to_name(r));
     }
 
     return ESP_OK;
@@ -64,9 +61,20 @@ esp_err_t online()
     ESP_LOGI(TAG, "Node goes online...");
     sys::set_mode(sys::MODE_ONLINE);
 
-    for (const auto &drv: drivers)
+    if (likely(initialized))
     {
-        drv->resume();
+        for (const auto &drv: drivers)
+            drv->resume();
+    }
+    else
+    {
+        initialized = true;
+        for (const auto &drv: drivers)
+        {
+            auto r = drv->start();
+            if (r != ESP_OK)
+                ESP_LOGW(TAG, "Error starting driver': %d (%s)", r, esp_err_to_name(r));
+        }
     }
 
     return ESP_OK;
@@ -81,9 +89,7 @@ esp_err_t offline()
     sys::set_mode(sys::MODE_OFFLINE);
 
     for (const auto &drv: drivers)
-    {
         drv->suspend();
-    }
 
     return ESP_OK;
 }

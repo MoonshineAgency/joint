@@ -8,59 +8,59 @@ menu "*** iot-node configuration ***"
 
     endmenu
 
-	menu "Default WiFi configuration"
-		
-		menu "Access point mode"
-		
-			config NODE_WIFI_AP_SSID
-				string "SSID"
-				default "iot-node"
-				
-			config NODE_WIFI_AP_PASSWD
-				string "Password"
-				default ""
-	
-			config NODE_WIFI_AP_CHANNEL
-				int "Channel"
-				range 0 13
-				default 6
+    menu "Default WiFi configuration"
+        
+        menu "Access point mode"
+        
+            config NODE_WIFI_AP_SSID
+                string "SSID"
+                default "iot-node"
+                
+            config NODE_WIFI_AP_PASSWD
+                string "Password"
+                default ""
+    
+            config NODE_WIFI_AP_CHANNEL
+                int "Channel"
+                range 0 13
+                default 6
 
-		endmenu
+        endmenu
 
-		menu "Station mode"
-		
-			config NODE_WIFI_STA_SSID
-				string "SSID"
-				default "MyHomeWIFI"
-				
-			config NODE_WIFI_STA_PASSWD
-				string "Password"
-				default "MyPassword"
-	
-		endmenu
+        menu "Station mode"
+        
+            config NODE_WIFI_STA_SSID
+                string "SSID"
+                default "MyHomeWIFI"
+                
+            config NODE_WIFI_STA_PASSWD
+                string "Password"
+                default "MyPassword"
+    
+        endmenu
 
-		config NODE_WIFI_DHCP
-			bool "Enable DHCP"
-			default y
-			
-		config NODE_WIFI_IP
-			string "IP address"
-			default "192.168.1.1"
+        config NODE_WIFI_DHCP
+            bool "Enable DHCP"
+            default y
+            
+        config NODE_WIFI_IP
+            string "IP address"
+            default "192.168.1.1"
 
-		config NODE_WIFI_NETMASK
-			string "Netmask"
-			default "255.255.255.0"
+        config NODE_WIFI_NETMASK
+            string "Netmask"
+            default "255.255.255.0"
 
-		config NODE_WIFI_GATEWAY
-			string "Gateway"
-			default "192.168.1.1"
-			
-		config NODE_WIFI_DNS
-			string "DNS server"
-			default "192.168.1.1"
+        config NODE_WIFI_GATEWAY
+            string "Gateway"
+            default "192.168.1.1"
+            
+        config NODE_WIFI_DNS
+            string "DNS server"
+            default "192.168.1.1"
 
-	endmenu
-	
+    endmenu
+    
     menu "MQTT"
 
         config NODE_MQTT_URI
@@ -74,6 +74,22 @@ menu "*** iot-node configuration ***"
         config NODE_MQTT_PASSWORD
             string "Password"
             default "node"
+
+    endmenu
+
+    menu "Driver settings"
+
+        config DEFAULT_DRIVER_STACK_SIZE
+            int "Default stack size for driver tasks"
+            default 2048
+
+        config AHT_DRIVER_DEFAULT_STACK_SIZE
+            int "AHT driver stack size"
+            default 4096
+
+        config DS18X20_MAX_SENSORS
+            int "Maximum number of DS18x20 sensors"
+            default 64
 
     endmenu
 

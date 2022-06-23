@@ -24,7 +24,7 @@ protected:
     TaskHandle_t _handle = nullptr;
     config_t _config;
 
-    esp_err_t create_task(size_t stack_size, uint32_t priority);
+    esp_err_t create_task();
 
     static void sleep(uint32_t ms)
     {
@@ -59,6 +59,9 @@ public:
 class periodic_driver_t : public driver_t
 {
     using driver_t::driver_t;
+
+protected:
+    size_t _loop_no = 0;
 
 private:
     EventGroupHandle_t _state = nullptr;

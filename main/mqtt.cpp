@@ -71,6 +71,7 @@ int mqtt_client_t::publish(const std::string &topic, const std::string &data, in
 
 int mqtt_client_t::publish_json(const std::string &subtopic, cJSON *json, int qos, int retain)
 {
+    //ESP_LOGI(TAG, "mqtt publish to %s", (_main_topic + subtopic).c_str());
     auto buf = cJSON_PrintUnformatted(json);
     auto res = publish(_main_topic + subtopic, buf, qos, retain);
     cJSON_free(buf);
