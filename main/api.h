@@ -1,7 +1,7 @@
 #ifndef ESP_IOT_NODE_PLUS_API_H_
 #define ESP_IOT_NODE_PLUS_API_H_
 
-#include "common.h"
+#include <esp_err.h>
 #include <esp_http_server.h>
 
 /*

@@ -10,7 +10,10 @@
 ////////////////////////////////////////////////////////////////////////////////
 /// Settings
 
-#define SETTINGS_MAGIC 0xC0DE0001
+#define SETTINGS_PARTITION "settings"
+#define SETTINGS_MAGIC_KEY "magic"
+#define SETTINGS_DATA_KEY "data"
+#define SETTINGS_MAGIC_VAL 0xC0DE0001
 
 #if CONFIG_NODE_WIFI_DHCP
     #define DEFAULT_WIFI_DHCP true

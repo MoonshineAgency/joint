@@ -4,8 +4,6 @@
 #include <esp_err.h>
 #include <esp_log.h>
 
-namespace sys {
-
 typedef enum
 {
     MODE_INIT = 0,
@@ -15,15 +13,15 @@ typedef enum
     MODE_ONLINE,
 
     MODE_MAX
-} mode_t;
+} system_mode_t;
 
-esp_err_t init();
+esp_err_t system_init();
 
-void set_mode(mode_t mode);
+void system_set_mode(mode_t mode);
 
-const char *mode_name(mode_t val);
+const char *system_mode_name(mode_t val);
 
-mode_t mode();
+mode_t system_mode();
 
 #define SYSTEM_CHECK(x)                                                         \
     do {                                                                        \
@@ -33,7 +31,5 @@ mode_t mode();
             ESP_ERROR_CHECK(__);                                                \
         }                                                                       \
     } while (0)
-
-} // namespace sys
 
 #endif // ESP_IOT_NODE_PLUS_SYSTEM_H_

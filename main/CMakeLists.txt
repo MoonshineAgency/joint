@@ -1,21 +1,22 @@
 idf_component_register(
     SRCS
-        common.cpp
-        system.cpp
-        settings.cpp
-        bus.cpp
-        wifi.cpp
-        safe_mode.cpp
-        normal_mode.cpp
-        main.cpp
-        mqtt.cpp
-        node.cpp
-        webserver.cpp
-        api.cpp
-        driver.cpp
+        common.c
+        bus.c
+        system.c
+        settings.c
+        wifi.c
+        mqtt.c
+        api.c
+        webserver.c
+        node.c
+        safe_mode.c
+        normal_mode.c
+        main.c
+        driver.c
+        periodic_driver.c
 
-        drivers/drv_aht.cpp
-        drivers/drv_ds18x20.cpp
+        drivers/drv_aht.c
+        drivers/drv_ds18x20.c
 
     INCLUDE_DIRS
         .

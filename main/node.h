@@ -3,14 +3,10 @@
 
 #include <esp_err.h>
 
-namespace node {
+esp_err_t node_init();
 
-esp_err_t init();
+esp_err_t node_online();
 
-esp_err_t online();
-
-esp_err_t offline();
-
-} // namespace node
+esp_err_t node_offline();
 
 #endif // ESP_IOT_NODE_PLUS_NODE_H_

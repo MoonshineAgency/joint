@@ -4,31 +4,33 @@
 #include <esp_ota_ops.h>
 #include <esp_mac.h>
 
-namespace sys {
-
 static const char *const mode_names[] = {
-    "INIT", "BOOT", "SAFE MODE", "OFFLINE", "ONLINE"
+    [MODE_INIT]    = "INIT",
+    [MODE_BOOT]    = "BOOT",
+    [MODE_SAFE]    = "SAFE MODE",
+    [MODE_OFFLINE] = "OFFLINE",
+    [MODE_ONLINE]  = "ONLINE"
 };
 
-static mode_t cur_mode = sys::MODE_INIT;
-static mode_t prev_mode = sys::MODE_INIT;
+static mode_t cur_mode = MODE_INIT;
+static mode_t prev_mode = MODE_INIT;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const char *mode_name(mode_t val)
+const char *system_mode_name(mode_t val)
 {
-    return val < sys::MODE_MAX ? mode_names[val] : nullptr;
+    return val < MODE_MAX ? mode_names[val] : NULL;
 }
 
-esp_err_t init()
+esp_err_t system_init()
 {
     const esp_app_desc_t *app = esp_ota_get_app_description();
 
-    cur_mode = prev_mode = sys::MODE_INIT;
+    cur_mode = prev_mode = MODE_INIT;
 
     ESP_LOGI(TAG, "%s v.%s built %s", app->project_name, app->version, app->date);
 
-    SYSTEM_ID = static_cast<const char *>(calloc(1, SYSTEM_ID_LEN));
+    SYSTEM_ID = calloc(1, SYSTEM_ID_LEN);
     if (!SYSTEM_ID)
     {
         ESP_LOGE(TAG, "Out of memory at boot");
@@ -46,7 +48,7 @@ esp_err_t init()
     return ESP_OK;
 }
 
-void set_mode(mode_t mode)
+void system_set_mode(mode_t mode)
 {
     if (mode == cur_mode)
         return;
@@ -54,15 +56,13 @@ void set_mode(mode_t mode)
     prev_mode = cur_mode;
     cur_mode = mode;
 
-    ESP_LOGW(TAG, "Switching from mode %s to %s", mode_name(prev_mode), mode_name(cur_mode));
+    ESP_LOGW(TAG, "Switching from mode %s to %s", system_mode_name(prev_mode), system_mode_name(cur_mode));
 
-    CHECK_LOGW(bus::send_event(bus::MODE_SET, nullptr, 0),
+    CHECK_LOGW(bus_send_event(MODE_SET, NULL, 0),
                "Error sending event");
 }
 
-mode_t mode()
+mode_t system_mode()
 {
     return cur_mode;
 }
-
-} // namespace sys

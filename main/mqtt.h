@@ -1,49 +1,29 @@
 #ifndef ESP_IOT_NODE_PLUS_MQTT_H_
 #define ESP_IOT_NODE_PLUS_MQTT_H_
 
-#include "common.h"
-#include <string>
+#include <esp_err.h>
 #include <mqtt_client.h>
 #include <cJSON.h>
 
-class mqtt_client_t
-{
-private:
-    esp_mqtt_client_handle_t _handle;
-    bool _connected;
-    std::string _main_topic;
+typedef void (*mqtt_callback_t)(const char *topic, const char *data, size_t data_len);
 
-    static mqtt_client_t *_instance;
+esp_mqtt_client_handle_t mqtt_client();
 
-    static void _handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data);
+esp_err_t mqtt_init();
+esp_err_t mqtt_connect();
+esp_err_t mqtt_disconnect();
+bool mqtt_connected();
 
-    mqtt_client_t()
-        :_handle(nullptr), _connected(false)
-    {}
+int mqtt_publish(const char *topic, const char *data, int len, int qos, int retain);
+int mqtt_publish_json(const char *topic, const cJSON *json, int qos, int retain);
 
-public:
-    static mqtt_client_t *get()
-    {
-        if (_instance == nullptr)
-            _instance = new mqtt_client_t();
-        return _instance;
-    }
+int mqtt_publish_subtopic(const char *subtopic, const char *data, int len, int qos, int retain);
+int mqtt_publish_json_subtopic(const char *subtopic, const cJSON *json, int qos, int retain);
 
-    mqtt_client_t(const mqtt_client_t&) = delete;
-    mqtt_client_t &operator=(const mqtt_client_t&) = delete;
+int mqtt_subscribe(const char *topic, mqtt_callback_t cb, int qos);
+int mqtt_subscribe_subtopic(const char *subtopic, mqtt_callback_t cb, int qos);
 
-    esp_mqtt_client_handle_t handle() { return _handle; }
-
-    esp_err_t init();
-    esp_err_t connect();
-    esp_err_t disconnect();
-
-    bool connected() const { return _connected; }
-
-    int publish(const char *topic, const char *data, int len, int qos, int retain);
-    int publish(const std::string &topic, const std::string &data, int qos, int retain);
-
-    int publish_json(const std::string &subtopic, cJSON *json, int qos, int retain);
-};
+void mqtt_unsubscribe(const char *topic, mqtt_callback_t cb);
+void mqtt_unsubscribe_subtopic(const char *subtopic, mqtt_callback_t cb);
 
 #endif // ESP_IOT_NODE_PLUS_MQTT_H_

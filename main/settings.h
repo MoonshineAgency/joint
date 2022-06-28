@@ -1,12 +1,11 @@
 #ifndef ESP_IOT_NODE_PLUS_SETTINGS_H_
 #define ESP_IOT_NODE_PLUS_SETTINGS_H_
 
-#include "common.h"
-#include "basic_settings.h"
+#include <esp_err.h>
+#include <stdbool.h>
+#include <esp_wifi.h>
 
-namespace settings {
-
-struct data_t
+typedef struct
 {
     struct {
         bool safe_mode;
@@ -34,22 +33,13 @@ struct data_t
         wifi_ap_config_t ap;
         wifi_sta_config_t sta;
     } wifi;
-};
+} settings_t;
 
-class settings_t : public basic_settings_t<data_t>
-{
-protected:
-    esp_err_t _on_reset() override;
+extern settings_t settings;
 
-public:
-    settings_t(const char *name, uint32_t magic, const data_t *defaults)
-        : basic_settings_t<data_t>(name, magic, defaults)
-    {}
-};
-
-void create(const char *name, uint32_t magic);
-extern settings_t *get();
-
-} // namespace settings
+esp_err_t settings_init();
+esp_err_t settings_load();
+esp_err_t settings_save();
+esp_err_t settings_reset();
 
 #endif // ESP_IOT_NODE_PLUS_SETTINGS_H_

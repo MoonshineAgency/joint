@@ -1,12 +1,13 @@
 #ifndef ESP_IOT_NODE_PLUS_COMMON_H_
 #define ESP_IOT_NODE_PLUS_COMMON_H_
 
-#include <cstddef>
-#include <cstdlib>
-#include <cstdio>
+#include <stddef.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include <esp_log.h>
 #include <esp_err.h>
-#include <esp_wifi.h>
+#include <esp_check.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <freertos/queue.h>
