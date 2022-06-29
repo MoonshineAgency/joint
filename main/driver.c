@@ -150,7 +150,7 @@ int config_get_int(cJSON *item, int def)
     return cJSON_IsNumber(item) ? (int)cJSON_GetNumberValue(item) : def;
 }
 
-gpio_num_t config_get_gpio(cJSON *item)
+gpio_num_t config_get_gpio(cJSON *item, gpio_num_t def)
 {
     int res = config_get_int(item, GPIO_NUM_NC);
     return res >= GPIO_NUM_MAX ? GPIO_NUM_NC : res;

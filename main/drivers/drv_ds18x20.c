@@ -5,7 +5,7 @@
 #include <ds18x20.h>
 
 static ds18x20_addr_t sensors[CONFIG_DS18X20_MAX_SENSORS] = { 0 };
-static float results[CONFIG_DS18X20_MAX_SENSORS] = {0 };
+static float results[CONFIG_DS18X20_MAX_SENSORS] = { 0 };
 static size_t sensors_count = 0;
 static gpio_num_t gpio;
 static size_t scan_interval;
@@ -58,7 +58,7 @@ static esp_err_t init(driver_t *self)
     sensors_count = 0;
     loop_no = 0;
 
-    gpio = config_get_gpio(cJSON_GetObjectItem(self->config, "gpio"));
+    gpio = config_get_gpio(cJSON_GetObjectItem(self->config, "gpio"), GPIO_NUM_NC);
     scan_interval = config_get_int(cJSON_GetObjectItem(self->config, "scan_interval"), 1);
 
     ESP_LOGI(self->name, "Configured to use GPIO %d with scan_interval %d", gpio, scan_interval);

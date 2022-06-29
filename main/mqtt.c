@@ -17,7 +17,9 @@ static char *msg_topic = NULL;
 typedef struct
 {
     char topic[MAX_TOPIC_LEN];
+    int qos;
     mqtt_callback_t callback;
+    void *ctx;
 } subscription_t;
 
 static cvector_vector_type(subscription_t) subs = NULL;
@@ -51,11 +53,32 @@ static void on_data(esp_mqtt_event_handle_t event)
         // time to callback
         for (size_t i = 0; i < cvector_size(subs); i++)
             if (!strncmp(msg_topic, subs[i].topic, MAX_TOPIC_LEN - 1))
-                subs[i].callback(msg_topic, msg_data, msg_data_size + 1);
+                subs[i].callback(msg_topic, msg_data, msg_data_size + 1, subs[i].ctx);
 
         // free memory
         free(msg_data);
         free(msg_topic);
+    }
+}
+
+inline static int find_topic(const char *topic, cvector_vector_type(const char *) topics)
+{
+    for (size_t i = 0; i < cvector_size(topics); i++)
+        if (!strncmp(topic, topics[i], MAX_TOPIC_LEN - 1))
+            return i;
+    return -1;
+}
+
+static void resubscribe()
+{
+    cvector_vector_type(const char *) topics;
+    for (size_t i = 0; i < cvector_size(subs); i++)
+    {
+        if (find_topic(subs[i].topic, topics) < 0)
+            continue;
+        ESP_LOGI(TAG, "Resubscribing to %s", subs[i].topic);
+        esp_mqtt_client_subscribe(handle, subs[i].topic, subs[i].qos);
+        cvector_push_back(topics, subs[i].topic);
     }
 }
 
@@ -67,6 +90,7 @@ static void handler(void *arg, esp_event_base_t event_base, int32_t event_id, vo
             connected = true;
             ESP_LOGI(TAG, "Connected to MQTT broker");
             bus_send_event(MQTT_CONNECTED, NULL, 0);
+            resubscribe();
             break;
         case MQTT_EVENT_DISCONNECTED:
             connected = false;
@@ -157,7 +181,7 @@ int mqtt_publish_json_subtopic(const char *subtopic, const cJSON *json, int qos,
     return mqtt_publish_json(topic, json, qos, retain);
 }
 
-int mqtt_subscribe(const char *topic, mqtt_callback_t cb, int qos)
+int mqtt_subscribe(const char *topic, mqtt_callback_t cb, int qos, void *ctx)
 {
     bool subscribed = false;
     for (size_t i = 0; i < cvector_size(subs); i++)
@@ -170,7 +194,9 @@ int mqtt_subscribe(const char *topic, mqtt_callback_t cb, int qos)
 
     subscription_t s = {
         .topic = { 0 },
-        .callback = cb
+        .callback = cb,
+        .qos = qos,
+        .ctx = ctx
     };
     strncpy(s.topic, topic, sizeof(s.topic) - 1);
     cvector_push_back(subs, s);
@@ -178,28 +204,28 @@ int mqtt_subscribe(const char *topic, mqtt_callback_t cb, int qos)
     return subscribed ? 0 : esp_mqtt_client_subscribe(handle, topic, qos);
 }
 
-int mqtt_subscribe_subtopic(const char *subtopic, mqtt_callback_t cb, int qos)
+int mqtt_subscribe_subtopic(const char *subtopic, mqtt_callback_t cb, int qos, void *ctx)
 {
     char topic[MAX_TOPIC_LEN] = { 0 };
     full_topic(topic, subtopic);
 
-    return mqtt_subscribe(topic, cb, qos);
+    return mqtt_subscribe(topic, cb, qos, ctx);
 }
 
-void mqtt_unsubscribe(const char *topic, mqtt_callback_t cb)
+void mqtt_unsubscribe(const char *topic, mqtt_callback_t cb, void *ctx)
 {
     for (size_t i = 0; i < cvector_size(subs); i++)
-        if (!strncmp(topic, subs[i].topic, MAX_TOPIC_LEN - 1) && cb == subs[i].callback)
+        if (!strncmp(topic, subs[i].topic, MAX_TOPIC_LEN - 1) && cb == subs[i].callback && ctx == subs[i].ctx)
         {
             cvector_erase(subs, i);
             return;
         }
 }
 
-void mqtt_unsubscribe_subtopic(const char *subtopic, mqtt_callback_t cb)
+void mqtt_unsubscribe_subtopic(const char *subtopic, mqtt_callback_t cb, void *ctx)
 {
     char topic[MAX_TOPIC_LEN] = { 0 };
     full_topic(topic, subtopic);
 
-    mqtt_unsubscribe(topic, cb);
+    mqtt_unsubscribe(topic, cb, ctx);
 }

@@ -8,6 +8,8 @@
 
 #include "drivers/drv_aht.h"
 #include "drivers/drv_ds18x20.h"
+#include "drivers/drv_gh_io.h"
+#include "drivers/drv_adc.h"
 
 static bool initialized = false;
 
@@ -18,8 +20,10 @@ typedef struct
 } drv_descr_t;
 
 static drv_descr_t drivers[] = {
-    { .drv = &drv_aht, .cfg = "{ \"stack_size\": 4096, \"sensors\": [{ \"port\": 1, \"sda\": 13, \"scl\": 14, \"type\": 0 }] }" },
+    { .drv = &drv_aht,     .cfg = "{ \"stack_size\": 4096, \"sensors\": [{ \"port\": 1, \"sda\": 13, \"scl\": 14, \"type\": 0 }] }" },
     { .drv = &drv_ds18x20, .cfg = "{ \"stack_size\": 4096, \"gpio\": 15, \"scan_interval\": 10 }" },
+    { .drv = &drv_gh_io,   .cfg = "{ \"stack_size\": 4096, \"port\": 0, \"sda\": 16, \"scl\": 17, \"intr\": 27 } }" },
+    { .drv = &drv_adc,     .cfg = "{ \"stack_size\": 4096, \"period\": 500 }" },
 };
 static const size_t driver_count = sizeof(drivers) / sizeof(drv_descr_t);
 

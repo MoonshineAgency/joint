@@ -41,6 +41,6 @@ esp_err_t driver_resume(driver_t *drv);
 esp_err_t driver_stop(driver_t *drv);
 
 int config_get_int(cJSON *item, int def);
-gpio_num_t config_get_gpio(cJSON *item);
+gpio_num_t config_get_gpio(cJSON *item, gpio_num_t def);
 
 #endif // ESP_IOT_NODE_PLUS_DRIVER_H_

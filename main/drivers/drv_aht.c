@@ -47,9 +47,9 @@ static esp_err_t init(driver_t *self)
     for (int i = 0; i < cJSON_GetArraySize(sensors_j); i++)
     {
         cJSON *sensor_j = cJSON_GetArrayItem(sensors_j, i);
-        gpio_num_t sda = config_get_gpio(cJSON_GetObjectItem(sensor_j, "sda"));
-        gpio_num_t scl = config_get_gpio(cJSON_GetObjectItem(sensor_j, "scl"));
-        int port = config_get_int(cJSON_GetObjectItem(sensor_j, "port"), 0);
+        gpio_num_t sda = config_get_gpio(cJSON_GetObjectItem(sensor_j, "sda"), GPIO_NUM_NC);
+        gpio_num_t scl = config_get_gpio(cJSON_GetObjectItem(sensor_j, "scl"), GPIO_NUM_NC);
+        i2c_port_t port = config_get_int(cJSON_GetObjectItem(sensor_j, "port"), 1);
         uint8_t addr = config_get_int(cJSON_GetObjectItem(sensor_j, "address"), AHT_I2C_ADDRESS_GND);
         int freq = config_get_int(cJSON_GetObjectItem(sensor_j, "frequency"), 0);
 

@@ -83,21 +83,45 @@ menu "*** iot-node configuration ***"
             int "Default stack size for driver tasks"
             default 2048
 
-        config AHT_DRIVER_DEFAULT_STACK_SIZE
-            int "AHT driver stack size"
-            default 4096
+        menu "AHT"
 
-        config AHT_DRIVER_MAX_DEVICES
-            int "Maximal AHT devices count"
-            default 8
+            config AHT_DRIVER_DEFAULT_STACK_SIZE
+                int "AHT driver stack size"
+                default 4096
 
-        config DS18X20_MAX_SENSORS
-            int "Maximum number of DS18x20 sensors"
-            default 64
+            config AHT_DRIVER_MAX_DEVICES
+                int "Maximal AHT devices count"
+                default 8
 
-        config BMP180_DRIVER_DEFAULT_STACK_SIZE
-            int "BMP180 driver stack size"
-            default 4096
+        endmenu
+
+        menu "DS18x20"
+
+            config DS18X20_MAX_SENSORS
+                int "Maximum number of DS18x20 sensors"
+                default 64
+
+        endmenu
+
+        menu "ADC"
+
+            config ADC_DRIVER_AIN0_GPIO
+                int "AIN0 GPIO"
+                default 32
+
+            config ADC_DRIVER_AIN1_GPIO
+                int "AIN1 GPIO"
+                default 33
+
+            config ADC_DRIVER_AIN2_GPIO
+                int "AIN2 GPIO"
+                default 34
+
+            config ADC_DRIVER_AIN3_GPIO
+                int "AIN3 GPIO"
+                default 35
+
+        endmenu
 
     endmenu
 
