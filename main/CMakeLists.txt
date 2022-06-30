@@ -18,7 +18,7 @@ idf_component_register(
         drivers/drv_aht.c
         drivers/drv_ds18x20.c
         drivers/drv_gh_io.c
-        drivers/drv_adc.c
+        drivers/drv_gh_adc.c
 
     INCLUDE_DIRS
         .

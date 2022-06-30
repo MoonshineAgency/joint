@@ -81,7 +81,15 @@ menu "*** iot-node configuration ***"
 
         config DEFAULT_DRIVER_STACK_SIZE
             int "Default stack size for driver tasks"
-            default 2048
+            default 4096
+
+        config I2C0_SDA_GPIO
+            int "I2C0 SDA GPIO"
+            default 16
+
+        config I2C0_SCL_GPIO
+            int "I2C0 SCL GPIO"
+            default 17
 
         menu "AHT"
 
@@ -105,21 +113,30 @@ menu "*** iot-node configuration ***"
 
         menu "ADC"
 
-            config ADC_DRIVER_AIN0_GPIO
-                int "AIN0 GPIO"
-                default 32
 
-            config ADC_DRIVER_AIN1_GPIO
-                int "AIN1 GPIO"
-                default 33
+        endmenu
 
-            config ADC_DRIVER_AIN2_GPIO
-                int "AIN2 GPIO"
-                default 34
+        menu "GH IO"
 
-            config ADC_DRIVER_AIN3_GPIO
-                int "AIN3 GPIO"
-                default 35
+            config GH_IO_DRIVER_INTR_GPIO
+                int "GPIO for TCA9555 INTR pin"
+                default 27
+
+            config GH_IO_DRIVER_INPUTS_TOPIC
+                string "Subtopic for publishing isolated inputs state"
+                default "isolated_inputs"
+
+            config GH_IO_DRIVER_SWITCHES_TOPIC
+                string "Subtopic for publishing switches state"
+                default "switches"
+
+            config GH_IO_DRIVER_RELAYS_CMD_TOPIC
+                string "Subtopic for controlling relays"
+                default "relays/%d/command"
+
+            config GH_IO_DRIVER_RELAYS_STATE_TOPIC
+                string "Subtopic publishing relays state"
+                default "relays/%d/state"
 
         endmenu
 

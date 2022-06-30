@@ -3,6 +3,6 @@
 
 #include "driver.h"
 
-extern driver_t drv_adc;
+extern driver_t drv_gh_adc;
 
 #endif // ESP_IOT_NODE_PLUS_DRV_ADC_H_

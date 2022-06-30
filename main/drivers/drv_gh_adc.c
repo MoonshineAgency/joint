@@ -1,5 +1,4 @@
-#include "drv_adc.h"
-#include "common.h"
+#include "drv_gh_adc.h"
 #include "mqtt.h"
 #include "periodic_driver.h"
 #include <driver/adc.h>
@@ -53,8 +52,8 @@ static esp_err_t init(driver_t *self)
     return periodic_driver_init(self);
 }
 
-driver_t drv_adc = {
-    .name = "drv_adc",
+driver_t drv_gh_adc = {
+    .name = "drv_gh_adc",
 
     .config = NULL,
     .state = DRIVER_NEW,
