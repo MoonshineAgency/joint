@@ -6,6 +6,7 @@
 #include "mqtt.h"
 #include "wifi.h"
 #include "webserver.h"
+#include "sntp.h"
 
 static void task(void *arg)
 {
@@ -25,6 +26,7 @@ static void task(void *arg)
         switch (e.type)
         {
             case NETWORK_UP:
+                sntp_iot_init();
                 if (mqtt_connected())
                     mqtt_disconnect();
                 SYSTEM_CHECK(mqtt_connect());
@@ -37,10 +39,6 @@ static void task(void *arg)
                 break;
             case MQTT_DISCONNECTED:
                 SYSTEM_CHECK(node_offline());
-                break;
-            case NETWORK_DOWN:
-                SYSTEM_CHECK(node_offline());
-                mqtt_disconnect();
                 break;
             default:
                 break;

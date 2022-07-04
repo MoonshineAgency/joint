@@ -11,6 +11,8 @@ idf_component_register(
         node.c
         safe_mode.c
         normal_mode.c
+        hwrtc.c
+        sntp.c
         main.c
         driver.c
         periodic_driver.c
@@ -19,6 +21,7 @@ idf_component_register(
         drivers/drv_ds18x20.c
         drivers/drv_gh_io.c
         drivers/drv_gh_adc.c
+        drivers/drv_ph_meter.c
 
     INCLUDE_DIRS
         .

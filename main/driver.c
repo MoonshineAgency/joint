@@ -152,6 +152,6 @@ int config_get_int(cJSON *item, int def)
 
 gpio_num_t config_get_gpio(cJSON *item, gpio_num_t def)
 {
-    int res = config_get_int(item, GPIO_NUM_NC);
-    return res >= GPIO_NUM_MAX ? GPIO_NUM_NC : res;
+    int res = config_get_int(item, def);
+    return res >= GPIO_NUM_MAX ? def : res;
 }

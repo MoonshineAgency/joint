@@ -1,5 +1,4 @@
 #include "node.h"
-#include <i2cdev.h>
 #include "common.h"
 #include "settings.h"
 #include "system.h"
@@ -10,6 +9,7 @@
 #include "drivers/drv_ds18x20.h"
 #include "drivers/drv_gh_io.h"
 #include "drivers/drv_gh_adc.h"
+#include "drivers/drv_ph_meter.h"
 
 static bool initialized = false;
 
@@ -20,10 +20,11 @@ typedef struct
 } drv_descr_t;
 
 static drv_descr_t drivers[] = {
-    { .drv = &drv_aht,     .cfg = "{ \"stack_size\": 4096, \"sensors\": [{ \"port\": 1, \"sda\": 13, \"scl\": 14, \"type\": 0 }] }" },
-    { .drv = &drv_ds18x20, .cfg = "{ \"stack_size\": 4096, \"gpio\": 15, \"scan_interval\": 10 }" },
-    { .drv = &drv_gh_io,   .cfg = "{ \"stack_size\": 4096, \"port\": 0, \"sda\": 16, \"scl\": 17, \"intr\": 27 } }" },
-    { .drv = &drv_gh_adc,  .cfg = "{ \"stack_size\": 4096, \"period\": 500 }" },
+    { .drv = &drv_aht,      .cfg = "{ \"stack_size\": 4096, \"sensors\": [{ \"port\": 1, \"sda\": 13, \"scl\": 14, \"type\": 0 }] }" },
+    { .drv = &drv_ds18x20,  .cfg = "{ \"stack_size\": 4096, \"gpio\": 15, \"scan_interval\": 10 }" },
+    { .drv = &drv_gh_io,    .cfg = "{ \"stack_size\": 4096, \"port\": 0, \"sda\": 16, \"scl\": 17, \"intr\": 27 } }" },
+    { .drv = &drv_gh_adc,   .cfg = "{ \"stack_size\": 4096, \"period\": 500 }" },
+    { .drv = &drv_ph_meter, .cfg = "{ \"stack_size\": 4096, \"period\": 1000 }" },
 };
 static const size_t driver_count = sizeof(drivers) / sizeof(drv_descr_t);
 
@@ -31,8 +32,6 @@ esp_err_t node_init()
 {
     ESP_LOGI(TAG, "Initializing node %s...", settings.node.name);
     system_set_mode(MODE_OFFLINE);
-
-    SYSTEM_CHECK(i2cdev_init());
 
     for (size_t i = 0; i < driver_count; i++)
         driver_init(drivers[i].drv, drivers[i].cfg);

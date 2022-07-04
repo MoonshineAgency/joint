@@ -153,6 +153,10 @@ bool mqtt_connected()
 
 int mqtt_publish(const char *topic, const char *data, int len, int qos, int retain)
 {
+//    static uint32_t last_mem;
+//    uint32_t mem = esp_get_free_heap_size();
+//    ESP_LOGI(TAG, "Free mem: %d, old: %d, taken: %d", mem, last_mem, last_mem - mem);
+//    last_mem = mem;
     return esp_mqtt_client_publish(handle, topic, data, len, qos, retain);
 }
 

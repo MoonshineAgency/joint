@@ -1,3 +1,6 @@
+#include <i2cdev.h>
+#include "common.h"
+#include "hwrtc.h"
 #include "system.h"
 #include "settings.h"
 #include "bus.h"
@@ -6,8 +9,14 @@
 
 void app_main()
 {
+    ESP_ERROR_CHECK(i2cdev_init());
     // Init basic system
     ESP_ERROR_CHECK(system_init());
+
+    esp_err_t r = hw_rtc_init();
+    if (r != ESP_OK)
+        ESP_LOGW(TAG, "Error initializing HW RTC: %d (%s)", r, esp_err_to_name(r));
+
     // Init settings storage, reset if storage is not formatted
     ESP_ERROR_CHECK(settings_init());
     // Load settings

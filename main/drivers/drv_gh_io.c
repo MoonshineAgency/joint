@@ -14,7 +14,7 @@ static uint8_t old_switches;
 static uint8_t old_inputs;
 static uint8_t relays_state = 0;
 
-void IRAM_ATTR on_port_change(void *arg)
+static void IRAM_ATTR on_port_change(void *arg)
 {
     BaseType_t hp_task;
     BaseType_t r = xEventGroupSetBitsFromISR(event, CHANGED_BITS, &hp_task);
@@ -32,12 +32,12 @@ static void publish_relays_state()
     }
 }
 
-void on_relays_command(const char *topic, const char *data, size_t data_len, void *ctx)
+static void on_relays_command(const char *topic, const char *data, size_t data_len, void *ctx)
 {
     size_t relay = (size_t)ctx;
 
     bool state = data[0] == '1' || !strncasecmp(data, "on", 2) || !strncasecmp(data, "yes", 3);
-    relays_state |= state << relay;
+    relays_state = (relays_state & ~BIT(relay)) | state << relay;
 
     esp_err_t r = tca95x5_set_level(&dev, relay, state);
     if (r != ESP_OK)
@@ -49,6 +49,26 @@ void on_relays_command(const char *topic, const char *data, size_t data_len, voi
     ESP_LOGI(drv_gh_io.name, "Relay %d switched to %d", relay, state);
 
     publish_relays_state();
+}
+
+static void subscribe()
+{
+    for (size_t i = 0; i < RELAYS_COUNT; i++)
+    {
+        char topic[32] = { 0 };
+        snprintf(topic, sizeof(topic), CONFIG_GH_IO_DRIVER_RELAYS_CMD_TOPIC, i);
+        mqtt_subscribe_subtopic(topic, on_relays_command, 2, (void *)i);
+    }
+}
+
+static void unsubscribe()
+{
+    for (size_t i = 0; i < RELAYS_COUNT; i++)
+    {
+        char topic[32] = { 0 };
+        snprintf(topic, sizeof(topic), CONFIG_GH_IO_DRIVER_RELAYS_CMD_TOPIC, i);
+        mqtt_unsubscribe_subtopic(topic, on_relays_command, (void *)i);
+    }
 }
 
 static void publish_inputs(const char *topic, uint8_t val, uint8_t old_val)
@@ -63,7 +83,7 @@ static void publish_inputs(const char *topic, uint8_t val, uint8_t old_val)
 
 static void publish_inputs_state(driver_t *self)
 {
-    uint16_t val;
+    uint16_t val = 0;
     esp_err_t r = tca95x5_port_read(&dev, &val);
     if (r != ESP_OK)
     {
@@ -71,11 +91,11 @@ static void publish_inputs_state(driver_t *self)
         return;
     }
 
-    uint8_t inputs = (val >> 12) & 0x0f;
+    uint8_t inputs = (val >> 8) & 0x0f;
     publish_inputs(CONFIG_GH_IO_DRIVER_INPUTS_TOPIC, inputs, old_inputs);
     old_inputs = inputs;
 
-    uint8_t switches = (val >> 8) & 0x0f;
+    uint8_t switches = (val >> 12) & 0x0f;
     publish_inputs(CONFIG_GH_IO_DRIVER_SWITCHES_TOPIC, ~switches, old_switches);
     old_switches = switches;
 }
@@ -130,13 +150,6 @@ static esp_err_t init(driver_t *self)
     gpio_install_isr_service(0);
     gpio_isr_handler_add(intr, on_port_change, NULL);
 
-    for (size_t i = 0; i < RELAYS_COUNT; i++)
-    {
-        char topic[32] = { 0 };
-        snprintf(topic, sizeof(topic), CONFIG_GH_IO_DRIVER_RELAYS_CMD_TOPIC, i);
-        mqtt_subscribe_subtopic(topic, on_relays_command, 2, (void *)i);
-    }
-
     old_switches = old_inputs = 0;
 
     return periodic_driver_init(self);
@@ -144,14 +157,22 @@ static esp_err_t init(driver_t *self)
 
 static esp_err_t start(driver_t *self)
 {
+    subscribe();
     publish_inputs_state(self);
     publish_relays_state();
 
     return periodic_driver_start(self);
 }
 
+static esp_err_t suspend(driver_t *self)
+{
+    unsubscribe();
+    return periodic_driver_suspend(self);
+}
+
 static esp_err_t resume(driver_t *self)
 {
+    subscribe();
     publish_inputs_state(self);
     publish_relays_state();
 
@@ -160,13 +181,7 @@ static esp_err_t resume(driver_t *self)
 
 static esp_err_t stop(driver_t *self)
 {
-    for (size_t i = 0; i < RELAYS_COUNT; i++)
-    {
-        char topic[32] = { 0 };
-        snprintf(topic, sizeof(topic), CONFIG_GH_IO_DRIVER_RELAYS_CMD_TOPIC, i);
-        mqtt_unsubscribe_subtopic(topic, on_relays_command, (void *)i);
-    }
-
+    unsubscribe();
     return periodic_driver_stop(self);
 }
 
@@ -180,7 +195,7 @@ driver_t drv_gh_io = {
 
     .init = init,
     .start = start,
-    .suspend = periodic_driver_suspend,
+    .suspend = suspend,
     .resume = resume,
     .stop = stop,
 };

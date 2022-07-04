@@ -8,6 +8,22 @@ menu "*** iot-node configuration ***"
 
     endmenu
 
+    menu "Date/Time"
+
+        config NODE_TZ
+            string "Timezone"
+            default "UTC"
+
+        config SNTP_ENABLE
+            bool "Enable SNTP date/time sync"
+            default yes
+
+        config SNTP_TIME_SERVER
+            string "SNTP time server"
+            default "pool.ntp.org"
+
+    endmenu
+
     menu "Default WiFi configuration"
         
         menu "Access point mode"
@@ -108,11 +124,6 @@ menu "*** iot-node configuration ***"
             config DS18X20_MAX_SENSORS
                 int "Maximum number of DS18x20 sensors"
                 default 64
-
-        endmenu
-
-        menu "ADC"
-
 
         endmenu
 
