@@ -25,8 +25,10 @@ static void loop(driver_t *self)
             ESP_LOGW(self->name, "Error reading device %d: %d (%s)", i, r, esp_err_to_name(r));
             continue;
         }
+
         char topic[32] = { 0 };
-        snprintf(topic, sizeof(topic), "aht_%d_%d_%d_%02x", i, devices[i].i2c_dev.cfg.scl_io_num, devices[i].i2c_dev.cfg.sda_io_num, devices[i].i2c_dev.addr);
+        snprintf(topic, sizeof(topic), "aht/%d_%d_%d_%02x", devices[i].i2c_dev.port, devices[i].i2c_dev.cfg.scl_io_num,
+            devices[i].i2c_dev.cfg.sda_io_num, devices[i].i2c_dev.addr);
         cJSON *msg = cJSON_CreateObject();
         cJSON_AddBoolToObject(msg, "calibrated", calibrated);
         cJSON_AddNumberToObject(msg, "humidity", rh);

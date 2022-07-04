@@ -41,7 +41,7 @@ static void loop(driver_t *self)
     for (size_t i = 0; i < sensors_count; i++)
     {
         char name[32] = { 0 };
-        snprintf(name, sizeof(name), "ds18x20_%08x%08x", (uint32_t)(sensors[i] >> 32), (uint32_t)sensors[i]);
+        snprintf(name, sizeof(name), "ds18x20/%08X%08X", (uint32_t)(sensors[i] >> 32), (uint32_t)sensors[i]);
 
         cJSON *json = cJSON_CreateObject();
         cJSON_AddStringToObject(json, "family", (sensors[i] & 0xff) == DS18B20_FAMILY_ID ? "DS18B20" : "DS18S20");
