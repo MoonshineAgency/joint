@@ -21,6 +21,7 @@ typedef esp_err_t (*driver_cb_t)(driver_t *self);
 struct driver
 {
     char name[32];
+    const char *defconfig;
     cJSON *config;
     driver_state_t state;
 
@@ -34,13 +35,16 @@ struct driver
     driver_cb_t stop;
 };
 
-esp_err_t driver_init(driver_t *drv, const char *config);
+esp_err_t driver_init(driver_t *drv, const char *config, size_t cfg_len);
 esp_err_t driver_start(driver_t *drv);
 esp_err_t driver_suspend(driver_t *drv);
 esp_err_t driver_resume(driver_t *drv);
 esp_err_t driver_stop(driver_t *drv);
 
+const char *driver_state_to_name(driver_state_t state);
+
 int config_get_int(cJSON *item, int def);
+float config_get_float(cJSON *item, float def);
 gpio_num_t config_get_gpio(cJSON *item, gpio_num_t def);
 
 #endif // ESP_IOT_NODE_PLUS_DRIVER_H_

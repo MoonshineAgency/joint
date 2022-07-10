@@ -1,0 +1,284 @@
+html {
+	font-family: Geneva, Helvetica, sans-serif;
+	font-size: 16px;
+}
+
+body {
+	margin: 0;
+	padding: 0;
+}
+
+.icon {
+	display: inline-block;
+	width: 1em;
+	height: 1em;
+	stroke-width: 0;
+	stroke: currentColor;
+	fill: currentColor;
+}
+
+.icon-wifi {
+	width: 1.25em;
+}
+
+/* The switch - the box around the slider */
+.switch {
+	position: relative;
+	display: inline-block;
+	width: 60px;
+	height: 32px;
+}
+
+/* Hide default HTML checkbox */
+.switch input {
+	opacity: 0;
+	width: 0;
+	height: 0;
+}
+
+/* The slider */
+.slider {
+	position: absolute;
+	cursor: pointer;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: #ccc;
+	-webkit-transition: .4s;
+	transition: .4s;
+}
+
+.slider:before {
+	position: absolute;
+	content: "";
+	height: 26px;
+	width: 26px;
+	left: 4px;
+	bottom: 3px;
+	background-color: white;
+	-webkit-transition: .4s;
+	transition: .4s;
+}
+
+input:checked+.slider {
+	background-color: #2196F3;
+}
+
+input:focus+.slider {
+	box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked+.slider:before {
+	-webkit-transform: translateX(26px);
+	-ms-transform: translateX(26px);
+	transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.slider.round {
+	border-radius: 32px;
+}
+
+.slider.round:before {
+	border-radius: 50%;
+}
+
+.header {
+	background-color: #ababab;
+	color: black;
+	overflow: hidden;
+	position: relative;
+}
+
+.header>.menu {
+	display: none;
+}
+
+.header a.icon {
+	float: right;
+	margin: 10px;
+	margin-top: 20px;
+}
+
+.header>.left {
+	margin: 10px;
+	float: left;
+}
+
+.header #app_name {
+	font-size: 22px;
+	font-weight: bold;
+	padding-left: 8px;
+}
+
+.small {
+	font-size: 10px;
+	font-weight: normal;
+}
+
+#menu {
+	display: none;
+	color: white;
+	background-color: black;
+}
+
+#menu.visible {
+	display: block;
+}
+
+#menu a {
+	display: block;
+	padding: 12px 16px;
+	color: white;
+	text-decoration: none;
+}
+
+#menu a:hover {
+	background-color: white;
+	color: black;
+}
+
+fieldset {
+	border: 1px solid #00aaff;
+	border-radius: 8px;
+	margin: 8px;
+}
+
+legend {
+	font-weight: bold;
+	font-size: 1.2em;
+}
+
+.ui-widget {
+	display: flex;
+	margin: 4px 4px 4px 4px;
+}
+
+.ui-widget label:not(.switch) {
+	display: inline-block;
+	width: 150px;
+}
+
+.ui-widget input {
+	font-family: Geneva, Helvetica, Arial, sans-serif;
+	font-size: 16px;
+	flex-grow: 1;
+	min-width: 200px;
+}
+
+.ui-widget .ui-text {
+	font-family: Geneva, Helvetica, Arial, sans-serif;
+	font-size: 16px;
+	flex-grow: 1;
+	min-width: 200px;
+	color: darkgray;
+	font-style: normal;
+}
+
+.buttons {
+	margin: 16px;
+	text-align: center;
+}
+
+.ui-button {
+	font-family: Geneva, Helvetica, Arial, sans-serif;
+	font-size: 16px;
+	background-color: #00aaff;
+	color: white;
+	padding: 8px;
+	border: 1px solid #00aaff;
+	border-radius: 8px;
+}
+
+.ui-button.cancel {
+	background-color: white;
+	color: blue;
+}
+
+.ui-button:hover {
+	background-color: white;
+	color: black;
+}
+
+.ui-button:active {
+	background-color: blue;
+	color: white;
+}
+
+.row {
+	display: flex;
+	margin-bottom: 8px;
+}
+
+.cell-icon {
+	display: inline-block;
+	width: 32px;
+	height: 32px;
+	padding: 8px 0 0 8px;
+}
+
+.cell-name {
+	display: inline-block;
+	height: 32px;
+	width: 80px;
+	padding: 8px 0 0 8px;
+	font-size: 14px;
+}
+
+.cell-max {
+	display: inline-block;
+	flex-grow: 1;
+}
+
+.cell-val {
+	display: inline-block;
+	width: 30px;
+	padding: 8px;
+}
+
+.fullwidth {
+	width: 100%;
+}
+
+#effect_params {
+	margin-top: 32px;
+}
+
+.message {
+	margin: 16px;
+	padding: 8px;
+	border: 1px solid #00aaff;
+	border-radius: 8px;
+}
+
+.msg_ok {
+	margin: 16px;
+	padding: 8px;
+	border: 1px solid #00aaff;
+	border-radius: 8px;
+	background-color: #aaff7f;
+}
+
+.msg_err {
+	margin: 16px;
+	padding: 8px;
+	border: 1px solid #00aaff;
+	border-radius: 8px;
+	background-color: #ffb4b4;
+}
+
+#content {
+	margin-top: 24px;
+}
+
+#page {
+	width: 100%;
+}
+
+@media only screen and (min-width: 768px) {
+	#page {
+		width: 800px;
+		margin: auto;
+	}
+}

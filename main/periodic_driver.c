@@ -1,8 +1,7 @@
 #include "periodic_driver.h"
 #include "common.h"
 
-#define BIT_EXECUTING BIT(0)
-#define BIT_STOPPED   BIT(1)
+#define BIT_RUN BIT(0)
 
 void task(void *arg)
 {
@@ -11,36 +10,28 @@ void task(void *arg)
     EventGroupHandle_t group = (EventGroupHandle_t)drv->internal[1];
 
     uint32_t period = config_get_int(cJSON_GetObjectItem(drv->config, "period"), 1000);
-    xEventGroupWaitBits(group, BIT_EXECUTING, pdFALSE, pdTRUE, portMAX_DELAY);
+    xEventGroupWaitBits(group, BIT_RUN, pdFALSE, pdTRUE, portMAX_DELAY);
 
     TickType_t ticks = xTaskGetTickCount();
-    while (xEventGroupGetBits(group) | BIT_EXECUTING)
+    while (true)
     {
         loop(drv);
         vTaskDelayUntil(&ticks, pdMS_TO_TICKS(period));
     }
-
-    xEventGroupSetBits(group, BIT_STOPPED);
-
-    vTaskDelete(NULL);
 }
 
 esp_err_t periodic_driver_init(driver_t *drv)
 {
     CHECK_ARG(drv);
 
-    uint32_t stack_size = config_get_int(
-        cJSON_GetObjectItem(drv->config, "stack_size"),
-        CONFIG_DEFAULT_DRIVER_STACK_SIZE);
-    UBaseType_t priority = config_get_int(
-        cJSON_GetObjectItem(drv->config, "priority"),
-        tskIDLE_PRIORITY + 1);
+    uint32_t stack_size = config_get_int(cJSON_GetObjectItem(drv->config, "stack_size"), CONFIG_DEFAULT_DRIVER_STACK_SIZE);
+    UBaseType_t priority = config_get_int(cJSON_GetObjectItem(drv->config, "priority"), tskIDLE_PRIORITY + 1);
 
     drv->internal[1] = xEventGroupCreate();
-    xEventGroupClearBits((EventGroupHandle_t)(drv->internal[1]), BIT_EXECUTING | BIT_STOPPED);
+    xEventGroupClearBits((EventGroupHandle_t)(drv->internal[1]), BIT_RUN);
 
     ESP_LOGI(TAG, "Creating task for periodic driver %s (stack_size=%d, priority=%d)", drv->name, stack_size, priority);
-    int res = xTaskCreate(task, NULL, stack_size, drv, priority, (TaskHandle_t *)&drv->context);
+    int res = xTaskCreatePinnedToCore(task, NULL, stack_size, drv, priority, (TaskHandle_t *)&drv->context, APP_CPU_NUM);
     if (res != pdPASS)
     {
         ESP_LOGE(TAG, "Error creating task for periodic driver %s", drv->name);
@@ -52,7 +43,7 @@ esp_err_t periodic_driver_init(driver_t *drv)
 
 esp_err_t periodic_driver_start(driver_t *drv)
 {
-    xEventGroupSetBits((EventGroupHandle_t)(drv->internal[1]), BIT_EXECUTING);
+    xEventGroupSetBits((EventGroupHandle_t)(drv->internal[1]), BIT_RUN);
     return ESP_OK;
 }
 
@@ -70,12 +61,8 @@ esp_err_t periodic_driver_resume(driver_t *drv)
 
 esp_err_t periodic_driver_stop(driver_t *drv)
 {
-    EventGroupHandle_t group = (EventGroupHandle_t)(drv->internal[1]);
-
-    xEventGroupClearBits(group, BIT_EXECUTING);
-    xEventGroupWaitBits(group, BIT_STOPPED, pdFALSE, pdTRUE, portMAX_DELAY);
-
-    vEventGroupDelete(group);
+    vTaskDelete((TaskHandle_t)drv->context);
+    vEventGroupDelete((EventGroupHandle_t)(drv->internal[1]));
 
     return ESP_OK;
 }

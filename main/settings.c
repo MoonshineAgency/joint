@@ -123,3 +123,41 @@ esp_err_t settings_reset()
     strncpy(settings.node.name, SYSTEM_ID, sizeof(settings.node.name) - 1);
     return settings_save();
 }
+
+esp_err_t settings_load_driver_config(const char *name, char *buf, size_t max_size)
+{
+    ESP_LOGI(TAG, "Loading '%s' driver configuration...", name);
+
+    nvs_handle_t nvs;
+    ESP_RETURN_ON_ERROR(
+        nvs_open(SETTINGS_PARTITION, NVS_READONLY, &nvs),
+        TAG, "Could not open NVS to read");
+    size_t size;
+    ESP_RETURN_ON_ERROR(
+        nvs_get_str(nvs, name, NULL, &size),
+        TAG, "Error reading '%s' driver configuration: %d (%s)", name, err_rc_, esp_err_to_name(err_rc_));
+    if (size > max_size)
+    {
+        ESP_LOGE(TAG, "Configuration %s too big: %d", name, size);
+        return ESP_ERR_NO_MEM;
+    }
+    esp_err_t r = nvs_get_str(nvs, name, buf, &size);
+    nvs_close(nvs);
+
+    return r;
+}
+
+esp_err_t settings_save_driver_config(const char *name, const char *config)
+{
+    ESP_LOGI(TAG, "Saving '%s' driver configuration...", name);
+    nvs_handle_t nvs;
+    ESP_RETURN_ON_ERROR(
+        nvs_open(SETTINGS_PARTITION, NVS_READWRITE, &nvs),
+        TAG, "Could not open NVS to write");
+    ESP_RETURN_ON_ERROR(
+        nvs_set_str(nvs, name, config),
+        TAG, "Error writing '%s' driver configuration: %d (%s)", name, err_rc_, esp_err_to_name(err_rc_));
+    nvs_close(nvs);
+
+    return ESP_OK;
+}

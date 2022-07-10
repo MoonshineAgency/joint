@@ -2,6 +2,7 @@
 #include "periodic_driver.h"
 #include "mqtt.h"
 #include <esp_check.h>
+#include <esp_timer.h>
 #include <ads111x.h>
 
 #define GAIN ADS111X_GAIN_0V512
@@ -9,6 +10,9 @@
 static i2c_dev_t dev = { 0 };
 static int samples;
 static float gain;
+static float e1, slope;
+static float ph;
+static uint32_t last_update_time;
 
 static inline bool wait_adc_busy(driver_t *self)
 {
@@ -21,6 +25,8 @@ static inline bool wait_adc_busy(driver_t *self)
             ESP_LOGE(self->name, "Device is not responding: %d (%s)", r, esp_err_to_name(r));
             return false;
         }
+        if (busy)
+            vTaskDelay(1);
     }
     while (busy);
 
@@ -29,6 +35,9 @@ static inline bool wait_adc_busy(driver_t *self)
 
 static void loop(driver_t *self)
 {
+    uint32_t interval = (esp_timer_get_time() / 1000) - last_update_time;
+    last_update_time += interval;
+
     float voltage = 0;
     int32_t raw = 0;
     for (int i = 0; i < samples; i++)
@@ -56,9 +65,14 @@ static void loop(driver_t *self)
     voltage /= (float)samples;
     raw /= samples;
 
+    float dt = (float)interval / 1000.0f;
+    float alpha = 1.0f - dt / (dt + 2.0f);
+    ph = alpha * ph + (1.0f - alpha) * (7.0f + (voltage - e1) * slope);
+
     cJSON *json = cJSON_CreateObject();
     cJSON_AddNumberToObject(json, "voltage", voltage);
     cJSON_AddNumberToObject(json, "raw", raw);
+    cJSON_AddNumberToObject(json, "pH", ph);
     mqtt_publish_json_subtopic("pH", json, 0, 0);
     cJSON_Delete(json);
 }
@@ -73,6 +87,11 @@ static esp_err_t init(driver_t *self)
     i2c_port_t port = config_get_int(cJSON_GetObjectItem(self->config, "port"), 0);
     int freq = config_get_int(cJSON_GetObjectItem(self->config, "frequency"), 0);
     samples = config_get_int(cJSON_GetObjectItem(self->config, "samples"), 32);
+
+    e1 = config_get_float(cJSON_GetObjectItem(self->config, "ph7_voltage"), 0.0f);
+    float e2 = config_get_float(cJSON_GetObjectItem(self->config, "ph4_voltage"), 0.17143f);
+
+    slope = (4.0f - 7.0f) / (e2 - e1);
 
     gain = ads111x_gain_values[GAIN] / ADS111X_MAX_VALUE;
 
@@ -101,6 +120,7 @@ static esp_err_t init(driver_t *self)
 
 driver_t drv_ph_meter = {
     .name = "drv_ph_meter",
+    .defconfig = "{ \"stack_size\": 4096, \"period\": 1000, \"address\": 72, \"ph7_voltage\": 0, \"ph4_voltage\": 0.17143, \"samples\": 32 }",
 
     .config = NULL,
     .state = DRIVER_NEW,

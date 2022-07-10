@@ -10,6 +10,7 @@
 
 static i2c_dev_t dev = { 0 };
 static EventGroupHandle_t event;
+static gpio_num_t intr;
 static uint8_t old_switches;
 static uint8_t old_inputs;
 static uint8_t relays_state = 0;
@@ -119,7 +120,7 @@ static esp_err_t init(driver_t *self)
 
     gpio_num_t sda = config_get_gpio(cJSON_GetObjectItem(self->config, "sda"), CONFIG_I2C0_SDA_GPIO);
     gpio_num_t scl = config_get_gpio(cJSON_GetObjectItem(self->config, "scl"), CONFIG_I2C0_SCL_GPIO);
-    gpio_num_t intr = config_get_gpio(cJSON_GetObjectItem(self->config, "intr"), CONFIG_GH_IO_DRIVER_INTR_GPIO);
+    intr = config_get_gpio(cJSON_GetObjectItem(self->config, "intr"), CONFIG_GH_IO_DRIVER_INTR_GPIO);
     uint8_t addr = config_get_int(cJSON_GetObjectItem(self->config, "address"), TCA95X5_I2C_ADDR_BASE);
     i2c_port_t port = config_get_int(cJSON_GetObjectItem(self->config, "port"), 0);
     int freq = config_get_int(cJSON_GetObjectItem(self->config, "frequency"), 0);
@@ -182,11 +183,15 @@ static esp_err_t resume(driver_t *self)
 static esp_err_t stop(driver_t *self)
 {
     unsubscribe();
+    gpio_isr_handler_remove(intr);
+    vEventGroupDelete(event);
+
     return periodic_driver_stop(self);
 }
 
 driver_t drv_gh_io = {
     .name = "drv_gh_io",
+    .defconfig = "{ \"stack_size\": 4096, \"port\": 0, \"sda\": 16, \"scl\": 17, \"intr\": 27 } }",
 
     .config = NULL,
     .state = DRIVER_NEW,

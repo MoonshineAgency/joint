@@ -151,6 +151,30 @@ menu "*** iot-node configuration ***"
 
         endmenu
 
+        menu "ADC"
+
+            config ADC_DRIVER_TDS_CHANNEL
+                int "ADC1 channel for TDS meter"
+                default 3
+
+            config ADC_DRIVER_AIN0_CHANNEL
+                int "ADC1 channel AIN0"
+                default 4
+
+            config ADC_DRIVER_AIN1_CHANNEL
+                int "ADC1 channel AIN1"
+                default 5
+
+            config ADC_DRIVER_AIN2_CHANNEL
+                int "ADC1 channel AIN2"
+                default 6
+
+            config ADC_DRIVER_AIN3_CHANNEL
+                int "ADC1 channel AIN3"
+                default 7
+
+        endmenu
+
     endmenu
 
 endmenu

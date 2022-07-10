@@ -3,6 +3,7 @@
 #include "hwrtc.h"
 #include <esp_sntp.h>
 
+#ifdef CONFIG_SNTP_ENABLE
 static void callback(struct timeval *tv)
 {
     ESP_LOGI(TAG, "Got time from SNTP, updating HW RTC");
@@ -10,6 +11,7 @@ static void callback(struct timeval *tv)
     if (r != ESP_OK)
         ESP_LOGW(TAG, "Error updating HW RTC: %d (%s)", r, esp_err_to_name(r));
 }
+#endif
 
 void sntp_iot_init()
 {

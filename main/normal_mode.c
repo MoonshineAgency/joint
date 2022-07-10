@@ -27,9 +27,8 @@ static void task(void *arg)
         {
             case NETWORK_UP:
                 sntp_iot_init();
-                if (mqtt_connected())
-                    mqtt_disconnect();
-                SYSTEM_CHECK(mqtt_connect());
+                mqtt_disconnect();
+                mqtt_connect();
                 res = webserver_restart();
                 if (res != ESP_OK)
                     ESP_LOGW(TAG, "Could not restart webserver");

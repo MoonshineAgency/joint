@@ -42,4 +42,7 @@ esp_err_t settings_load();
 esp_err_t settings_save();
 esp_err_t settings_reset();
 
+esp_err_t settings_load_driver_config(const char *name, char *buf, size_t max_size);
+esp_err_t settings_save_driver_config(const char *name, const char *config);
+
 #endif // ESP_IOT_NODE_PLUS_SETTINGS_H_

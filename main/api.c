@@ -293,7 +293,6 @@ static esp_err_t post_settings_wifi(httpd_req_t *req)
             goto exit;
         }
         const char *sta_password = cJSON_GetStringValue(sta_password_item);
-        ESP_LOGI(TAG, "-------------%s-------------", sta_password);
         len = strlen(sta_password);
         if (len >= sizeof(settings.wifi.sta.password))
         {
@@ -308,12 +307,14 @@ static esp_err_t post_settings_wifi(httpd_req_t *req)
         strncpy(settings.wifi.ip.gateway, cJSON_GetStringValue(ip_gateway_item), sizeof(settings.wifi.ip.gateway) - 1);
         strncpy(settings.wifi.ip.dns, cJSON_GetStringValue(ip_dns_item), sizeof(settings.wifi.ip.dns) - 1);
         settings.wifi.ap.channel = ap_channel;
+        memset(settings.wifi.ap.ssid, 0, sizeof(settings.wifi.ap.ssid));
+        memset(settings.wifi.ap.password, 0, sizeof(settings.wifi.ap.password));
+        memset(settings.wifi.sta.ssid, 0, sizeof(settings.wifi.sta.ssid));
+        memset(settings.wifi.sta.password, 0, sizeof(settings.wifi.sta.password));
         strncpy((char *) settings.wifi.ap.ssid, ap_ssid, sizeof(settings.wifi.ap.ssid) - 1);
         strncpy((char *) settings.wifi.ap.password, ap_password, sizeof(settings.wifi.ap.password) - 1);
         strncpy((char *) settings.wifi.sta.ssid, sta_ssid, sizeof(settings.wifi.sta.ssid) - 1);
         strncpy((char *) settings.wifi.sta.password, sta_password, sizeof(settings.wifi.sta.password) - 1);
-
-        ESP_LOGI(TAG, "-------------%s-------------", settings.wifi.sta.password);
 
         err = settings_save();
         msg = err != ESP_OK

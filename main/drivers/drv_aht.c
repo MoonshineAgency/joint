@@ -18,7 +18,7 @@ static void loop(driver_t *self)
             ESP_LOGW(self->name, "Error reading device %d state: %d (%s)", i, r, esp_err_to_name(r));
             continue;
         }
-        float t, rh;
+        float t = 0, rh = 0;
         r = aht_get_data(&devices[i], &t, &rh);
         if (r != ESP_OK)
         {
@@ -97,6 +97,7 @@ static esp_err_t stop(driver_t *self)
 
 driver_t drv_aht = {
     .name = "drv_aht",
+    .defconfig = "{ \"stack_size\": 4096, \"sensors\": [{ \"port\": 1, \"sda\": 13, \"scl\": 14, \"type\": 0 }] }",
 
     .config = NULL,
     .state = DRIVER_NEW,

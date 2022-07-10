@@ -173,8 +173,8 @@ static esp_err_t init_sta()
     CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_LOST_IP, &ip_handler, NULL, NULL));
 
     wifi_config_t wifi_cfg = { 0 };
-    memcpy(wifi_cfg.sta.ssid, settings.wifi.sta.ssid, strlen((char *) settings.wifi.sta.ssid) + 1);
-    memcpy(wifi_cfg.sta.password, settings.wifi.sta.password, strlen((char *) settings.wifi.sta.ssid) + 1);
+    memcpy(wifi_cfg.sta.ssid, settings.wifi.sta.ssid, sizeof(wifi_cfg.sta.ssid));
+    memcpy(wifi_cfg.sta.password, settings.wifi.sta.password, sizeof(wifi_cfg.sta.password));
     wifi_cfg.sta.threshold.authmode = strlen((const char *) settings.wifi.sta.password)
                                       ? settings.wifi.sta.threshold.authmode
                                       : WIFI_AUTH_OPEN;

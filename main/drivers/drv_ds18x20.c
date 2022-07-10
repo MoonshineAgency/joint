@@ -4,6 +4,9 @@
 #include "periodic_driver.h"
 #include <ds18x20.h>
 
+#define SENSOR_ADDR_FMT "%08X%08X"
+#define SENSOR_ADDR(addr) (uint32_t)(addr >> 32), (uint32_t)addr
+
 static ds18x20_addr_t sensors[CONFIG_DS18X20_MAX_SENSORS] = { 0 };
 static float results[CONFIG_DS18X20_MAX_SENSORS] = { 0 };
 static size_t sensors_count = 0;
@@ -17,6 +20,7 @@ static void loop(driver_t *self)
 
     if (!(loop_no++ % scan_interval) || !sensors_count)
     {
+        size_t old_count = sensors_count;
         r = ds18x20_scan_devices(gpio, sensors, CONFIG_DS18X20_MAX_SENSORS, &sensors_count);
         if (r != ESP_OK)
         {
@@ -28,7 +32,13 @@ static void loop(driver_t *self)
             ESP_LOGW(self->name, "Sensors not found");
             return;
         }
-        ESP_LOGI(self->name, "Found %d sensors", sensors_count);
+        // TODO : compare sensor addresses
+        if (old_count != sensors_count)
+        {
+            ESP_LOGI(self->name, "Found %d sensors:", sensors_count);
+            for (size_t i = 0; i < sensors_count; i++)
+                ESP_LOGI(self->name, "%d: " SENSOR_ADDR_FMT, i, SENSOR_ADDR(sensors[i]));
+        }
     }
 
     r = ds18x20_measure_and_read_multi(gpio, sensors, sensors_count, results);
@@ -41,7 +51,7 @@ static void loop(driver_t *self)
     for (size_t i = 0; i < sensors_count; i++)
     {
         char name[32] = { 0 };
-        snprintf(name, sizeof(name), "ds18x20/%08X%08X", (uint32_t)(sensors[i] >> 32), (uint32_t)sensors[i]);
+        snprintf(name, sizeof(name), "ds18x20/" SENSOR_ADDR_FMT, SENSOR_ADDR(sensors[i]));
 
         cJSON *json = cJSON_CreateObject();
         cJSON_AddStringToObject(json, "family", (sensors[i] & 0xff) == DS18B20_FAMILY_ID ? "DS18B20" : "DS18S20");
@@ -75,6 +85,7 @@ static esp_err_t init(driver_t *self)
 
 driver_t drv_ds18x20 = {
     .name = "drv_ds18x20",
+    .defconfig = "{ \"stack_size\": 4096, \"gpio\": 15, \"scan_interval\": 10 }",
 
     .config = NULL,
     .state = DRIVER_NEW,
