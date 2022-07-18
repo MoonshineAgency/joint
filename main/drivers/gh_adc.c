@@ -1,4 +1,4 @@
-#include "drv_gh_adc.h"
+#include "gh_adc.h"
 #include <esp_log.h>
 #include <driver/adc.h>
 #include <esp_adc_cal.h>
@@ -82,6 +82,7 @@ static void task(driver_t *self)
     TickType_t period = pdMS_TO_TICKS(driver_config_get_int(cJSON_GetObjectItem(self->config, "period"), 1000));
     float moisture_0 = driver_config_get_float(cJSON_GetObjectItem(self->config, "moisture_0"), 2.2f);
     float moisture_100 = driver_config_get_float(cJSON_GetObjectItem(self->config, "moisture_100"), 0.9f);
+    float moisture_range = (moisture_0 - moisture_100) / 1000.0f;
 
     while (true)
     {
@@ -125,7 +126,7 @@ static void task(driver_t *self)
             else if (voltage >= moisture_0)
                 moisture = 0;
             else
-                moisture = (2.2f - voltage) / 0.013f;
+                moisture = (moisture_0 - voltage) / moisture_range;
             self->devices[c + AIN_COUNT].sensor.value = moisture;
             driver_send_device_update(self, &self->devices[c + AIN_COUNT]);
         }
@@ -149,8 +150,8 @@ static esp_err_t on_stop(driver_t *self)
 }
 
 driver_t drv_gh_adc = {
-    .name = "drv_gh_adc",
-    .defconfig = "{ \"stack_size\": 4096, \"period\": 500 }",
+    .name = "gh_adc",
+    .defconfig = "{ \"stack_size\": 4096, \"period\": 1000, \"samples\": 64, \"attenuation\": 3, \"moisture_0\": 2.2, \"moisture_100\": 0.9 }",
 
     .config = NULL,
     .state = DRIVER_NEW,

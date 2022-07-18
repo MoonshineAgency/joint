@@ -3,6 +3,6 @@
 
 #include "driver.h"
 
-extern driver_t drv_ds18x20;
+extern driver_t drv_ds18b20;
 
 #endif // ESP_IOT_NODE_PLUS_DRV_DC18X20_H_

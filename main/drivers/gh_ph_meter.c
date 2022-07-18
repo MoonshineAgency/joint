@@ -1,4 +1,4 @@
-#include "drv_ph_meter.h"
+#include "gh_ph_meter.h"
 #include <esp_check.h>
 #include <esp_timer.h>
 #include <ads111x.h>
@@ -152,8 +152,8 @@ static esp_err_t on_stop(driver_t *self)
 }
 
 driver_t drv_ph_meter = {
-    .name = "drv_ph_meter",
-    .defconfig = "{ \"stack_size\": 4096, \"period\": 1000, \"address\": 72, \"ph7_voltage\": 0, \"ph4_voltage\": 0.17143, \"samples\": 32 }",
+    .name = "gh_ph_meter",
+    .defconfig = "{ \"stack_size\": 4096, \"period\": 1000, \"port\": 0, \"sda\": 16, \"scl\": 17, \"address\": 72, \"ph7_voltage\": 0, \"ph4_voltage\": 0.17143, \"samples\": 32 }",
 
     .config = NULL,
     .state = DRIVER_NEW,

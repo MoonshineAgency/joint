@@ -17,11 +17,11 @@ idf_component_register(
         device.c
         driver.c
 
-        drivers/drv_aht.c
-        drivers/drv_ds18x20.c
-        drivers/drv_gh_io.c
-        drivers/drv_gh_adc.c
-        drivers/drv_ph_meter.c
+        drivers/ahtxx.c
+        drivers/ds18b20.c
+        drivers/gh_io.c
+        drivers/gh_adc.c
+        drivers/gh_ph_meter.c
 
     INCLUDE_DIRS
         .

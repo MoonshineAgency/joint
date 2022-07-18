@@ -6,64 +6,14 @@
 #include "driver.h"
 #include "mqtt.h"
 
-#include "drivers/drv_aht.h"
-#include "drivers/drv_ds18x20.h"
-#include "drivers/drv_gh_io.h"
-#include "drivers/drv_gh_adc.h"
-#include "drivers/drv_ph_meter.h"
-
-//#define DRIVER_CONFIG_TOPIC         "drivers/%s/config"
-//#define DRIVER_STATE_TOPIC          "drivers/%s/state"
-//#define DRIVER_COMMAND_TOPIC        "drivers/%s/command"
-//#define DRIVER_SET_CONFIG_TOPIC     "drivers/+/config/set"
+#include "drivers/ahtxx.h"
+#include "drivers/ds18b20.h"
+#include "drivers/gh_io.h"
+#include "drivers/gh_adc.h"
+#include "drivers/gh_ph_meter.h"
 
 static char buf[1024];
 static cvector_vector_type(driver_t *) drivers;
-
-//static void on_set_config(const char *topic, const char *data, size_t data_len, void *ctx)
-//{
-//    if (data_len > sizeof(buf) - 1)
-//    {
-//        ESP_LOGE(TAG, "Data too big: %d", data_len);
-//        return;
-//    }
-//
-//    char name[32];
-//    sscanf(topic, DRIVER_SET_CONFIG_TOPIC, name);
-//
-//    driver_t *drv = NULL;
-//    for (size_t i = 0; i < driver_count; i++)
-//        if (!strncmp(drivers[i]->name, name, sizeof(name)))
-//        {
-//            drv = drivers[i];
-//            break;
-//        }
-//    if (!drv)
-//    {
-//        ESP_LOGE(TAG, "Unknown driver '%s', ignoring attempt to set config", name);
-//        return;
-//    }
-//
-//    memcpy(buf, data, data_len);
-//    buf[data_len] = 0;
-//    esp_err_t r = settings_save_driver_config(drv->name, buf);
-//    if (r != ESP_OK)
-//    {
-//        ESP_LOGE(TAG, "Error saving driver config for '%s': %d (%s)", drv->name, r, esp_err_to_name(r));
-//        return;
-//    }
-//
-//    r = driver_stop(drv);
-//    if (r != ESP_OK)
-//        ESP_LOGW(TAG, "Error stopping driver '%s', but restarting anyway: %d (%s)", drv->name, r, esp_err_to_name(r));
-//
-//    r = driver_init(drv, data, data_len);
-//    if (r != ESP_OK)
-//        ESP_LOGW(TAG, "Error initializing driver %s: %d (%s)", drv->name, r, esp_err_to_name(r));
-//
-//    publish_driver(drv);
-//}
-
 static QueueHandle_t node_queue = NULL;
 
 static void node_task(void *arg)
@@ -114,7 +64,7 @@ esp_err_t node_init()
     cvector_push_back(drivers, &drv_gh_adc);
     cvector_push_back(drivers, &drv_ph_meter);
     cvector_push_back(drivers, &drv_aht);
-    cvector_push_back(drivers, &drv_ds18x20);
+    cvector_push_back(drivers, &drv_ds18b20);
 
     system_set_mode(MODE_OFFLINE);
 

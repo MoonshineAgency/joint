@@ -1,4 +1,4 @@
-#include "drv_ds18x20.h"
+#include "ds18b20.h"
 #include <esp_log.h>
 #include <ds18x20.h>
 #include "settings.h"
@@ -136,9 +136,9 @@ static void task(driver_t *self)
     }
 }
 
-driver_t drv_ds18x20 = {
-    .name = "drv_ds18x20",
-    .defconfig = "{ \"stack_size\": 4096, \"gpio\": 15, \"scan_interval\": 10 }",
+driver_t drv_ds18b20 = {
+    .name = "ds18b20",
+    .defconfig = "{ \"stack_size\": 4096, \"period\": 1000, \"gpio\": 15, \"scan_interval\": 10 }",
 
     .config = NULL,
     .state = DRIVER_NEW,

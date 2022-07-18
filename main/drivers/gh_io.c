@@ -1,4 +1,4 @@
-#include "drv_gh_io.h"
+#include "gh_io.h"
 #include <esp_log.h>
 #include <esp_check.h>
 #include "settings.h"
@@ -184,42 +184,9 @@ static esp_err_t on_stop(driver_t *self)
     return ESP_OK;
 }
 
-/*
-static void publish_relays_state()
-{
-    char topic[32] = { 0 };
-    for (size_t i = 0; i < RELAYS_COUNT; i++)
-    {
-        snprintf(topic, sizeof(topic), CONFIG_GH_IO_DRIVER_RELAYS_STATE_TOPIC, i);
-        mqtt_publish_subtopic(topic, (relays_state >> i) & 1 ? "1" : "0", 1, 2, 1);
-    }
-}
-
-static void on_relays_command(const char *topic, const char *data, size_t data_len, void *ctx)
-{
-    size_t relay = (size_t)ctx;
-
-    bool state = data[0] == '1' || !strncasecmp(data, "on", 2) || !strncasecmp(data, "yes", 3);
-    relays_state = (relays_state & ~BIT(relay)) | state << relay;
-
-    esp_err_t r = tca95x5_set_level(&dev, relay, state);
-    if (r != ESP_OK)
-    {
-        ESP_LOGE(drv_gh_io.name, "Error writing to port: %d, %s", r, esp_err_to_name(r));
-        return;
-    }
-
-    ESP_LOGI(drv_gh_io.name, "Relay %d switched to %d", relay, state);
-
-    publish_relays_state();
-}
-
-*/
-
-
 driver_t drv_gh_io = {
-    .name = "drv_gh_io",
-    .defconfig = "{ \"stack_size\": 4096, \"port\": 0, \"sda\": 16, \"scl\": 17, \"intr\": 27 } }",
+    .name = "gh_io",
+    .defconfig = "{ \"stack_size\": 4096, \"port\": 0, \"sda\": 16, \"scl\": 17, \"intr\": 27, \"address\": 32 }",
 
     .config = NULL,
     .state = DRIVER_NEW,

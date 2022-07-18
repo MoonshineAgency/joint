@@ -1,4 +1,4 @@
-#include "drv_aht.h"
+#include "ahtxx.h"
 #include "common.h"
 #include "driver.h"
 #include "settings.h"
@@ -116,8 +116,8 @@ static esp_err_t on_stop(driver_t *self)
 }
 
 driver_t drv_aht = {
-    .name = "drv_aht",
-    .defconfig = "{ \"stack_size\": 4096, \"sensors\": [{ \"port\": 1, \"sda\": 13, \"scl\": 14, \"type\": 0 }] }",
+    .name = "ahtxx",
+    .defconfig = "{ \"stack_size\": 4096, \"period\": 1000, \"sensors\": [{ \"port\": 1, \"sda\": 13, \"scl\": 14, \"type\": 0, \"address\": 56 }] }",
 
     .config = NULL,
     .state = DRIVER_NEW,
