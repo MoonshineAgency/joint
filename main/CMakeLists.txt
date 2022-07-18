@@ -14,8 +14,8 @@ idf_component_register(
         hwrtc.c
         sntp.c
         main.c
+        device.c
         driver.c
-        periodic_driver.c
 
         drivers/drv_aht.c
         drivers/drv_ds18x20.c

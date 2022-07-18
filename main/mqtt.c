@@ -5,6 +5,7 @@
 #include "system.h"
 #include "cvector.h"
 
+#define DISCOVERY_TOPIC "homeassistant"
 #define MAX_TOPIC_LEN (sizeof(settings.node.name) + 100)
 
 static bool connected = false;

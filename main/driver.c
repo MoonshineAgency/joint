@@ -1,16 +1,68 @@
 #include "driver.h"
 #include "common.h"
+#include "node.h"
 
-#define ERR_INVALID_STATE "Driver %s is in invalid state"
+#define ERR_INVALID_STATE "[%s] Driver in invalid state"
 
-static const char *state_names[] = {
-    [DRIVER_NEW]         = "new",
-    [DRIVER_INITIALIZED] = "initialized",
-    [DRIVER_RUNNING]     = "running",
-    [DRIVER_SUSPENDED]   = "suspended",
-    [DRIVER_FINISHED]    = "finished",
-    [DRIVER_INVALID]     = "invalid",
-};
+#define DRIVER_TIMEOUT 1000
+
+static void driver_task(void *arg)
+{
+    driver_t *self = (driver_t *)arg;
+    esp_err_t r;
+
+    xEventGroupClearBits(self->eg, DRIVER_BIT_INITIALIZED | DRIVER_BIT_RUNNING);
+
+    if (self->on_init)
+    {
+        r = self->on_init(self);
+        if (r != ESP_OK)
+        {
+            self->state = DRIVER_INVALID;
+            ESP_LOGE(TAG, "[%s] Error initializing driver: %d (%s)", self->name, r, esp_err_to_name(r));
+            goto exit;
+        }
+    }
+
+    self->state = DRIVER_INITIALIZED;
+    xEventGroupSetBits(self->eg, DRIVER_BIT_INITIALIZED);
+
+    xEventGroupWaitBits(self->eg, DRIVER_BIT_START, pdFALSE, pdTRUE, portMAX_DELAY);
+    if (self->on_start)
+    {
+        r = self->on_start(self);
+        if (r != ESP_OK)
+        {
+            self->state = DRIVER_INVALID;
+            ESP_LOGE(TAG, "[%s] Error starting driver: %d (%s)", self->name, r, esp_err_to_name(r));
+            goto exit;
+        }
+    }
+
+    self->state = DRIVER_RUNNING;
+    xEventGroupSetBits(self->eg, DRIVER_BIT_RUNNING);
+
+    self->task(self);
+
+    if (self->on_stop)
+    {
+        r = self->on_stop(self);
+        if (r != ESP_OK)
+        {
+            self->state = DRIVER_INVALID;
+            ESP_LOGE(TAG, "[%s] Error stopping driver: %d (%s)", self->name, r, esp_err_to_name(r));
+            goto exit;
+        }
+    }
+
+    self->state = DRIVER_FINISHED;
+    xEventGroupSetBits(self->eg, DRIVER_BIT_STOPPED);
+
+exit:
+    vTaskDelete(NULL);
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 esp_err_t driver_init(driver_t *drv, const char *config, size_t cfg_len)
 {
@@ -22,35 +74,72 @@ esp_err_t driver_init(driver_t *drv, const char *config, size_t cfg_len)
         return ESP_ERR_INVALID_STATE;
     }
 
+    esp_err_t r = ESP_OK;
+
     if (drv->config)
     {
         cJSON_Delete(drv->config);
         drv->config = NULL;
     }
 
-    if (config)
-    {
+    if (config && cfg_len)
         drv->config = cJSON_ParseWithLength(config, cfg_len);
-        if (!drv->config)
-            // FIXME: use defconfig
-            ESP_LOGW(TAG, "Invalid config for driver %s, using default", drv->name);
+
+    if (!drv->config)
+    {
+        ESP_LOGW(TAG, "[%s] Invalid or empty driver config, using default", drv->name);
+        drv->config = cJSON_Parse(drv->defconfig);
     }
 
-    esp_err_t res = ESP_OK;
-    if (drv->init)
-        res = drv->init(drv);
-    if (res == ESP_OK)
+    if (drv->eg)
+        vEventGroupDelete(drv->eg);
+
+    uint32_t stack_size = driver_config_get_int(cJSON_GetObjectItem(drv->config, "stack_size"), CONFIG_DEFAULT_DRIVER_STACK_SIZE);
+    UBaseType_t priority = driver_config_get_int(cJSON_GetObjectItem(drv->config, "priority"), tskIDLE_PRIORITY + 1);
+
+    drv->eg = xEventGroupCreate();
+    if (!drv->eg)
+    {
+        ESP_LOGE(TAG, "[%s] Error creating event group for driver", drv->name);
+        r = ESP_ERR_NO_MEM;
+        goto exit;
+    }
+    xEventGroupClearBits(drv->eg, DRIVER_BIT_INITIALIZED | DRIVER_BIT_RUNNING | DRIVER_BIT_START);
+
+    if (drv->handle)
+        vTaskDelete(drv->handle);
+
+    ESP_LOGI(TAG, "[%s] Creating driver task (stack_size=%d, priority=%d)", drv->name, stack_size, priority);
+    int res = xTaskCreatePinnedToCore(driver_task, NULL, stack_size, drv, priority, &drv->handle, APP_CPU_NUM);
+    if (res != pdPASS)
+    {
+        ESP_LOGE(TAG, "[%s] Error creating task for driver", drv->name);
+        r = ESP_ERR_NO_MEM;
+        goto exit;
+    }
+
+    // wait while driver init
+    EventBits_t bits = xEventGroupWaitBits(drv->eg, DRIVER_BIT_INITIALIZED, pdFALSE, pdTRUE, pdMS_TO_TICKS(DRIVER_TIMEOUT));
+    if (!(bits & DRIVER_BIT_INITIALIZED))
+    {
+        ESP_LOGE(TAG, "[%s] Driver has not been initialized due to error or timeout", drv->name);
+        r = ESP_ERR_TIMEOUT;
+        goto exit;
+    }
+
+exit:
+    if (r == ESP_OK)
     {
         drv->state = DRIVER_INITIALIZED;
-        ESP_LOGI(TAG, "Driver %s initialized", drv->name);
+        ESP_LOGI(TAG, "[%s] Driver initialized", drv->name);
     }
     else
     {
-        ESP_LOGE(TAG, "Error initializing driver %s: %d (%s)", drv->name, res, esp_err_to_name(res));
         drv->state = DRIVER_INVALID;
+        ESP_LOGE(TAG, "[%s] Error initializing driver: %d (%s)", drv->name, r, esp_err_to_name(r));
     }
     
-    return res;
+    return r;
 }
 
 esp_err_t driver_start(driver_t *drv)
@@ -63,122 +152,86 @@ esp_err_t driver_start(driver_t *drv)
         return ESP_ERR_INVALID_STATE;
     }
 
-    esp_err_t res = ESP_OK;
-    if (drv->start)
-        res = drv->start(drv);
-    if (res == ESP_OK)
+    xEventGroupSetBits(drv->eg, DRIVER_BIT_START);
+
+    EventBits_t bits = xEventGroupWaitBits(drv->eg, DRIVER_BIT_RUNNING, pdFALSE, pdTRUE, pdMS_TO_TICKS(DRIVER_TIMEOUT));
+    if (!(bits & DRIVER_BIT_RUNNING))
     {
-        ESP_LOGI(TAG, "Driver %s started", drv->name);
-        drv->state = DRIVER_RUNNING;
-    }
-    else
-    {
-        ESP_LOGE(TAG, "Error starting driver %s: %d (%s)", drv->name, res, esp_err_to_name(res));
-        drv->state = DRIVER_INVALID;
+        ESP_LOGE(TAG, "[%s] Driver has not been started due to error or timeout", drv->name);
+        return ESP_ERR_TIMEOUT;
     }
 
-    return res;
-}
+    ESP_LOGI(TAG, "[%s] Driver started", drv->name);
 
-esp_err_t driver_suspend(driver_t *drv)
-{
-    CHECK_ARG(drv);
-
-    if (drv->state != DRIVER_RUNNING)
-    {
-        ESP_LOGE(TAG, ERR_INVALID_STATE, drv->name);
-        return ESP_ERR_INVALID_STATE;
-    }
-
-    esp_err_t res = ESP_OK;
-    if (drv->suspend)
-        res = drv->suspend(drv);
-    if (res == ESP_OK)
-    {
-        ESP_LOGI(TAG, "Driver %s suspended", drv->name);
-        drv->state = DRIVER_SUSPENDED;
-    }
-    else
-    {
-        ESP_LOGE(TAG, "Error suspending driver %s: %d (%s)", drv->name, res, esp_err_to_name(res));
-        drv->state = DRIVER_INVALID;
-    }
-
-    return res;
-}
-
-esp_err_t driver_resume(driver_t *drv)
-{
-    CHECK_ARG(drv);
-
-    ESP_LOGI(TAG, "Resuming driver %s...", drv->name);
-    if (drv->state != DRIVER_SUSPENDED)
-    {
-        ESP_LOGE(TAG, ERR_INVALID_STATE, drv->name);
-        return ESP_ERR_INVALID_STATE;
-    }
-
-    esp_err_t res = ESP_OK;
-    if (drv->resume)
-        res = drv->resume(drv);
-    if (res == ESP_OK)
-    {
-        ESP_LOGI(TAG, "Driver %s resumed", drv->name);
-        drv->state = DRIVER_RUNNING;
-    }
-    else
-    {
-        ESP_LOGE(TAG, "Error resuming driver %s: %d (%s)", drv->name, res, esp_err_to_name(res));
-        drv->state = DRIVER_INVALID;
-    }
-
-    return res;
+    return ESP_OK;
 }
 
 esp_err_t driver_stop(driver_t *drv)
 {
     CHECK_ARG(drv);
 
-    if (drv->state != DRIVER_RUNNING && drv->state != DRIVER_SUSPENDED && drv->state != DRIVER_INVALID)
+    if (drv->state != DRIVER_RUNNING && drv->state != DRIVER_INVALID)
     {
         ESP_LOGE(TAG, ERR_INVALID_STATE, drv->name);
         return ESP_ERR_INVALID_STATE;
     }
 
-    esp_err_t res = ESP_OK;
-    if (drv->stop)
-        res = drv->stop(drv);
-    if (res == ESP_OK)
+    xEventGroupClearBits(drv->eg, DRIVER_BIT_START);
+
+    EventBits_t bits = xEventGroupWaitBits(drv->eg, DRIVER_BIT_STOPPED, pdFALSE, pdTRUE, pdMS_TO_TICKS(DRIVER_TIMEOUT));
+    if (!(bits & DRIVER_BIT_STOPPED))
     {
-        ESP_LOGI(TAG, "Driver %s stopped", drv->name);
-        drv->state = DRIVER_FINISHED;
-    }
-    else
-    {
-        ESP_LOGE(TAG, "Error stopping driver %s: %d (%s)", drv->name, res, esp_err_to_name(res));
-        drv->state = DRIVER_INVALID;
+        ESP_LOGE(TAG, "[%s] Driver has not been stopped due to error or timeout", drv->name);
+        return ESP_ERR_TIMEOUT;
     }
 
-    return res;
+    ESP_LOGI(TAG, "[%s] Driver stopped", drv->name);
+
+    return ESP_OK;
 }
 
-const char *driver_state_to_name(driver_state_t state)
+void driver_send_device_update(driver_t *drv, const device_t *dev)
 {
-    return state_names[state];
+    driver_event_t e = {
+        .type = DRV_EVENT_DEVICE_UPDATED,
+        .sender = drv,
+        .dev = *dev
+    };
+    xQueueSend(drv->event_queue, &e, 0);
 }
 
-int config_get_int(cJSON *item, int def)
+void driver_send_device_add(driver_t *drv, const device_t *dev)
+{
+    driver_event_t e = {
+        .type = DRV_EVENT_DEVICE_ADDED,
+        .sender = drv,
+        .dev = *dev
+    };
+    xQueueSend(drv->event_queue, &e, 0);
+}
+
+void driver_send_device_remove(driver_t *drv, const device_t *dev)
+{
+    driver_event_t e = {
+        .type = DRV_EVENT_DEVICE_REMOVED,
+        .sender = drv,
+        .dev = *dev
+    };
+    xQueueSend(drv->event_queue, &e, 0);
+}
+
+int driver_config_get_int(cJSON *item, int def)
 {
     return cJSON_IsNumber(item) ? (int)cJSON_GetNumberValue(item) : def;
 }
 
-float config_get_float(cJSON *item, float def)
+float driver_config_get_float(cJSON *item, float def)
 {
     return cJSON_IsNumber(item) ? (float)cJSON_GetNumberValue(item) : def;
 }
 
-gpio_num_t config_get_gpio(cJSON *item, gpio_num_t def)
+gpio_num_t driver_config_get_gpio(cJSON *item, gpio_num_t def)
 {
-    int res = config_get_int(item, def);
+    int res = driver_config_get_int(item, def);
     return res >= GPIO_NUM_MAX ? def : res;
 }

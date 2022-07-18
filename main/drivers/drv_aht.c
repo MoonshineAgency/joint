@@ -1,98 +1,118 @@
 #include "drv_aht.h"
 #include "common.h"
-#include "mqtt.h"
-#include "periodic_driver.h"
+#include "driver.h"
+#include "settings.h"
 #include <aht.h>
 
-static aht_t devices[CONFIG_AHT_DRIVER_MAX_DEVICES] = { 0 };
-static size_t device_count = 0;
+static cvector_vector_type(aht_t) sensors;
 
-static void loop(driver_t *self)
+static esp_err_t on_init(driver_t *self)
 {
-    for (size_t i = 0; i < device_count; i++)
-    {
-        bool calibrated = false;
-        esp_err_t r = aht_get_status(&devices[i], NULL, &calibrated);
-        if (r != ESP_OK)
-        {
-            ESP_LOGW(self->name, "Error reading device %d state: %d (%s)", i, r, esp_err_to_name(r));
-            continue;
-        }
-        float t = 0, rh = 0;
-        r = aht_get_data(&devices[i], &t, &rh);
-        if (r != ESP_OK)
-        {
-            ESP_LOGW(self->name, "Error reading device %d: %d (%s)", i, r, esp_err_to_name(r));
-            continue;
-        }
+    cvector_free(self->devices);
+    cvector_free(sensors);
 
-        char topic[32] = { 0 };
-        snprintf(topic, sizeof(topic), "aht/%d_%d_%d_%02x", devices[i].i2c_dev.port, devices[i].i2c_dev.cfg.scl_io_num,
-            devices[i].i2c_dev.cfg.sda_io_num, devices[i].i2c_dev.addr);
-        cJSON *msg = cJSON_CreateObject();
-        cJSON_AddBoolToObject(msg, "calibrated", calibrated);
-        cJSON_AddNumberToObject(msg, "humidity", rh);
-        cJSON_AddNumberToObject(msg, "temperature", t);
-        mqtt_publish_json_subtopic(topic, msg, 0, 0);
-        cJSON_Delete(msg);
-    }
-}
-
-static esp_err_t init(driver_t *self)
-{
-    self->internal[0] = loop;
-
-    memset(devices, 0, sizeof(devices));
-    device_count = 0;
-
+    // Init devices
     cJSON *sensors_j = cJSON_GetObjectItem(self->config, "sensors");
     for (int i = 0; i < cJSON_GetArraySize(sensors_j); i++)
     {
         cJSON *sensor_j = cJSON_GetArrayItem(sensors_j, i);
-        gpio_num_t sda = config_get_gpio(cJSON_GetObjectItem(sensor_j, "sda"), GPIO_NUM_NC);
-        gpio_num_t scl = config_get_gpio(cJSON_GetObjectItem(sensor_j, "scl"), GPIO_NUM_NC);
-        i2c_port_t port = config_get_int(cJSON_GetObjectItem(sensor_j, "port"), 1);
-        uint8_t addr = config_get_int(cJSON_GetObjectItem(sensor_j, "address"), AHT_I2C_ADDRESS_GND);
-        int freq = config_get_int(cJSON_GetObjectItem(sensor_j, "frequency"), 0);
+        gpio_num_t sda = driver_config_get_gpio(cJSON_GetObjectItem(sensor_j, "sda"), GPIO_NUM_NC);
+        gpio_num_t scl = driver_config_get_gpio(cJSON_GetObjectItem(sensor_j, "scl"), GPIO_NUM_NC);
+        i2c_port_t port = driver_config_get_int(cJSON_GetObjectItem(sensor_j, "port"), 1);
+        uint8_t addr = driver_config_get_int(cJSON_GetObjectItem(sensor_j, "address"), AHT_I2C_ADDRESS_GND);
+        int freq = driver_config_get_int(cJSON_GetObjectItem(sensor_j, "frequency"), 0);
 
-        aht_t dev = { 0 };
-        dev.type = config_get_int(cJSON_GetObjectItem(sensor_j, "type"), 0);
+        aht_t aht = { 0 };
+        aht.type = driver_config_get_int(cJSON_GetObjectItem(sensor_j, "type"), 0);
 
-        esp_err_t r = aht_init_desc(&dev, addr, port, sda, scl);
+        esp_err_t r = aht_init_desc(&aht, addr, port, sda, scl);
         if (r != ESP_OK)
         {
             ESP_LOGW(self->name, "Could not initialize descriptor for device %d: %d (%s)", i, r, esp_err_to_name(r));
             continue;
         }
         if (freq)
-            dev.i2c_dev.cfg.master.clk_speed = freq;
+            aht.i2c_dev.cfg.master.clk_speed = freq;
 
-        r = aht_init(&dev);
+        r = aht_init(&aht);
         if (r != ESP_OK)
         {
             ESP_LOGW(self->name, "Could not initialize device %d: %d (%s)", i, r, esp_err_to_name(r));
+            aht_free_desc(&aht);
             continue;
         }
+        cvector_push_back(sensors, aht);
 
-        ESP_LOGI(self->name, "Initialized device %d: %s (ADDR=0x%02x, PORT=%d, SDA=%d, SCL=%d, FREQ=%d)",
-            device_count, dev.type == AHT_TYPE_AHT1x ? "AHT1x" : "AHT20", addr, port, sda, scl, freq);
+        device_t dev = { 0 };
+        snprintf(dev.uid, sizeof(dev.uid), "aht_rh%d", i);
+        dev.type = DEV_SENSOR;
+        snprintf(dev.name, sizeof(dev.name), "%s humidity (AHT sensor %d)", settings.node.name, i);
+        strncpy(dev.device_class, "humidity", sizeof(dev.device_class));
+        strncpy(dev.sensor.measurement_unit, "%", sizeof(dev.sensor.measurement_unit));
+        dev.sensor.precision = 2;
+        cvector_push_back(self->devices, dev);
 
-        devices[device_count++] = dev;
+        memset(&dev, 0, sizeof(device_t));
+        snprintf(dev.uid, sizeof(dev.uid), "aht_t%d", i);
+        dev.type = DEV_SENSOR;
+        snprintf(dev.name, sizeof(dev.name), "%s temperature (AHT sensor %d)", settings.node.name, i);
+        strncpy(dev.device_class, "temperature", sizeof(dev.device_class));
+        strncpy(dev.sensor.measurement_unit, "°C", sizeof(dev.sensor.measurement_unit));
+        dev.sensor.precision = 2;
+        cvector_push_back(self->devices, dev);
+
+        ESP_LOGI(self->name, "Initialized device %d: %s (ADDR=0x%02x, PORT=%d, SDA=%d, SCL=%d, FREQ=%dkHz)",
+            i, aht.type == AHT_TYPE_AHT1x ? "AHT1x" : "AHT20", addr, port, sda, scl, aht.i2c_dev.cfg.master.clk_speed / 1000);
     }
 
-    return periodic_driver_init(self);
+    return ESP_OK;
 }
 
-static esp_err_t stop(driver_t *self)
+static void task(driver_t *self)
 {
-    for (size_t i = 0; i < device_count; i++)
+    TickType_t period = pdMS_TO_TICKS(driver_config_get_int(cJSON_GetObjectItem(self->config, "period"), 1000));
+
+    while (true)
     {
-        esp_err_t r = aht_free_desc(&devices[i]);
+        TickType_t start = xTaskGetTickCount();
+
+        for (size_t i = 0; i < cvector_size(sensors); i++)
+        {
+            float t = 0, rh = 0;
+            esp_err_t r = aht_get_data(&sensors[i], &t, &rh);
+            if (r != ESP_OK)
+            {
+                ESP_LOGW(self->name, "Error reading device %d: %d (%s)", i, r, esp_err_to_name(r));
+                continue;
+            }
+
+            device_t *dev = &self->devices[i * 2];
+            dev->sensor.value = rh;
+            driver_send_device_update(self, dev);
+            dev = &self->devices[i * 2 + 1];
+            dev->sensor.value = t;
+            driver_send_device_update(self, dev);
+        }
+
+        while (xTaskGetTickCount() - start < period)
+        {
+            if (!(xEventGroupGetBits(self->eg) & DRIVER_BIT_START))
+                return;
+            vTaskDelay(1);
+        }
+    }
+}
+
+static esp_err_t on_stop(driver_t *self)
+{
+    for (size_t i = 0; i < cvector_size(sensors); i++)
+    {
+        esp_err_t r = aht_free_desc(&sensors[i]);
         if (r != ESP_OK)
             ESP_LOGW(self->name, "Device descriptor free error %d: %d (%s)", i, r, esp_err_to_name(r));
     }
 
-    return periodic_driver_stop(self);
+    return ESP_OK;
 }
 
 driver_t drv_aht = {
@@ -101,12 +121,15 @@ driver_t drv_aht = {
 
     .config = NULL,
     .state = DRIVER_NEW,
-    .context = NULL,
-    .internal = { 0 },
+    .event_queue = NULL,
 
-    .init = init,
-    .start = periodic_driver_start,
-    .suspend = periodic_driver_suspend,
-    .resume = periodic_driver_resume,
-    .stop = stop,
+    .devices = NULL,
+    .handle = NULL,
+    .eg = NULL,
+
+    .on_init = on_init,
+    .on_start = NULL,
+    .on_stop = on_stop,
+
+    .task = task
 };
