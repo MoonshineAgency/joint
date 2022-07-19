@@ -16,7 +16,7 @@
 #define DRIVER_SET_CONFIG_TOPIC_FMT  "drivers/%s/set_config"
 
 static char buf[1024];
-static cvector_vector_type(driver_t *) drivers;
+static cvector_vector_type(driver_t *) drivers = NULL;
 static QueueHandle_t node_queue = NULL;
 
 static void publish_driver(const driver_t *drv)

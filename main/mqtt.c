@@ -62,20 +62,20 @@ static void on_data(esp_mqtt_event_handle_t event)
     }
 }
 
-inline static int find_topic(const char *topic, cvector_vector_type(const char *) topics)
+inline static bool find_topic(const char *topic, cvector_vector_type(const char *) topics)
 {
     for (size_t i = 0; i < cvector_size(topics); i++)
         if (!strncmp(topic, topics[i], MAX_TOPIC_LEN - 1))
-            return i;
-    return -1;
+            return true;
+    return false;
 }
 
 static void resubscribe()
 {
-    cvector_vector_type(const char *) topics;
+    cvector_vector_type(const char *) topics = NULL;
     for (size_t i = 0; i < cvector_size(subs); i++)
     {
-        if (find_topic(subs[i].topic, topics) < 0)
+        if (find_topic(subs[i].topic, topics))
             continue;
         ESP_LOGI(TAG, "Resubscribing to %s", subs[i].topic);
         esp_mqtt_client_subscribe(handle, subs[i].topic, subs[i].qos);

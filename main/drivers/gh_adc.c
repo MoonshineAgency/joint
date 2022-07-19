@@ -82,7 +82,7 @@ static void task(driver_t *self)
     TickType_t period = pdMS_TO_TICKS(driver_config_get_int(cJSON_GetObjectItem(self->config, "period"), 1000));
     float moisture_0 = driver_config_get_float(cJSON_GetObjectItem(self->config, "moisture_0"), 2.2f);
     float moisture_100 = driver_config_get_float(cJSON_GetObjectItem(self->config, "moisture_100"), 0.9f);
-    float moisture_range = (moisture_0 - moisture_100) / 1000.0f;
+    float moisture_perc = (moisture_0 - moisture_100) / 100.0f;
 
     while (true)
     {
@@ -112,26 +112,26 @@ static void task(driver_t *self)
 
         for (size_t c = 0; c < AIN_COUNT; c++)
         {
-            float voltage = (float)ain_voltages[c] / samples / 1000.0f;
+            float voltage = (float)ain_voltages[c] / (float)samples / 1000.0f;
             self->devices[c].sensor.value = voltage;
             driver_send_device_update(self, &self->devices[c]);
         }
 
         for (size_t c = 0; c < AIN_COUNT; c++)
         {
-            float voltage = (float)ain_voltages[c] / samples / 1000.0f;
+            float voltage = (float)ain_voltages[c] / (float)samples / 1000.0f;
             float moisture;
             if (voltage <= moisture_100)
                 moisture = 100;
             else if (voltage >= moisture_0)
                 moisture = 0;
             else
-                moisture = (moisture_0 - voltage) / moisture_range;
+                moisture = (moisture_0 - voltage) / moisture_perc;
             self->devices[c + AIN_COUNT].sensor.value = moisture;
             driver_send_device_update(self, &self->devices[c + AIN_COUNT]);
         }
 
-        self->devices[AIN_COUNT * 2].sensor.value = (float)tds_voltage / samples / 1000.0f;
+        self->devices[AIN_COUNT * 2].sensor.value = (float)tds_voltage / (float)samples / 1000.0f;
         driver_send_device_update(self, &self->devices[AIN_COUNT * 2]);
 
         while (xTaskGetTickCount() - start < period)
