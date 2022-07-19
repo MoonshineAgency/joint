@@ -12,9 +12,56 @@
 #include "drivers/gh_adc.h"
 #include "drivers/gh_ph_meter.h"
 
+#define DRIVER_CONFIG_TOPIC_FMT      "drivers/%s/config"
+#define DRIVER_SET_CONFIG_TOPIC_FMT  "drivers/%s/set_config"
+
 static char buf[1024];
 static cvector_vector_type(driver_t *) drivers;
 static QueueHandle_t node_queue = NULL;
+
+static void publish_driver(const driver_t *drv)
+{
+    char topic[128] = { 0 };
+    snprintf(topic, sizeof(topic), DRIVER_CONFIG_TOPIC_FMT, drv->name);
+    mqtt_publish_json_subtopic(topic, drv->config, 2, 1);
+}
+
+static void on_set_config(const char *topic, const char *data, size_t data_len, void *ctx)
+{
+    if (data_len > sizeof(buf) - 1)
+    {
+        ESP_LOGE(TAG, "Data too big: %d", data_len);
+        return;
+    }
+
+    driver_t *drv = (driver_t *)ctx;
+
+    memcpy(buf, data, data_len);
+    buf[data_len] = 0;
+    esp_err_t r = settings_save_driver_config(drv->name, buf);
+    if (r != ESP_OK)
+    {
+        ESP_LOGE(TAG, "Error saving driver config for '%s': %d (%s)", drv->name, r, esp_err_to_name(r));
+        return;
+    }
+
+    r = driver_stop(drv);
+    if (r != ESP_OK)
+        ESP_LOGW(TAG, "Error stopping driver '%s', but restarting anyway: %d (%s)", drv->name, r, esp_err_to_name(r));
+
+    r = driver_init(drv, data, data_len);
+    if (r != ESP_OK)
+        ESP_LOGW(TAG, "Error initializing driver %s: %d (%s)", drv->name, r, esp_err_to_name(r));
+
+    if (system_mode() == MODE_ONLINE)
+    {
+        r = driver_start(drv);
+        if (r != ESP_OK)
+            ESP_LOGW(TAG, "Error initializing driver %s: %d (%s)", drv->name, r, esp_err_to_name(r));
+
+        publish_driver(drv);
+    }
+}
 
 static void node_task(void *arg)
 {
@@ -101,6 +148,13 @@ esp_err_t node_online()
         esp_err_t r = driver_start(drivers[i]);
         if (r != ESP_OK)
             ESP_LOGW(TAG, "Error starting driver %s: %d (%s)", drivers[i]->name, r, esp_err_to_name(r));
+
+        publish_driver(drivers[i]);
+
+        // subscribe on driver config
+        char topic[128] = { 0 };
+        snprintf(topic, sizeof(topic), DRIVER_SET_CONFIG_TOPIC_FMT, drivers[i]->name);
+        mqtt_subscribe_subtopic(topic, on_set_config, 2, drivers[i]);
     }
 
     // resend devices discovery and resub

@@ -97,6 +97,7 @@
         if ((vec)) {                             \
             size_t *p1 = &((size_t *)(vec))[-2]; \
             cvector_clib_free(p1);               \
+            vec = NULL;                          \
         }                                        \
     } while (0)
 

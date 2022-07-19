@@ -41,6 +41,7 @@ static void driver_task(void *arg)
 
     self->state = DRIVER_RUNNING;
     xEventGroupSetBits(self->eg, DRIVER_BIT_RUNNING);
+    vTaskDelay(1);
 
     self->task(self);
 
@@ -184,6 +185,8 @@ esp_err_t driver_stop(driver_t *drv)
         ESP_LOGE(TAG, "[%s] Driver has not been stopped due to error or timeout", drv->name);
         return ESP_ERR_TIMEOUT;
     }
+
+    drv->handle = NULL;
 
     ESP_LOGI(TAG, "[%s] Driver stopped", drv->name);
 

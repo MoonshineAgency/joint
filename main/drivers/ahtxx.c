@@ -4,7 +4,7 @@
 #include "settings.h"
 #include <aht.h>
 
-static cvector_vector_type(aht_t) sensors;
+static cvector_vector_type(aht_t) sensors = NULL;
 
 static esp_err_t on_init(driver_t *self)
 {

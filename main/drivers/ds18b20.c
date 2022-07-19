@@ -39,7 +39,7 @@ static void scan(driver_t *self)
     esp_err_t r;
 
     size_t result_count = 0;
-    ds18x20_addr_t scan_result[CONFIG_DS18X20_MAX_SENSORS] = {0 };
+    ds18x20_addr_t scan_result[CONFIG_DS18X20_MAX_SENSORS] = { 0 };
 
     r = ds18x20_scan_devices(gpio, scan_result, CONFIG_DS18X20_MAX_SENSORS, &result_count);
     if (r != ESP_OK)
@@ -77,7 +77,7 @@ static void scan(driver_t *self)
     cvector_free(self->devices);
     for (size_t i = 0; i < result_count; i++)
     {
-        device_t dev = {0};
+        device_t dev = { 0 };
         dev.type = DEV_SENSOR;
         snprintf(dev.uid, sizeof(dev.uid), SENSOR_ADDR_FMT, SENSOR_ADDR(scan_result[i]));
         snprintf(dev.name, sizeof(dev.name), "%s temperature (DS18x20 " SENSOR_ADDR_FMT ")", settings.node.name, SENSOR_ADDR(scan_result[i]));
