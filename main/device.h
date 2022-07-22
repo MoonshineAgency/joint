@@ -8,14 +8,14 @@
 typedef enum {
     DEV_SENSOR = 0,
     DEV_BINARY_SENSOR,
-    DEV_OUTPUT,
-    DEV_SWITCH,
+    DEV_BINARY_SWITCH,
+    DEV_NUMBER,
 } device_type_t;
 
 typedef struct device device_t;
 
 typedef void (*switch_write_cb_t)(device_t *dev, bool value);
-typedef void (*output_write_cb_t)(device_t *dev, uint32_t value);
+typedef void (*output_write_cb_t)(device_t *dev, float value);
 
 struct device
 {
@@ -24,7 +24,7 @@ struct device
     device_type_t type;
     char type_name[16];
     char device_class[32];
-    uint8_t internal[32];
+    void *internal[8];
     union {
         struct {
             char measurement_unit[16];
@@ -35,11 +35,13 @@ struct device
             bool value;
         } binary_sensor;
         struct {
-            int32_t min;
-            int32_t max;
-            int32_t value;
+            char measurement_unit[16];
+            float min;
+            float max;
+            float step;
+            float value;
             output_write_cb_t on_write;
-        } output;
+        } number;
         struct {
             bool value;
             switch_write_cb_t on_write;

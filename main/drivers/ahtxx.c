@@ -22,7 +22,8 @@ static esp_err_t on_init(driver_t *self)
         uint8_t addr = driver_config_get_int(cJSON_GetObjectItem(sensor_j, "address"), AHT_I2C_ADDRESS_GND);
         int freq = driver_config_get_int(cJSON_GetObjectItem(sensor_j, "frequency"), 0);
 
-        aht_t aht = { 0 };
+        aht_t aht;
+        memset(&aht, 0, sizeof(aht));
         aht.type = driver_config_get_int(cJSON_GetObjectItem(sensor_j, "type"), 0);
 
         esp_err_t r = aht_init_desc(&aht, addr, port, sda, scl);

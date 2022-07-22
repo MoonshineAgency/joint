@@ -60,6 +60,7 @@ static void driver_task(void *arg)
     xEventGroupSetBits(self->eg, DRIVER_BIT_STOPPED);
 
 exit:
+    self->handle = NULL;
     vTaskDelete(NULL);
 }
 
@@ -107,8 +108,13 @@ esp_err_t driver_init(driver_t *drv, const char *config, size_t cfg_len)
     }
     xEventGroupClearBits(drv->eg, DRIVER_BIT_INITIALIZED | DRIVER_BIT_RUNNING | DRIVER_BIT_START);
 
+
     if (drv->handle)
-        vTaskDelete(drv->handle);
+    {
+        eTaskState state = eTaskGetState(drv->handle);
+        if (state != eDeleted && state != eInvalid)
+            vTaskDelete(drv->handle);
+    }
 
     ESP_LOGI(TAG, "[%s] Creating driver task (stack_size=%d, priority=%d)", drv->name, stack_size, priority);
     int res = xTaskCreatePinnedToCore(driver_task, NULL, stack_size, drv, priority, &drv->handle, APP_CPU_NUM);

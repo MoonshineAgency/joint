@@ -19,6 +19,10 @@
 extern const char *TAG;
 extern const char *SYSTEM_ID;
 
+extern const char *DEVICE_MANUFACTURER;
+extern const char *DEVICE_NAME;
+extern const char *DEVICE_MODEL;
+
 #define CHECK(x) \
     do { \
         esp_err_t __; \

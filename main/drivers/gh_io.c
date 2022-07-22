@@ -18,6 +18,7 @@ static device_t *inputs;
 
 static void IRAM_ATTR on_port_change(void *arg)
 {
+    (void)arg;
     BaseType_t hp_task;
     BaseType_t r = xEventGroupSetBitsFromISR(port_event, CHANGED_BITS, &hp_task);
     if (r != pdFAIL)
@@ -26,7 +27,7 @@ static void IRAM_ATTR on_port_change(void *arg)
 
 static void on_relay_command(device_t *dev, bool value)
 {
-    esp_err_t r = tca95x5_set_level(&expander, dev->internal[0], value);
+    esp_err_t r = tca95x5_set_level(&expander, (uint32_t)(dev->internal[0]), value);
     if (r != ESP_OK)
     {
         ESP_LOGE(drv_gh_io.name, "Cannot set port value: %d (%s)", r, esp_err_to_name(r));
@@ -60,6 +61,7 @@ static esp_err_t on_init(driver_t *self)
     i2c_port_t port = driver_config_get_int(cJSON_GetObjectItem(self->config, "port"), 0);
     int freq = driver_config_get_int(cJSON_GetObjectItem(self->config, "frequency"), 0);
 
+    memset(&expander, 0, sizeof(expander));
     ESP_RETURN_ON_ERROR(
         tca95x5_init_desc(&expander, addr, port, sda, scl),
         self->name, "Error initializing device descriptor: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
@@ -88,11 +90,11 @@ static esp_err_t on_init(driver_t *self)
 
     device_t dev;
 
-    for (int i = 0; i < RELAYS_COUNT; i++)
+    for (uint32_t i = 0; i < RELAYS_COUNT; i++)
     {
         memset(&dev, 0, sizeof(dev));
-        dev.type = DEV_SWITCH;
-        dev.internal[0] = i;
+        dev.type = DEV_BINARY_SWITCH;
+        dev.internal[0] = (void *)i;
         dev.binary_switch.on_write = on_relay_command;
         snprintf(dev.uid, sizeof(dev.uid), "relay%d", i);
         snprintf(dev.name, sizeof(dev.name), "%s relay %d", settings.node.name, i);
@@ -100,7 +102,7 @@ static esp_err_t on_init(driver_t *self)
     }
 
     inputs = self->devices + RELAYS_COUNT;
-    for (int i = 0; i < INPUTS_COUNT; i++)
+    for (uint32_t i = 0; i < INPUTS_COUNT; i++)
     {
         memset(&dev, 0, sizeof(dev));
         dev.type = DEV_BINARY_SENSOR;
@@ -110,7 +112,7 @@ static esp_err_t on_init(driver_t *self)
     }
 
     switches = inputs + INPUTS_COUNT;
-    for (int i = 0; i < SWITCHES_COUNT; i++)
+    for (uint32_t i = 0; i < SWITCHES_COUNT; i++)
     {
         memset(&dev, 0, sizeof(dev));
         dev.type = DEV_BINARY_SENSOR;
@@ -180,13 +182,16 @@ static esp_err_t on_stop(driver_t *self)
     gpio_isr_handler_remove(intr);
     vEventGroupDelete(port_event);
     port_event = NULL;
+    esp_err_t r = tca95x5_free_desc(&expander);
+    if (r != ESP_OK)
+        ESP_LOGW(self->name, "Device descriptor free error: %d (%s)", r, esp_err_to_name(r));
 
     return ESP_OK;
 }
 
 driver_t drv_gh_io = {
     .name = "gh_io",
-    .defconfig = "{ \"stack_size\": 4096, \"port\": 0, \"sda\": 16, \"scl\": 17, \"intr\": 27, \"address\": 32 }",
+    .defconfig = "{ \"stack_size\": 4096, \"period\": 1000, \"port\": 0, \"sda\": 16, \"scl\": 17, \"intr\": 27, \"address\": 32 }",
 
     .config = NULL,
     .state = DRIVER_NEW,

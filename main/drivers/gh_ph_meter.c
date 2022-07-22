@@ -31,6 +31,7 @@ static esp_err_t on_init(driver_t *self)
 
     gain = ads111x_gain_values[GAIN] / ADS111X_MAX_VALUE;
 
+    memset(&adc, 0, sizeof(adc));
     ESP_RETURN_ON_ERROR(
         ads111x_init_desc(&adc, addr, port, sda, scl),
         self->name, "Error initializing device descriptor: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
@@ -153,7 +154,8 @@ static esp_err_t on_stop(driver_t *self)
 
 driver_t drv_ph_meter = {
     .name = "gh_ph_meter",
-    .defconfig = "{ \"stack_size\": 4096, \"period\": 1000, \"port\": 0, \"sda\": 16, \"scl\": 17, \"address\": 72, \"ph7_voltage\": 0, \"ph4_voltage\": 0.17143, \"samples\": 32 }",
+    .defconfig = "{ \"stack_size\": 4096, \"period\": 1000, \"port\": 0, \"sda\": 16, \"scl\": 17, "
+                 "\"address\": 72, \"ph7_voltage\": 0, \"ph4_voltage\": 0.17143, \"samples\": 32 }",
 
     .config = NULL,
     .state = DRIVER_NEW,
