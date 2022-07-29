@@ -75,5 +75,6 @@ void driver_send_device_remove(driver_t *drv, const device_t *dev);
 int driver_config_get_int(cJSON *item, int def);
 float driver_config_get_float(cJSON *item, float def);
 gpio_num_t driver_config_get_gpio(cJSON *item, gpio_num_t def);
+bool driver_config_get_bool(cJSON *item, bool def);
 
 #endif // ESP_IOT_NODE_PLUS_DRIVER_H_

@@ -6,11 +6,13 @@
 #include "driver.h"
 #include "mqtt.h"
 
-#include "drivers/ahtxx.h"
-#include "drivers/ds18b20.h"
 #include "drivers/gh_io.h"
 #include "drivers/gh_adc.h"
 #include "drivers/gh_ph_meter.h"
+
+#include "drivers/ahtxx.h"
+#include "drivers/ds18b20.h"
+#include "drivers/dhtxx.h"
 
 #define DRIVER_CONFIG_TOPIC_FMT      "drivers/%s/config"
 #define DRIVER_SET_CONFIG_TOPIC_FMT  "drivers/%s/set_config"
@@ -112,6 +114,7 @@ esp_err_t node_init()
     cvector_push_back(drivers, &drv_ph_meter);
     cvector_push_back(drivers, &drv_aht);
     cvector_push_back(drivers, &drv_ds18b20);
+    cvector_push_back(drivers, &drv_dht);
 
     system_set_mode(MODE_OFFLINE);
 

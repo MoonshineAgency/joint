@@ -93,6 +93,10 @@ esp_err_t driver_init(driver_t *drv, const char *config, size_t cfg_len)
         drv->config = cJSON_Parse(drv->defconfig);
     }
 
+    char *buf = cJSON_PrintUnformatted(drv->config);
+    ESP_LOGI(TAG, "[%s] Driver config: %s", drv->name, buf);
+    cJSON_free(buf);
+
     if (drv->eg)
         vEventGroupDelete(drv->eg);
 
@@ -243,4 +247,9 @@ gpio_num_t driver_config_get_gpio(cJSON *item, gpio_num_t def)
 {
     int res = driver_config_get_int(item, def);
     return res >= GPIO_NUM_MAX ? def : res;
+}
+
+bool driver_config_get_bool(cJSON *item, bool def)
+{
+    return cJSON_IsBool(item) ? cJSON_IsTrue(item) : def;
 }

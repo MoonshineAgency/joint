@@ -191,7 +191,7 @@ static esp_err_t on_stop(driver_t *self)
 
 driver_t drv_gh_io = {
     .name = "gh_io",
-    .defconfig = "{ \"stack_size\": 4096, \"period\": 1000, \"port\": 0, \"sda\": 16, \"scl\": 17, \"intr\": 27, \"address\": 32 }",
+    .defconfig = "{ \"stack_size\": 4096, \"port\": 0, \"sda\": 16, \"scl\": 17, \"intr\": 27, \"address\": 32 }",
 
     .config = NULL,
     .state = DRIVER_NEW,

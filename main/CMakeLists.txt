@@ -22,6 +22,7 @@ idf_component_register(
         drivers/gh_io.c
         drivers/gh_adc.c
         drivers/gh_ph_meter.c
+        drivers/dhtxx.c
 
     INCLUDE_DIRS
         .

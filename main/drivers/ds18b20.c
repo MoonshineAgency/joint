@@ -138,7 +138,7 @@ static void task(driver_t *self)
 
 driver_t drv_ds18b20 = {
     .name = "ds18b20",
-    .defconfig = "{ \"stack_size\": 4096, \"period\": 1000, \"gpio\": 15, \"scan_interval\": 10 }",
+    .defconfig = "{ \"stack_size\": 4096, \"period\": 5000, \"gpio\": 15, \"scan_interval\": 10 }",
 
     .config = NULL,
     .state = DRIVER_NEW,

@@ -151,7 +151,7 @@ static esp_err_t on_stop(driver_t *self)
 
 driver_t drv_gh_adc = {
     .name = "gh_adc",
-    .defconfig = "{ \"stack_size\": 4096, \"period\": 1000, \"samples\": 64, \"attenuation\": 3, \"moisture_0\": 2.2, \"moisture_100\": 0.9 }",
+    .defconfig = "{ \"stack_size\": 4096, \"period\": 2000, \"samples\": 64, \"attenuation\": 3, \"moisture_0\": 2.2, \"moisture_100\": 0.9 }",
 
     .config = NULL,
     .state = DRIVER_NEW,

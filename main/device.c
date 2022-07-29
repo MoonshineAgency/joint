@@ -9,11 +9,14 @@
 #define DISCOVERY_TOPIC_FMT "homeassistant/%s/%s/%s/config"
 #define COMMAND_TOPIC_FMT   "%s/%s/command"
 
-#define STATE_QOS 0
-#define STATE_RETAIN 0
+#define QOS_SENSOR_STATE 0
+#define RETAIN_SENSOR_STATE 0
 
-#define DISCOVERY_QOS 2
-#define DISCOVERY_RETAIN 1
+#define QOS_EFFECTOR_STATE 2
+#define RETAIN_EFFECTOR_STATE 1
+
+#define QOS_DISCOVERY 2
+#define RETAIN_DISCOVERY 1
 
 static const char * const dev_type_names [] = {
     [DEV_SENSOR]        = "sensor",
@@ -142,24 +145,34 @@ static void on_write_cb(const char *topic, const char *data, size_t data_len, vo
 void device_publish_state(device_t *dev)
 {
     char data[32] = { 0 };
+    int qos = 0;
+    int retain = 0;
     switch (dev->type)
     {
         case DEV_SENSOR:
+            qos = QOS_SENSOR_STATE;
+            retain = RETAIN_SENSOR_STATE;
             snprintf(data, sizeof(data), "%.*f", dev->sensor.precision, dev->sensor.value);
             break;
         case DEV_BINARY_SENSOR:
+            qos = QOS_SENSOR_STATE;
+            retain = RETAIN_SENSOR_STATE;
             snprintf(data, sizeof(data), "%d", dev->binary_sensor.value);
             break;
         case DEV_NUMBER:
-            snprintf(data, sizeof(data), "%d", dev->number.value);
+            qos = QOS_EFFECTOR_STATE;
+            retain = RETAIN_EFFECTOR_STATE;
+            snprintf(data, sizeof(data), "%f", dev->number.value);
             break;
         case DEV_BINARY_SWITCH:
+            qos = QOS_EFFECTOR_STATE;
+            retain = RETAIN_EFFECTOR_STATE;
             snprintf(data, sizeof(data), "%d", dev->binary_switch.value);
             break;
     }
 
     char topic[128] = { 0 };
-    mqtt_publish(device_state_topic(dev, topic, sizeof(topic)), data, strlen(data), STATE_QOS, STATE_RETAIN);
+    mqtt_publish(device_state_topic(dev, topic, sizeof(topic)), data, strlen(data), qos, retain);
 }
 
 void device_publish_discovery(device_t *dev)
@@ -169,7 +182,7 @@ void device_publish_discovery(device_t *dev)
         return;
 
     cJSON *json = device_descriptor(dev);
-    mqtt_publish_json(topic, json, DISCOVERY_QOS, DISCOVERY_RETAIN);
+    mqtt_publish_json(topic, json, QOS_DISCOVERY, RETAIN_DISCOVERY);
     cJSON_Delete(json);
 }
 
@@ -178,7 +191,7 @@ void device_unpublish_discovery(device_t *dev)
     char topic[128] = { 0 };
     if (!device_discovery_topic(dev, topic, sizeof(topic)))
         return;
-    mqtt_publish(topic, "", 0, DISCOVERY_QOS, DISCOVERY_RETAIN);
+    mqtt_publish(topic, "", 0, QOS_DISCOVERY, RETAIN_DISCOVERY);
 }
 
 void device_subscribe(device_t *dev)
