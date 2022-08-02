@@ -17,6 +17,7 @@ static const adc1_channel_t ain_channels[AIN_COUNT] = {
     CONFIG_ADC_DRIVER_AIN2_CHANNEL,
     CONFIG_ADC_DRIVER_AIN3_CHANNEL,
 };
+static int update_period;
 
 static esp_err_t on_init(driver_t *self)
 {
@@ -24,6 +25,7 @@ static esp_err_t on_init(driver_t *self)
 
     adc_atten_t atten = driver_config_get_int(cJSON_GetObjectItem(self->config, "attenuation"), ADC_ATTEN_DB_11);
     samples = driver_config_get_int(cJSON_GetObjectItem(self->config, "samples"), 64);
+    update_period = driver_config_get_int(cJSON_GetObjectItem(self->config, "period"), 1000);
 
     adc_power_acquire();
     adc1_config_width(ADC_WIDTH);
@@ -41,6 +43,7 @@ static esp_err_t on_init(driver_t *self)
         memset(&dev, 0, sizeof(dev));
         dev.type = DEV_SENSOR;
         dev.sensor.precision = 3;
+        dev.sensor.update_period = update_period;
         strncpy(dev.sensor.measurement_unit, "V", sizeof(dev.sensor.measurement_unit));
         strncpy(dev.device_class, "voltage",  sizeof(dev.device_class));
         snprintf(dev.uid, sizeof(dev.uid), "ain%d", c);
@@ -53,6 +56,7 @@ static esp_err_t on_init(driver_t *self)
         memset(&dev, 0, sizeof(dev));
         dev.type = DEV_SENSOR;
         dev.sensor.precision = 1;
+        dev.sensor.update_period = update_period;
         strncpy(dev.sensor.measurement_unit, "%", sizeof(dev.sensor.measurement_unit));
         strncpy(dev.device_class, "humidity", sizeof(dev.device_class));
         snprintf(dev.uid, sizeof(dev.uid), "moisture%d", c);
@@ -63,6 +67,7 @@ static esp_err_t on_init(driver_t *self)
     memset(&dev, 0, sizeof(dev));
     dev.type = DEV_SENSOR;
     dev.sensor.precision = 3;
+    dev.sensor.update_period = update_period;
     strncpy(dev.sensor.measurement_unit, "V", sizeof(dev.sensor.measurement_unit));
     strncpy(dev.device_class, "voltage",  sizeof(dev.device_class));
     strncpy(dev.uid, "tds",  sizeof(dev.uid));
@@ -79,7 +84,7 @@ static void task(driver_t *self)
     uint32_t ain_voltages[AIN_COUNT];
     uint32_t tds_voltage;
 
-    TickType_t period = pdMS_TO_TICKS(driver_config_get_int(cJSON_GetObjectItem(self->config, "period"), 1000));
+    TickType_t period = pdMS_TO_TICKS(update_period);
     float moisture_0 = driver_config_get_float(cJSON_GetObjectItem(self->config, "moisture_0"), 2.2f);
     float moisture_100 = driver_config_get_float(cJSON_GetObjectItem(self->config, "moisture_100"), 0.9f);
     float moisture_perc = (moisture_0 - moisture_100) / 100.0f;

@@ -9,6 +9,7 @@
 #define MAX_TOPIC_LEN (sizeof(settings.node.name) + 100)
 
 static bool connected = false;
+static bool started = false;
 static esp_mqtt_client_handle_t handle = NULL;
 
 static char *msg_data = NULL;
@@ -140,14 +141,26 @@ esp_err_t mqtt_connect()
 {
     ESP_LOGI(TAG, "Connecting to MQTT broker '%s'...", settings.mqtt.uri);
 
-    return esp_mqtt_client_start(handle);
+    if (started)
+        return ESP_OK;
+
+    esp_err_t r = esp_mqtt_client_start(handle);
+    if (r == ESP_OK)
+        started = true;
+    return r;
 }
 
 esp_err_t mqtt_disconnect()
 {
     ESP_LOGI(TAG, "Disconnecting from MQTT broker '%s'...", settings.mqtt.uri);
 
-    return esp_mqtt_client_stop(handle);
+    if (!started)
+        return ESP_OK;
+
+    esp_err_t r = esp_mqtt_client_stop(handle);
+    if (r == ESP_OK)
+        started = false;
+    return r;
 }
 
 bool mqtt_connected()

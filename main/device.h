@@ -30,6 +30,7 @@ struct device
             char measurement_unit[16];
             float value;
             int precision;
+            int update_period;
         } sensor;
         struct {
             bool value;

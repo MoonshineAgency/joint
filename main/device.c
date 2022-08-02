@@ -18,6 +18,8 @@
 #define QOS_DISCOVERY 2
 #define RETAIN_DISCOVERY 1
 
+#define EXPIRES_AFTER_PERIODS 5
+
 static const char * const dev_type_names [] = {
     [DEV_SENSOR]        = "sensor",
     [DEV_BINARY_SENSOR] = "binary_sensor",
@@ -70,6 +72,8 @@ static cJSON *device_descriptor(const device_t *dev)
     {
         case DEV_SENSOR:
             cJSON_AddStringToObject(res, "unit_of_measurement", dev->sensor.measurement_unit);
+            if (dev->sensor.update_period > 0)
+                cJSON_AddNumberToObject(res, "expire_after", dev->sensor.update_period * EXPIRES_AFTER_PERIODS / 1000);
             break;
         case DEV_BINARY_SENSOR:
             cJSON_AddStringToObject(res, "payload_on", "1");

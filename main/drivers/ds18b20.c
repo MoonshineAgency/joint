@@ -15,6 +15,8 @@ static float results[CONFIG_DS18X20_MAX_SENSORS] = { 0 };
 static size_t sensors_count = 0;
 static size_t loop_no = 0;
 
+static int update_period;
+
 static esp_err_t on_init(driver_t *self)
 {
     cvector_free(self->devices);
@@ -24,6 +26,7 @@ static esp_err_t on_init(driver_t *self)
 
     gpio = driver_config_get_gpio(cJSON_GetObjectItem(self->config, "gpio"), GPIO_NUM_NC);
     scan_interval = driver_config_get_int(cJSON_GetObjectItem(self->config, "scan_interval"), 1);
+    update_period = driver_config_get_int(cJSON_GetObjectItem(self->config, "period"), 1000);
 
     ESP_LOGI(self->name, "Configured to use GPIO %d with scan_interval %d", gpio, scan_interval);
 
@@ -83,6 +86,7 @@ static void scan(driver_t *self)
         snprintf(dev.name, sizeof(dev.name), "%s temperature (DS18x20 " SENSOR_ADDR_FMT ")", settings.node.name, SENSOR_ADDR(scan_result[i]));
         strncpy(dev.sensor.measurement_unit, "°C", sizeof(dev.sensor.measurement_unit));
         dev.sensor.precision = 2;
+        dev.sensor.update_period = update_period;
         cvector_push_back(self->devices, dev);
     }
     // 3. add connected
@@ -108,7 +112,7 @@ static void scan(driver_t *self)
 
 static void task(driver_t *self)
 {
-    TickType_t period = pdMS_TO_TICKS(driver_config_get_int(cJSON_GetObjectItem(self->config, "period"), 1000));
+    TickType_t period = pdMS_TO_TICKS(update_period);
 
     while (true)
     {

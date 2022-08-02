@@ -6,10 +6,14 @@
 
 static cvector_vector_type(aht_t) sensors = NULL;
 
+static int update_period;
+
 static esp_err_t on_init(driver_t *self)
 {
     cvector_free(self->devices);
     cvector_free(sensors);
+
+    update_period = driver_config_get_int(cJSON_GetObjectItem(self->config, "period"), 1000);
 
     // Init devices
     cJSON *sensors_j = cJSON_GetObjectItem(self->config, "sensors");
@@ -51,6 +55,7 @@ static esp_err_t on_init(driver_t *self)
         strncpy(dev.device_class, "humidity", sizeof(dev.device_class));
         strncpy(dev.sensor.measurement_unit, "%", sizeof(dev.sensor.measurement_unit));
         dev.sensor.precision = 2;
+        dev.sensor.update_period = update_period;
         cvector_push_back(self->devices, dev);
 
         memset(&dev, 0, sizeof(device_t));
@@ -60,6 +65,7 @@ static esp_err_t on_init(driver_t *self)
         strncpy(dev.device_class, "temperature", sizeof(dev.device_class));
         strncpy(dev.sensor.measurement_unit, "°C", sizeof(dev.sensor.measurement_unit));
         dev.sensor.precision = 2;
+        dev.sensor.update_period = update_period;
         cvector_push_back(self->devices, dev);
 
         ESP_LOGI(self->name, "Initialized device %d: %s (ADDR=0x%02x, PORT=%d, SDA=%d, SCL=%d, FREQ=%dkHz)",
@@ -71,7 +77,7 @@ static esp_err_t on_init(driver_t *self)
 
 static void task(driver_t *self)
 {
-    TickType_t period = pdMS_TO_TICKS(driver_config_get_int(cJSON_GetObjectItem(self->config, "period"), 1000));
+    TickType_t period = pdMS_TO_TICKS(update_period);
 
     while (true)
     {

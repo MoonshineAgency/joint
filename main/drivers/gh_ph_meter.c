@@ -12,6 +12,7 @@ static float gain;
 static float e1, slope;
 static float ph;
 static uint32_t last_update_time;
+static int update_period;
 
 static esp_err_t on_init(driver_t *self)
 {
@@ -23,6 +24,7 @@ static esp_err_t on_init(driver_t *self)
     i2c_port_t port = driver_config_get_int(cJSON_GetObjectItem(self->config, "port"), 0);
     int freq = driver_config_get_int(cJSON_GetObjectItem(self->config, "frequency"), 0);
     samples = driver_config_get_int(cJSON_GetObjectItem(self->config, "samples"), 32);
+    update_period = driver_config_get_int(cJSON_GetObjectItem(self->config, "period"), 1000);
 
     e1 = driver_config_get_float(cJSON_GetObjectItem(self->config, "ph7_voltage"), 0.0f);
     float e2 = driver_config_get_float(cJSON_GetObjectItem(self->config, "ph4_voltage"), 0.17143f);
@@ -57,6 +59,7 @@ static esp_err_t on_init(driver_t *self)
     snprintf(dev.name, sizeof(dev.name), "%s pH 0", settings.node.name);
     strncpy(dev.sensor.measurement_unit, "pH", sizeof(dev.sensor.measurement_unit));
     dev.sensor.precision = 2;
+    dev.sensor.update_period = update_period;
     cvector_push_back(self->devices, dev);
 
     memset(&dev, 0, sizeof(dev));
@@ -66,6 +69,7 @@ static esp_err_t on_init(driver_t *self)
     strncpy(dev.device_class, "voltage", sizeof(dev.device_class));
     strncpy(dev.sensor.measurement_unit, "V", sizeof(dev.sensor.measurement_unit));
     dev.sensor.precision = 4;
+    dev.sensor.update_period = update_period;
     cvector_push_back(self->devices, dev);
 
     return ESP_OK;
@@ -95,7 +99,7 @@ static void task(driver_t *self)
     uint32_t interval = (esp_timer_get_time() / 1000) - last_update_time;
     last_update_time += interval;
 
-    TickType_t period = pdMS_TO_TICKS(driver_config_get_int(cJSON_GetObjectItem(self->config, "period"), 1000));
+    TickType_t period = pdMS_TO_TICKS(update_period);
 
     while (true)
     {
