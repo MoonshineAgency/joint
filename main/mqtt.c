@@ -125,12 +125,12 @@ esp_err_t mqtt_init()
     esp_mqtt_client_config_t config;
     memset(&config, 0, sizeof(config));
 
-    config.uri = settings.mqtt.uri;
-    config.username = settings.mqtt.username;
-    config.password = settings.mqtt.password;
-    config.client_id = SYSTEM_ID;
-    config.out_buffer_size = 8192;
-    config.network_timeout_ms = 5000;
+    config.broker.address.uri = settings.mqtt.uri;
+    config.credentials.username = settings.mqtt.username;
+    config.credentials.authentication.password = settings.mqtt.password;
+    config.credentials.client_id = SYSTEM_ID;
+    config.buffer.out_size = 8192;
+    config.network.timeout_ms = 5000;
     //config.disable_auto_reconnect = true;
 
     handle = esp_mqtt_client_init(&config);

@@ -90,7 +90,7 @@ static esp_err_t on_init(driver_t *self)
 
     device_t dev;
 
-    for (uint32_t i = 0; i < RELAYS_COUNT; i++)
+    for (int i = 0; i < RELAYS_COUNT; i++)
     {
         memset(&dev, 0, sizeof(dev));
         dev.type = DEV_BINARY_SWITCH;
@@ -102,7 +102,7 @@ static esp_err_t on_init(driver_t *self)
     }
 
     inputs = self->devices + RELAYS_COUNT;
-    for (uint32_t i = 0; i < INPUTS_COUNT; i++)
+    for (int i = 0; i < INPUTS_COUNT; i++)
     {
         memset(&dev, 0, sizeof(dev));
         dev.type = DEV_BINARY_SENSOR;
@@ -112,7 +112,7 @@ static esp_err_t on_init(driver_t *self)
     }
 
     switches = inputs + INPUTS_COUNT;
-    for (uint32_t i = 0; i < SWITCHES_COUNT; i++)
+    for (int i = 0; i < SWITCHES_COUNT; i++)
     {
         memset(&dev, 0, sizeof(dev));
         dev.type = DEV_BINARY_SENSOR;

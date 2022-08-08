@@ -74,7 +74,7 @@ esp_err_t settings_load()
     res = nvs_get_u32(nvs, SETTINGS_MAGIC_KEY, &magic);
     if (res == ESP_OK && magic != SETTINGS_MAGIC_VAL)
     {
-        ESP_LOGW(TAG, "Invalid magic 0x%08x, expected 0x%08x", magic, SETTINGS_MAGIC_VAL);
+        ESP_LOGW(TAG, "Invalid magic 0x%08" PRIx32 ", expected 0x%08x", magic, SETTINGS_MAGIC_VAL);
         res = ESP_FAIL;
     }
     if (res != ESP_OK)
@@ -138,7 +138,7 @@ esp_err_t settings_load_driver_config(const char *name, char *buf, size_t max_si
         TAG, "Error reading '%s' driver configuration: %d (%s)", name, err_rc_, esp_err_to_name(err_rc_));
     if (size > max_size)
     {
-        ESP_LOGE(TAG, "Configuration %s too big: %d", name, size);
+        ESP_LOGE(TAG, "Configuration %s too big: %u", name, size);
         return ESP_ERR_NO_MEM;
     }
     esp_err_t r = nvs_get_str(nvs, name, buf, &size);

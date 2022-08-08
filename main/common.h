@@ -2,6 +2,7 @@
 #define ESP_IOT_NODE_PLUS_COMMON_H_
 
 #include <stddef.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

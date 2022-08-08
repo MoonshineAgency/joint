@@ -51,7 +51,7 @@ static esp_err_t on_init(driver_t *self)
         device_t dev = { 0 };
         snprintf(dev.uid, sizeof(dev.uid), "aht_rh%d", i);
         dev.type = DEV_SENSOR;
-        snprintf(dev.name, sizeof(dev.name), "%s humidity (AHT sensor %d)", settings.node.name, i);
+        snprintf(dev.name, sizeof(dev.name), "%s humidity (AHT %d)", settings.node.name, i);
         strncpy(dev.device_class, "humidity", sizeof(dev.device_class));
         strncpy(dev.sensor.measurement_unit, "%", sizeof(dev.sensor.measurement_unit));
         dev.sensor.precision = 2;
@@ -61,14 +61,14 @@ static esp_err_t on_init(driver_t *self)
         memset(&dev, 0, sizeof(device_t));
         snprintf(dev.uid, sizeof(dev.uid), "aht_t%d", i);
         dev.type = DEV_SENSOR;
-        snprintf(dev.name, sizeof(dev.name), "%s temperature (AHT sensor %d)", settings.node.name, i);
+        snprintf(dev.name, sizeof(dev.name), "%s temperature (AHT %d)", settings.node.name, i);
         strncpy(dev.device_class, "temperature", sizeof(dev.device_class));
         strncpy(dev.sensor.measurement_unit, "°C", sizeof(dev.sensor.measurement_unit));
         dev.sensor.precision = 2;
         dev.sensor.update_period = update_period;
         cvector_push_back(self->devices, dev);
 
-        ESP_LOGI(self->name, "Initialized device %d: %s (ADDR=0x%02x, PORT=%d, SDA=%d, SCL=%d, FREQ=%dkHz)",
+        ESP_LOGI(self->name, "Initialized device %d: %s (ADDR=0x%02x, PORT=%d, SDA=%d, SCL=%d, FREQ=%" PRIu32 "kHz)",
             i, aht.type == AHT_TYPE_AHT1x ? "AHT1x" : "AHT20", addr, port, sda, scl, aht.i2c_dev.cfg.master.clk_speed / 1000);
     }
 

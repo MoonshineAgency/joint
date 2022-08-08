@@ -20,7 +20,7 @@ typedef void (*output_write_cb_t)(device_t *dev, float value);
 struct device
 {
     char uid[32];
-    char name[64];
+    char name[96];
     device_type_t type;
     char type_name[16];
     char device_class[32];

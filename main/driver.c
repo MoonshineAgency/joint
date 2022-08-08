@@ -120,7 +120,7 @@ esp_err_t driver_init(driver_t *drv, const char *config, size_t cfg_len)
             vTaskDelete(drv->handle);
     }
 
-    ESP_LOGI(TAG, "[%s] Creating driver task (stack_size=%d, priority=%d)", drv->name, stack_size, priority);
+    ESP_LOGI(TAG, "[%s] Creating driver task (stack_size=%" PRIu32 ", priority=%d)", drv->name, stack_size, priority);
     int res = xTaskCreatePinnedToCore(driver_task, NULL, stack_size, drv, priority, &drv->handle, APP_CPU_NUM);
     if (res != pdPASS)
     {

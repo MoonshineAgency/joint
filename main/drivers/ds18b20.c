@@ -3,7 +3,7 @@
 #include <ds18x20.h>
 #include "settings.h"
 
-#define SENSOR_ADDR_FMT "%08X%08X"
+#define SENSOR_ADDR_FMT "%08lX%08lX"
 #define SENSOR_ADDR(addr) (uint32_t)(addr >> 32), (uint32_t)addr
 
 static gpio_num_t gpio;

@@ -27,7 +27,7 @@ static esp_err_t on_init(driver_t *self)
     samples = driver_config_get_int(cJSON_GetObjectItem(self->config, "samples"), 64);
     update_period = driver_config_get_int(cJSON_GetObjectItem(self->config, "period"), 1000);
 
-    adc_power_acquire();
+    //adc_power_acquire();
     adc1_config_width(ADC_WIDTH);
 
     for (size_t c = 0; c < AIN_COUNT; c++)
@@ -150,7 +150,7 @@ static void task(driver_t *self)
 
 static esp_err_t on_stop(driver_t *self)
 {
-    adc_power_release();
+    //adc_power_release();
     return ESP_OK;
 }
 

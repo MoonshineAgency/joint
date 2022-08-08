@@ -49,7 +49,7 @@ static esp_err_t on_init(driver_t *self)
         device_t dev = { 0 };
         snprintf(dev.uid, sizeof(dev.uid), "dht_rh%d", i);
         dev.type = DEV_SENSOR;
-        snprintf(dev.name, sizeof(dev.name), "%s humidity (DHT sensor %d)", settings.node.name, i);
+        snprintf(dev.name, sizeof(dev.name), "%s humidity (DHT %d)", settings.node.name, i);
         strncpy(dev.device_class, "humidity", sizeof(dev.device_class));
         strncpy(dev.sensor.measurement_unit, "%", sizeof(dev.sensor.measurement_unit));
         dev.sensor.precision = 1;
@@ -59,7 +59,7 @@ static esp_err_t on_init(driver_t *self)
         memset(&dev, 0, sizeof(device_t));
         snprintf(dev.uid, sizeof(dev.uid), "dht_t%d", i);
         dev.type = DEV_SENSOR;
-        snprintf(dev.name, sizeof(dev.name), "%s temperature (DHT sensor %d)", settings.node.name, i);
+        snprintf(dev.name, sizeof(dev.name), "%s temperature (DHT %d)", settings.node.name, i);
         strncpy(dev.device_class, "temperature", sizeof(dev.device_class));
         strncpy(dev.sensor.measurement_unit, "°C", sizeof(dev.sensor.measurement_unit));
         dev.sensor.precision = 1;
