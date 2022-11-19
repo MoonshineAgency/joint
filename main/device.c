@@ -114,7 +114,7 @@ static cJSON *device_descriptor(const device_t *dev)
     cJSON_AddStringToObject(device, "name", DEVICE_NAME);
     cJSON_AddStringToObject(device, "model", DEVICE_MODEL);
 
-    const esp_app_desc_t *app_desc = esp_ota_get_app_description();
+    const esp_app_desc_t *app_desc = esp_app_get_description();
     snprintf(buf, sizeof(buf), "%s (%s)", app_desc->version, app_desc->date);
     cJSON_AddStringToObject(device, "sw_version", buf);
 

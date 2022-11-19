@@ -1,41 +1,87 @@
 #include "gh_adc.h"
 #include <esp_log.h>
-#include <driver/adc.h>
-#include <esp_adc_cal.h>
+#include <esp_adc/adc_oneshot.h>
+#include <esp_adc/adc_cali_scheme.h>
 #include "settings.h"
+#include "common.h"
 
-#define ADC_WIDTH ADC_WIDTH_BIT_12
+#define ADC_WIDTH ADC_BITWIDTH_12
 #define TDS_ATTEN ADC_ATTEN_DB_6 // 1.75V max
 #define AIN_COUNT 4
 
-static esp_adc_cal_characteristics_t ain_cal = { 0 };
-static esp_adc_cal_characteristics_t tds_cal = { 0 };
-static size_t samples;
-static const adc1_channel_t ain_channels[AIN_COUNT] = {
+static adc_oneshot_unit_handle_t adc_handle = NULL;
+static adc_cali_handle_t cali_handle = NULL;
+
+static const adc_oneshot_unit_init_cfg_t unit_cfg = {
+    .unit_id = ADC_UNIT_1,
+    .ulp_mode = ADC_ULP_MODE_DISABLE,
+};
+
+static const adc_channel_t ain_channels[AIN_COUNT] = {
     CONFIG_ADC_DRIVER_AIN0_CHANNEL,
     CONFIG_ADC_DRIVER_AIN1_CHANNEL,
     CONFIG_ADC_DRIVER_AIN2_CHANNEL,
     CONFIG_ADC_DRIVER_AIN3_CHANNEL,
 };
+
+static size_t samples;
 static int update_period;
 
 static esp_err_t on_init(driver_t *self)
 {
     cvector_free(self->devices);
+    if (adc_handle)
+    {
+        adc_oneshot_del_unit(adc_handle);
+        adc_handle = NULL;
+    }
+    if (cali_handle)
+    {
+        adc_cali_delete_scheme_line_fitting(cali_handle);
+        cali_handle = NULL;
+    }
 
     adc_atten_t atten = driver_config_get_int(cJSON_GetObjectItem(self->config, "attenuation"), ADC_ATTEN_DB_11);
     samples = driver_config_get_int(cJSON_GetObjectItem(self->config, "samples"), 64);
     update_period = driver_config_get_int(cJSON_GetObjectItem(self->config, "period"), 1000);
 
-    //adc_power_acquire();
-    adc1_config_width(ADC_WIDTH);
+    ESP_RETURN_ON_ERROR(
+        adc_oneshot_new_unit(&unit_cfg, &adc_handle),
+        self->name, "Error initializing ADC UNIT 1: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
+    );
 
+    // four free to use ADC channels
+    adc_oneshot_chan_cfg_t chan_cfg = {
+        .atten = atten,
+        .bitwidth = ADC_WIDTH,
+    };
     for (size_t c = 0; c < AIN_COUNT; c++)
-        adc1_config_channel_atten(ain_channels[c], atten);
-    esp_adc_cal_characterize(ADC_UNIT_1, atten, ADC_WIDTH, 1100, &ain_cal);
+        ESP_RETURN_ON_ERROR(
+            adc_oneshot_config_channel(adc_handle, ain_channels[c], &chan_cfg),
+            self->name, "Error configuring ADC channel: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
+        );
 
-    adc1_config_channel_atten(CONFIG_ADC_DRIVER_TDS_CHANNEL, TDS_ATTEN);
-    esp_adc_cal_characterize(ADC_UNIT_1, TDS_ATTEN, ADC_WIDTH, 1100, &tds_cal);
+    // TDS measure channel
+    chan_cfg.atten = TDS_ATTEN;
+    ESP_RETURN_ON_ERROR(
+        adc_oneshot_config_channel(adc_handle, CONFIG_ADC_DRIVER_TDS_CHANNEL, &chan_cfg),
+        self->name, "Error configuring ADC channel: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
+    );
+
+    // calibration
+    adc_cali_line_fitting_efuse_val_t efuse_cali = ADC_CALI_LINE_FITTING_EFUSE_VAL_EFUSE_VREF;
+    adc_cali_scheme_line_fitting_check_efuse(&efuse_cali);
+
+    adc_cali_line_fitting_config_t cail_cfg = {
+        .atten = atten,
+        .bitwidth = ADC_WIDTH,
+        .unit_id = unit_cfg.unit_id,
+        .default_vref = efuse_cali == ADC_CALI_LINE_FITTING_EFUSE_VAL_DEFAULT_VREF ? 1100 : 0,
+    };
+    ESP_RETURN_ON_ERROR(
+        adc_cali_create_scheme_line_fitting(&cail_cfg, &cali_handle),
+        self->name, "Error creating ADC calibration scheme: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
+    );
 
     device_t dev = { 0 };
     for (size_t c = 0; c < AIN_COUNT; c++)
@@ -77,12 +123,29 @@ static esp_err_t on_init(driver_t *self)
     return ESP_OK;
 }
 
+static int adc_read_voltage(driver_t *self, adc_channel_t channel)
+{
+    int raw, res;
+    esp_err_t r = adc_oneshot_read(adc_handle, channel, &raw);
+    if (r != ESP_OK)
+    {
+        ESP_LOGE(self->name, "Error reading ADC1 channel %d: %d (%s)", channel, r, esp_err_to_name(r));
+        return 0;
+    }
+    r = adc_cali_raw_to_voltage(cali_handle, raw, &res);
+    if (r != ESP_OK)
+    {
+        ESP_LOGE(self->name, "Error converting raw ADC value to voltage: %d (%s)", r, esp_err_to_name(r));
+        return 0;
+    }
+
+    return res;
+}
+
 static void task(driver_t *self)
 {
-    esp_err_t r;
-
-    uint32_t ain_voltages[AIN_COUNT];
-    uint32_t tds_voltage;
+    int ain_voltages[AIN_COUNT];
+    int tds_voltage;
 
     TickType_t period = pdMS_TO_TICKS(update_period);
     float moisture_0 = driver_config_get_float(cJSON_GetObjectItem(self->config, "moisture_0"), 2.2f);
@@ -98,21 +161,10 @@ static void task(driver_t *self)
 
         for (size_t i = 0; i < samples; i++)
         {
-            uint32_t v;
             for (size_t c = 0; c < AIN_COUNT; c++)
-            {
-                v = 0;
-                r = esp_adc_cal_get_voltage(ain_channels[c], &ain_cal, &v);
-                if (r != ESP_OK)
-                    ESP_LOGE(self->name, "Error reading ADC1 channel %d: %d (%s)", ain_channels[c], r, esp_err_to_name(r));
-                ain_voltages[c] += v;
-            }
+                ain_voltages[c] += adc_read_voltage(self, ain_channels[c]);
 
-            v = 0;
-            r = esp_adc_cal_get_voltage(CONFIG_ADC_DRIVER_TDS_CHANNEL, &tds_cal, &v);
-            if (r != ESP_OK)
-                ESP_LOGE(self->name, "Error reading ADC1 channel %d: %d (%s)", CONFIG_ADC_DRIVER_TDS_CHANNEL, r, esp_err_to_name(r));
-            tds_voltage += v;
+            tds_voltage += adc_read_voltage(self, CONFIG_ADC_DRIVER_TDS_CHANNEL);
         }
 
         for (size_t c = 0; c < AIN_COUNT; c++)
@@ -124,14 +176,13 @@ static void task(driver_t *self)
 
         for (size_t c = 0; c < AIN_COUNT; c++)
         {
-            float voltage = (float)ain_voltages[c] / (float)samples / 1000.0f;
             float moisture;
-            if (voltage <= moisture_100)
+            if (self->devices[c].sensor.value <= moisture_100)
                 moisture = 100;
-            else if (voltage >= moisture_0)
+            else if (self->devices[c].sensor.value >= moisture_0)
                 moisture = 0;
             else
-                moisture = (moisture_0 - voltage) / moisture_perc;
+                moisture = (moisture_0 - self->devices[c].sensor.value) / moisture_perc;
             self->devices[c + AIN_COUNT].sensor.value = moisture;
             driver_send_device_update(self, &self->devices[c + AIN_COUNT]);
         }
@@ -148,12 +199,6 @@ static void task(driver_t *self)
     }
 }
 
-static esp_err_t on_stop(driver_t *self)
-{
-    //adc_power_release();
-    return ESP_OK;
-}
-
 driver_t drv_gh_adc = {
     .name = "gh_adc",
     .defconfig = "{ \"stack_size\": 4096, \"period\": 2000, \"samples\": 64, \"attenuation\": 3, \"moisture_0\": 2.2, \"moisture_100\": 0.9 }",
@@ -168,7 +213,7 @@ driver_t drv_gh_adc = {
 
     .on_init = on_init,
     .on_start = NULL,
-    .on_stop = on_stop,
+    .on_stop = NULL,
 
     .task = task
 };

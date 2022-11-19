@@ -24,7 +24,7 @@ const char *system_mode_name(mode_t val)
 
 esp_err_t system_init()
 {
-    const esp_app_desc_t *app = esp_ota_get_app_description();
+    const esp_app_desc_t *app = esp_app_get_description();
 
     cur_mode = prev_mode = MODE_INIT;
 

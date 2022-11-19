@@ -54,4 +54,7 @@ extern const char *DEVICE_MODEL;
         } \
     } while (0)
 
+#define __STR(x) #x
+#define STR(x) __STR(x)
+
 #endif // ESP_IOT_NODE_PLUS_COMMON_H_

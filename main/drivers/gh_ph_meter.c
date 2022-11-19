@@ -3,6 +3,7 @@
 #include <esp_timer.h>
 #include <ads111x.h>
 #include "settings.h"
+#include "common.h"
 
 #define GAIN ADS111X_GAIN_0V512
 
@@ -158,7 +159,7 @@ static esp_err_t on_stop(driver_t *self)
 
 driver_t drv_ph_meter = {
     .name = "gh_ph_meter",
-    .defconfig = "{ \"stack_size\": 4096, \"period\": 5000, \"port\": 0, \"sda\": 16, \"scl\": 17, "
+    .defconfig = "{ \"stack_size\": 4096, \"period\": 5000, \"port\": 0, \"sda\": " STR(CONFIG_I2C0_SDA_GPIO) ", \"scl\": " STR(CONFIG_I2C0_SCL_GPIO) ", "
                  "\"address\": 72, \"ph7_voltage\": 0, \"ph4_voltage\": 0.17143, \"samples\": 32 }",
 
     .config = NULL,

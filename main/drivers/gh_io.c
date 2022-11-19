@@ -3,6 +3,7 @@
 #include <esp_check.h>
 #include "settings.h"
 #include <tca95x5.h>
+#include "common.h"
 
 #define RELAYS_COUNT 7
 #define SWITCHES_COUNT 4
@@ -191,7 +192,8 @@ static esp_err_t on_stop(driver_t *self)
 
 driver_t drv_gh_io = {
     .name = "gh_io",
-    .defconfig = "{ \"stack_size\": 4096, \"port\": 0, \"sda\": 16, \"scl\": 17, \"intr\": 27, \"address\": 32 }",
+    .defconfig = "{ \"stack_size\": 4096, \"port\": 0, \"sda\": " STR(CONFIG_I2C0_SDA_GPIO) ", \"scl\": " STR(CONFIG_I2C0_SCL_GPIO)
+        ", \"intr\": " STR(CONFIG_GH_IO_DRIVER_INTR_GPIO) ", \"address\": 32 }",
 
     .config = NULL,
     .state = DRIVER_NEW,
