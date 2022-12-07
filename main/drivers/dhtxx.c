@@ -4,6 +4,12 @@
 #include "settings.h"
 #include <dht.h>
 
+#define FMT_HUMIDITY_SENSOR_ID      "dht_rh%d"
+#define FMT_TEMPERATURE_SENSOR_ID   "dht_t%d"
+
+#define FMT_HUMIDITY_SENSOR_NAME    "%s humidity (DHT %d)"
+#define FMT_TEMPERATURE_SENSOR_NAME "%s temperature (DHT %d)"
+
 typedef struct
 {
     gpio_num_t gpio;
@@ -19,27 +25,27 @@ static esp_err_t on_init(driver_t *self)
     cvector_free(self->devices);
     cvector_free(sensors);
 
-    update_period = driver_config_get_int(cJSON_GetObjectItem(self->config, "period"), 1000);
+    update_period = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_PERIOD), 1000);
 
     // Init devices
-    cJSON *sensors_j = cJSON_GetObjectItem(self->config, "sensors");
+    cJSON *sensors_j = cJSON_GetObjectItem(self->config, OPT_SENSORS);
     for (int i = 0; i < cJSON_GetArraySize(sensors_j); i++)
     {
         cJSON *sensor_j = cJSON_GetArrayItem(sensors_j, i);
         sensor_t s;
-        s.gpio = driver_config_get_gpio(cJSON_GetObjectItem(sensor_j, "gpio"), GPIO_NUM_NC);
+        s.gpio = driver_config_get_gpio(cJSON_GetObjectItem(sensor_j, OPT_GPIO), GPIO_NUM_NC);
         if (s.gpio == GPIO_NUM_NC)
         {
             ESP_LOGW(self->name, "Invalid GPIO number");
             continue;
         }
-        s.type = driver_config_get_int(cJSON_GetObjectItem(sensor_j, "type"), DHT_TYPE_DHT11);
+        s.type = driver_config_get_int(cJSON_GetObjectItem(sensor_j, OPT_TYPE), DHT_TYPE_DHT11);
         if (s.type > DHT_TYPE_SI7021)
         {
             ESP_LOGW(self->name, "Invalid DHT sensor type %d", s.type);
             continue;
         }
-        bool pullup = driver_config_get_gpio(cJSON_GetObjectItem(sensor_j, "pullup"), false);
+        bool pullup = driver_config_get_gpio(cJSON_GetObjectItem(sensor_j, OPT_PULLUP), false);
         gpio_reset_pin(s.gpio);
         if (pullup)
             gpio_set_pull_mode(s.gpio, GPIO_PULLUP_ONLY);
@@ -47,21 +53,21 @@ static esp_err_t on_init(driver_t *self)
         cvector_push_back(sensors, s);
 
         device_t dev = { 0 };
-        snprintf(dev.uid, sizeof(dev.uid), "dht_rh%d", i);
+        snprintf(dev.uid, sizeof(dev.uid), FMT_HUMIDITY_SENSOR_ID, i);
         dev.type = DEV_SENSOR;
-        snprintf(dev.name, sizeof(dev.name), "%s humidity (DHT %d)", settings.node.name, i);
-        strncpy(dev.device_class, "humidity", sizeof(dev.device_class));
-        strncpy(dev.sensor.measurement_unit, "%", sizeof(dev.sensor.measurement_unit));
+        snprintf(dev.name, sizeof(dev.name), FMT_HUMIDITY_SENSOR_NAME, settings.node.name, i);
+        strncpy(dev.device_class, DEV_CLASS_HUMIDITY, sizeof(dev.device_class));
+        strncpy(dev.sensor.measurement_unit, DEV_MU_HUMIDITY, sizeof(dev.sensor.measurement_unit));
         dev.sensor.precision = 1;
         dev.sensor.update_period = update_period;
         cvector_push_back(self->devices, dev);
 
         memset(&dev, 0, sizeof(device_t));
-        snprintf(dev.uid, sizeof(dev.uid), "dht_t%d", i);
+        snprintf(dev.uid, sizeof(dev.uid), FMT_TEMPERATURE_SENSOR_ID, i);
         dev.type = DEV_SENSOR;
-        snprintf(dev.name, sizeof(dev.name), "%s temperature (DHT %d)", settings.node.name, i);
-        strncpy(dev.device_class, "temperature", sizeof(dev.device_class));
-        strncpy(dev.sensor.measurement_unit, "°C", sizeof(dev.sensor.measurement_unit));
+        snprintf(dev.name, sizeof(dev.name), FMT_TEMPERATURE_SENSOR_NAME, settings.node.name, i);
+        strncpy(dev.device_class, DEV_CLASS_TEMPERATURE, sizeof(dev.device_class));
+        strncpy(dev.sensor.measurement_unit, DEV_MU_TEMPERATURE, sizeof(dev.sensor.measurement_unit));
         dev.sensor.precision = 1;
         dev.sensor.update_period = update_period;
         cvector_push_back(self->devices, dev);
@@ -107,7 +113,7 @@ static void task(driver_t *self)
 
 driver_t drv_dht = {
     .name = "dhtxx",
-    .defconfig = "{ \"stack_size\": 4096, \"period\": 5000, \"sensors\": [{ \"gpio\": 21, \"type\": 0, \"pullup\": true }] }",
+    .defconfig = DHT_DEFCONFIG,
 
     .config = NULL,
     .state = DRIVER_NEW,

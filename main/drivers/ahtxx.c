@@ -4,6 +4,12 @@
 #include "settings.h"
 #include <aht.h>
 
+#define FMT_HUMIDITY_SENSOR_ID      "aht_rh%d"
+#define FMT_TEMPERATURE_SENSOR_ID   "aht_t%d"
+
+#define FMT_HUMIDITY_SENSOR_NAME    "%s humidity (AHT %d)"
+#define FMT_TEMPERATURE_SENSOR_NAME "%s temperature (AHT %d)"
+
 static cvector_vector_type(aht_t) sensors = NULL;
 
 static int update_period;
@@ -13,22 +19,22 @@ static esp_err_t on_init(driver_t *self)
     cvector_free(self->devices);
     cvector_free(sensors);
 
-    update_period = driver_config_get_int(cJSON_GetObjectItem(self->config, "period"), 1000);
+    update_period = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_PERIOD), 1000);
 
     // Init devices
-    cJSON *sensors_j = cJSON_GetObjectItem(self->config, "sensors");
+    cJSON *sensors_j = cJSON_GetObjectItem(self->config, OPT_SENSORS);
     for (int i = 0; i < cJSON_GetArraySize(sensors_j); i++)
     {
         cJSON *sensor_j = cJSON_GetArrayItem(sensors_j, i);
-        gpio_num_t sda = driver_config_get_gpio(cJSON_GetObjectItem(sensor_j, "sda"), GPIO_NUM_NC);
-        gpio_num_t scl = driver_config_get_gpio(cJSON_GetObjectItem(sensor_j, "scl"), GPIO_NUM_NC);
-        i2c_port_t port = driver_config_get_int(cJSON_GetObjectItem(sensor_j, "port"), 1);
-        uint8_t addr = driver_config_get_int(cJSON_GetObjectItem(sensor_j, "address"), AHT_I2C_ADDRESS_GND);
-        int freq = driver_config_get_int(cJSON_GetObjectItem(sensor_j, "frequency"), 0);
+        gpio_num_t sda = driver_config_get_gpio(cJSON_GetObjectItem(sensor_j, OPT_SDA), GPIO_NUM_NC);
+        gpio_num_t scl = driver_config_get_gpio(cJSON_GetObjectItem(sensor_j, OPT_SCL), GPIO_NUM_NC);
+        i2c_port_t port = driver_config_get_int(cJSON_GetObjectItem(sensor_j, OPT_PORT), 1);
+        uint8_t addr = driver_config_get_int(cJSON_GetObjectItem(sensor_j, OPT_ADDRESS), AHT_I2C_ADDRESS_GND);
+        int freq = driver_config_get_int(cJSON_GetObjectItem(sensor_j, OPT_FREQ), 0);
 
         aht_t aht;
         memset(&aht, 0, sizeof(aht));
-        aht.type = driver_config_get_int(cJSON_GetObjectItem(sensor_j, "type"), 0);
+        aht.type = driver_config_get_int(cJSON_GetObjectItem(sensor_j, OPT_TYPE), 0);
 
         esp_err_t r = aht_init_desc(&aht, addr, port, sda, scl);
         if (r != ESP_OK)
@@ -49,21 +55,21 @@ static esp_err_t on_init(driver_t *self)
         cvector_push_back(sensors, aht);
 
         device_t dev = { 0 };
-        snprintf(dev.uid, sizeof(dev.uid), "aht_rh%d", i);
+        snprintf(dev.uid, sizeof(dev.uid), FMT_HUMIDITY_SENSOR_ID, i);
         dev.type = DEV_SENSOR;
-        snprintf(dev.name, sizeof(dev.name), "%s humidity (AHT %d)", settings.node.name, i);
-        strncpy(dev.device_class, "humidity", sizeof(dev.device_class));
-        strncpy(dev.sensor.measurement_unit, "%", sizeof(dev.sensor.measurement_unit));
+        snprintf(dev.name, sizeof(dev.name), FMT_HUMIDITY_SENSOR_NAME, settings.node.name, i);
+        strncpy(dev.device_class, DEV_CLASS_HUMIDITY, sizeof(dev.device_class));
+        strncpy(dev.sensor.measurement_unit, DEV_MU_HUMIDITY, sizeof(dev.sensor.measurement_unit));
         dev.sensor.precision = 2;
         dev.sensor.update_period = update_period;
         cvector_push_back(self->devices, dev);
 
         memset(&dev, 0, sizeof(device_t));
-        snprintf(dev.uid, sizeof(dev.uid), "aht_t%d", i);
+        snprintf(dev.uid, sizeof(dev.uid), FMT_TEMPERATURE_SENSOR_ID, i);
         dev.type = DEV_SENSOR;
-        snprintf(dev.name, sizeof(dev.name), "%s temperature (AHT %d)", settings.node.name, i);
-        strncpy(dev.device_class, "temperature", sizeof(dev.device_class));
-        strncpy(dev.sensor.measurement_unit, "°C", sizeof(dev.sensor.measurement_unit));
+        snprintf(dev.name, sizeof(dev.name), FMT_TEMPERATURE_SENSOR_NAME, settings.node.name, i);
+        strncpy(dev.device_class, DEV_CLASS_TEMPERATURE, sizeof(dev.device_class));
+        strncpy(dev.sensor.measurement_unit, DEV_MU_TEMPERATURE, sizeof(dev.sensor.measurement_unit));
         dev.sensor.precision = 2;
         dev.sensor.update_period = update_period;
         cvector_push_back(self->devices, dev);
@@ -124,7 +130,7 @@ static esp_err_t on_stop(driver_t *self)
 
 driver_t drv_aht = {
     .name = "ahtxx",
-    .defconfig = "{ \"stack_size\": 4096, \"period\": 5000, \"sensors\": [{ \"port\": 1, \"sda\": 13, \"scl\": 14, \"type\": 0, \"address\": 56 }] }",
+    .defconfig = AHT_DEFCONFIG,
 
     .config = NULL,
     .state = DRIVER_NEW,

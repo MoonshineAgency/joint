@@ -26,6 +26,11 @@ static const adc_channel_t ain_channels[AIN_COUNT] = {
 
 static size_t samples;
 static int update_period;
+static int tds_dev_idx = -1;
+static struct {
+    bool enabled;
+    float voltage_0, voltage_100, voltage_perc;
+} moisture_cfg;
 
 static esp_err_t on_init(driver_t *self)
 {
@@ -40,10 +45,17 @@ static esp_err_t on_init(driver_t *self)
         adc_cali_delete_scheme_line_fitting(cali_handle);
         cali_handle = NULL;
     }
+    memset(&moisture_cfg, 0, sizeof(moisture_cfg));
 
     adc_atten_t atten = driver_config_get_int(cJSON_GetObjectItem(self->config, "attenuation"), ADC_ATTEN_DB_11);
     samples = driver_config_get_int(cJSON_GetObjectItem(self->config, "samples"), 64);
     update_period = driver_config_get_int(cJSON_GetObjectItem(self->config, "period"), 1000);
+    cJSON *moisture_j = cJSON_GetObjectItem(self->config, "moisture");
+    moisture_cfg.enabled = driver_config_get_bool(cJSON_GetObjectItem(moisture_j, "enabled"), false);
+    moisture_cfg.voltage_0 = driver_config_get_float(cJSON_GetObjectItem(moisture_j, "voltage_0"), 2.2f);
+    moisture_cfg.voltage_100 = driver_config_get_float(cJSON_GetObjectItem(moisture_j, "voltage_100"), 0.9f);
+    moisture_cfg.voltage_perc = (moisture_cfg.voltage_0 - moisture_cfg.voltage_100) / 100.0f;
+    tds_dev_idx = moisture_cfg.enabled ? AIN_COUNT * 2 : AIN_COUNT;
 
     ESP_RETURN_ON_ERROR(
         adc_oneshot_new_unit(&unit_cfg, &adc_handle),
@@ -97,18 +109,19 @@ static esp_err_t on_init(driver_t *self)
         cvector_push_back(self->devices, dev);
     }
 
-    for (size_t c = 0; c < AIN_COUNT; c++)
-    {
-        memset(&dev, 0, sizeof(dev));
-        dev.type = DEV_SENSOR;
-        dev.sensor.precision = 1;
-        dev.sensor.update_period = update_period;
-        strncpy(dev.sensor.measurement_unit, "%", sizeof(dev.sensor.measurement_unit));
-        strncpy(dev.device_class, "humidity", sizeof(dev.device_class));
-        snprintf(dev.uid, sizeof(dev.uid), "moisture%d", c);
-        snprintf(dev.name, sizeof(dev.name), "%s moisture sensor on AIN%d", settings.node.name, c);
-        cvector_push_back(self->devices, dev);
-    }
+    if (moisture_cfg.enabled)
+        for (size_t c = 0; c < AIN_COUNT; c++)
+        {
+            memset(&dev, 0, sizeof(dev));
+            dev.type = DEV_SENSOR;
+            dev.sensor.precision = 1;
+            dev.sensor.update_period = update_period;
+            strncpy(dev.sensor.measurement_unit, "%", sizeof(dev.sensor.measurement_unit));
+            strncpy(dev.device_class, "humidity", sizeof(dev.device_class));
+            snprintf(dev.uid, sizeof(dev.uid), "moisture%d", c);
+            snprintf(dev.name, sizeof(dev.name), "%s moisture sensor on AIN%d", settings.node.name, c);
+            cvector_push_back(self->devices, dev);
+        }
 
     memset(&dev, 0, sizeof(dev));
     dev.type = DEV_SENSOR;
@@ -148,9 +161,6 @@ static void task(driver_t *self)
     int tds_voltage;
 
     TickType_t period = pdMS_TO_TICKS(update_period);
-    float moisture_0 = driver_config_get_float(cJSON_GetObjectItem(self->config, "moisture_0"), 2.2f);
-    float moisture_100 = driver_config_get_float(cJSON_GetObjectItem(self->config, "moisture_100"), 0.9f);
-    float moisture_perc = (moisture_0 - moisture_100) / 100.0f;
 
     while (true)
     {
@@ -174,21 +184,22 @@ static void task(driver_t *self)
             driver_send_device_update(self, &self->devices[c]);
         }
 
-        for (size_t c = 0; c < AIN_COUNT; c++)
-        {
-            float moisture;
-            if (self->devices[c].sensor.value <= moisture_100)
-                moisture = 100;
-            else if (self->devices[c].sensor.value >= moisture_0)
-                moisture = 0;
-            else
-                moisture = (moisture_0 - self->devices[c].sensor.value) / moisture_perc;
-            self->devices[c + AIN_COUNT].sensor.value = moisture;
-            driver_send_device_update(self, &self->devices[c + AIN_COUNT]);
-        }
+        if (moisture_cfg.enabled)
+            for (size_t c = 0; c < AIN_COUNT; c++)
+            {
+                float moisture;
+                if (self->devices[c].sensor.value <= moisture_cfg.voltage_100)
+                    moisture = 100;
+                else if (self->devices[c].sensor.value >= moisture_cfg.voltage_0)
+                    moisture = 0;
+                else
+                    moisture = (moisture_cfg.voltage_0 - self->devices[c].sensor.value) / moisture_cfg.voltage_perc;
+                self->devices[c + AIN_COUNT].sensor.value = moisture;
+                driver_send_device_update(self, &self->devices[c + AIN_COUNT]);
+            }
 
-        self->devices[AIN_COUNT * 2].sensor.value = (float)tds_voltage / (float)samples / 1000.0f;
-        driver_send_device_update(self, &self->devices[AIN_COUNT * 2]);
+        self->devices[tds_dev_idx].sensor.value = (float)tds_voltage / (float)samples / 1000.0f;
+        driver_send_device_update(self, &self->devices[tds_dev_idx]);
 
         while (xTaskGetTickCount() - start < period)
         {
@@ -201,7 +212,8 @@ static void task(driver_t *self)
 
 driver_t drv_gh_adc = {
     .name = "gh_adc",
-    .defconfig = "{ \"stack_size\": 4096, \"period\": 2000, \"samples\": 64, \"attenuation\": 3, \"moisture_0\": 2.2, \"moisture_100\": 0.9 }",
+    .defconfig = "{ \"stack_size\": 4096, \"period\": 2000, \"samples\": 64, \"attenuation\": 3, "
+                 "\"moisture\": { \"voltage_0\": 2.2, \"voltage_100\": 0.9, \"enabled\": true } }",
 
     .config = NULL,
     .state = DRIVER_NEW,
