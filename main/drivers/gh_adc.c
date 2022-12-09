@@ -5,6 +5,14 @@
 #include "settings.h"
 #include "common.h"
 
+#define FMT_ADC_SENSOR_ID        "ain%d"
+#define FMT_MOISTURE_SENSOR_ID   "ain_moisture%d"
+#define FMT_TDS_SENSOR_ID        "tds0"
+
+#define FMT_ADC_SENSOR_NAME      "%s analog input %d"
+#define FMT_MOISTURE_SENSOR_NAME "%s moisture sensor on AIN%d"
+#define FMT_TDS_SENSOR_NAME      "%s TDS input 0 raw voltage"
+
 #define ADC_WIDTH ADC_BITWIDTH_12
 #define TDS_ATTEN ADC_ATTEN_DB_6 // 1.75V max
 #define AIN_COUNT 4
@@ -47,11 +55,11 @@ static esp_err_t on_init(driver_t *self)
     }
     memset(&moisture_cfg, 0, sizeof(moisture_cfg));
 
-    adc_atten_t atten = driver_config_get_int(cJSON_GetObjectItem(self->config, "attenuation"), ADC_ATTEN_DB_11);
-    samples = driver_config_get_int(cJSON_GetObjectItem(self->config, "samples"), 64);
-    update_period = driver_config_get_int(cJSON_GetObjectItem(self->config, "period"), 1000);
-    cJSON *moisture_j = cJSON_GetObjectItem(self->config, "moisture");
-    moisture_cfg.enabled = driver_config_get_bool(cJSON_GetObjectItem(moisture_j, "enabled"), false);
+    adc_atten_t atten = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_ATTEN), ADC_ATTEN_DB_11);
+    samples = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_SAMPLES), 64);
+    update_period = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_PERIOD), 1000);
+    cJSON *moisture_j = cJSON_GetObjectItem(self->config, OPT_MOISTURE);
+    moisture_cfg.enabled = driver_config_get_bool(cJSON_GetObjectItem(moisture_j, OPT_ENABLED), false);
     moisture_cfg.voltage_0 = driver_config_get_float(cJSON_GetObjectItem(moisture_j, "voltage_0"), 2.2f);
     moisture_cfg.voltage_100 = driver_config_get_float(cJSON_GetObjectItem(moisture_j, "voltage_100"), 0.9f);
     moisture_cfg.voltage_perc = (moisture_cfg.voltage_0 - moisture_cfg.voltage_100) / 100.0f;
@@ -102,10 +110,10 @@ static esp_err_t on_init(driver_t *self)
         dev.type = DEV_SENSOR;
         dev.sensor.precision = 3;
         dev.sensor.update_period = update_period;
-        strncpy(dev.sensor.measurement_unit, "V", sizeof(dev.sensor.measurement_unit));
-        strncpy(dev.device_class, "voltage",  sizeof(dev.device_class));
-        snprintf(dev.uid, sizeof(dev.uid), "ain%d", c);
-        snprintf(dev.name, sizeof(dev.name), "%s analog input %d", settings.node.name, c);
+        strncpy(dev.sensor.measurement_unit, DEV_MU_VOLTAGE, sizeof(dev.sensor.measurement_unit));
+        strncpy(dev.device_class, DEV_CLASS_VOLTAGE,  sizeof(dev.device_class));
+        snprintf(dev.uid, sizeof(dev.uid), FMT_ADC_SENSOR_ID, c);
+        snprintf(dev.name, sizeof(dev.name), FMT_ADC_SENSOR_NAME, settings.node.name, c);
         cvector_push_back(self->devices, dev);
     }
 
@@ -116,10 +124,10 @@ static esp_err_t on_init(driver_t *self)
             dev.type = DEV_SENSOR;
             dev.sensor.precision = 1;
             dev.sensor.update_period = update_period;
-            strncpy(dev.sensor.measurement_unit, "%", sizeof(dev.sensor.measurement_unit));
-            strncpy(dev.device_class, "humidity", sizeof(dev.device_class));
-            snprintf(dev.uid, sizeof(dev.uid), "moisture%d", c);
-            snprintf(dev.name, sizeof(dev.name), "%s moisture sensor on AIN%d", settings.node.name, c);
+            strncpy(dev.sensor.measurement_unit, DEV_MU_MOISTURE, sizeof(dev.sensor.measurement_unit));
+            strncpy(dev.device_class, DEV_CLASS_MOISTURE, sizeof(dev.device_class));
+            snprintf(dev.uid, sizeof(dev.uid), FMT_MOISTURE_SENSOR_ID, c);
+            snprintf(dev.name, sizeof(dev.name), FMT_MOISTURE_SENSOR_NAME, settings.node.name, c);
             cvector_push_back(self->devices, dev);
         }
 
@@ -127,10 +135,10 @@ static esp_err_t on_init(driver_t *self)
     dev.type = DEV_SENSOR;
     dev.sensor.precision = 3;
     dev.sensor.update_period = update_period;
-    strncpy(dev.sensor.measurement_unit, "V", sizeof(dev.sensor.measurement_unit));
-    strncpy(dev.device_class, "voltage",  sizeof(dev.device_class));
-    strncpy(dev.uid, "tds",  sizeof(dev.uid));
-    snprintf(dev.name, sizeof(dev.name), "%s TDS input raw", settings.node.name);
+    strncpy(dev.sensor.measurement_unit, DEV_MU_VOLTAGE, sizeof(dev.sensor.measurement_unit));
+    strncpy(dev.device_class, DEV_CLASS_VOLTAGE,  sizeof(dev.device_class));
+    strncpy(dev.uid, FMT_TDS_SENSOR_ID, sizeof(dev.uid));
+    snprintf(dev.name, sizeof(dev.name), FMT_TDS_SENSOR_NAME, settings.node.name);
     cvector_push_back(self->devices, dev);
 
     return ESP_OK;
@@ -212,8 +220,7 @@ static void task(driver_t *self)
 
 driver_t drv_gh_adc = {
     .name = "gh_adc",
-    .defconfig = "{ \"stack_size\": 4096, \"period\": 2000, \"samples\": 64, \"attenuation\": 3, "
-                 "\"moisture\": { \"voltage_0\": 2.2, \"voltage_100\": 0.9, \"enabled\": true } }",
+    .defconfig = GH_ADC_DEFCONFIG,
 
     .config = NULL,
     .state = DRIVER_NEW,
