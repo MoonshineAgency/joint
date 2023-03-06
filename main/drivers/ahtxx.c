@@ -130,7 +130,8 @@ static esp_err_t on_stop(driver_t *self)
 
 driver_t drv_aht = {
     .name = "ahtxx",
-    .defconfig = AHT_DEFCONFIG,
+    .defconfig = "{ \"" OPT_STACK_SIZE "\": " STR(CONFIG_DEFAULT_DRIVER_STACK_SIZE) ", \"" OPT_PERIOD "\": 5000, \"" OPT_SENSORS "\": " \
+        "[{ \"" OPT_PORT "\": 1, \"" OPT_SDA "\": 13, \"" OPT_SCL "\": 14, \"" OPT_TYPE "\": 0, \"" OPT_ADDRESS "\": 56 }] }",
 
     .config = NULL,
     .state = DRIVER_NEW,

@@ -34,10 +34,10 @@ static void task(void *arg)
                     ESP_LOGW(TAG, "Could not restart webserver");
                 break;
             case MQTT_CONNECTED:
-                SYSTEM_CHECK(node_online());
+                node_online();
                 break;
             case MQTT_DISCONNECTED:
-                SYSTEM_CHECK(node_offline());
+                node_offline();
                 break;
             default:
                 break;

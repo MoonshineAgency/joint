@@ -4,6 +4,7 @@
 #include <esp_err.h>
 #include <stdbool.h>
 #include <esp_wifi.h>
+#include <cJSON.h>
 
 typedef struct
 {
@@ -14,6 +15,7 @@ typedef struct
 
     struct {
         char name[32];
+        char tz[32];
     } node;
 
     struct {
@@ -44,5 +46,11 @@ esp_err_t settings_reset();
 
 esp_err_t settings_load_driver_config(const char *name, char *buf, size_t max_size);
 esp_err_t settings_save_driver_config(const char *name, const char *config);
+esp_err_t settings_reset_driver_config(const char *name);
+
+#define SETTINGS_JSON_MSG_SIZE 128
+
+esp_err_t settings_from_json(cJSON *src, char *msg);
+esp_err_t settings_to_json(cJSON **tgt);
 
 #endif // ESP_IOT_NODE_PLUS_SETTINGS_H_

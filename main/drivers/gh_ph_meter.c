@@ -19,13 +19,13 @@ static esp_err_t on_init(driver_t *self)
 {
     cvector_free(self->devices);
 
-    gpio_num_t sda = driver_config_get_gpio(cJSON_GetObjectItem(self->config, "sda"), CONFIG_I2C0_SDA_GPIO);
-    gpio_num_t scl = driver_config_get_gpio(cJSON_GetObjectItem(self->config, "scl"), CONFIG_I2C0_SCL_GPIO);
-    uint8_t addr = driver_config_get_int(cJSON_GetObjectItem(self->config, "address"), ADS111X_ADDR_GND);
-    i2c_port_t port = driver_config_get_int(cJSON_GetObjectItem(self->config, "port"), 0);
-    int freq = driver_config_get_int(cJSON_GetObjectItem(self->config, "frequency"), 0);
-    samples = driver_config_get_int(cJSON_GetObjectItem(self->config, "samples"), 32);
-    update_period = driver_config_get_int(cJSON_GetObjectItem(self->config, "period"), 1000);
+    gpio_num_t sda = driver_config_get_gpio(cJSON_GetObjectItem(self->config, OPT_SDA), CONFIG_I2C0_SDA_GPIO);
+    gpio_num_t scl = driver_config_get_gpio(cJSON_GetObjectItem(self->config, OPT_SCL), CONFIG_I2C0_SCL_GPIO);
+    uint8_t addr = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_ADDRESS), ADS111X_ADDR_GND);
+    i2c_port_t port = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_PORT), 0);
+    int freq = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_FREQ), 0);
+    samples = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_SAMPLES), 32);
+    update_period = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_PERIOD), 1000);
 
     e1 = driver_config_get_float(cJSON_GetObjectItem(self->config, "ph7_voltage"), 0.0f);
     float e2 = driver_config_get_float(cJSON_GetObjectItem(self->config, "ph4_voltage"), 0.17143f);
@@ -159,8 +159,8 @@ static esp_err_t on_stop(driver_t *self)
 
 driver_t drv_ph_meter = {
     .name = "gh_ph_meter",
-    .defconfig = "{ \"stack_size\": 4096, \"period\": 5000, \"port\": 0, \"sda\": " STR(CONFIG_I2C0_SDA_GPIO) ", \"scl\": " STR(CONFIG_I2C0_SCL_GPIO) ", "
-                 "\"address\": 72, \"ph7_voltage\": 0, \"ph4_voltage\": 0.17143, \"samples\": 32 }",
+    .defconfig = "{ \"" OPT_STACK_SIZE "\": 4096, \"" OPT_PERIOD "\": 5000, \"" OPT_PORT "\": 0, \"" OPT_SDA "\": " STR(CONFIG_I2C0_SDA_GPIO)
+        ", \"" OPT_SCL "\": " STR(CONFIG_I2C0_SCL_GPIO) ", \"" OPT_ADDRESS "\": 72, \"ph7_voltage\": 0, \"ph4_voltage\": 0.17143, \"" OPT_SAMPLES "\": 32 }",
 
     .config = NULL,
     .state = DRIVER_NEW,

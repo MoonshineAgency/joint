@@ -220,7 +220,8 @@ static void task(driver_t *self)
 
 driver_t drv_gh_adc = {
     .name = "gh_adc",
-    .defconfig = GH_ADC_DEFCONFIG,
+    .defconfig = "{ \"" OPT_STACK_SIZE "\": 4096, \"" OPT_PERIOD "\": 2000, \"" OPT_SAMPLES "\": 64, \"" OPT_ATTEN "\": 3, " \
+        "\"" OPT_MOISTURE "\": { \"voltage_0\": 2.2, \"voltage_100\": 0.9, \"" OPT_ENABLED "\": true } }",
 
     .config = NULL,
     .state = DRIVER_NEW,

@@ -113,7 +113,8 @@ static void task(driver_t *self)
 
 driver_t drv_dht = {
     .name = "dhtxx",
-    .defconfig = DHT_DEFCONFIG,
+    .defconfig = "{ \"" OPT_STACK_SIZE "\": " STR(CONFIG_DEFAULT_DRIVER_STACK_SIZE) ", \"" OPT_PERIOD "\": 5000, \"" OPT_SENSORS \
+        "\": [{ \"" OPT_GPIO "\": 21, \"" OPT_TYPE "\": 0, \"" OPT_PULLUP "\": true }] }",
 
     .config = NULL,
     .state = DRIVER_NEW,

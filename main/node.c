@@ -9,7 +9,6 @@
 #include "drivers/gh_io.h"
 #include "drivers/gh_adc.h"
 #include "drivers/gh_ph_meter.h"
-
 #include "drivers/ahtxx.h"
 #include "drivers/ds18b20.h"
 #include "drivers/dhtxx.h"
@@ -18,12 +17,12 @@
 #define DRIVER_SET_CONFIG_TOPIC_FMT  "drivers/%s/set_config"
 
 static char buf[1024];
-static cvector_vector_type(driver_t *) drivers = NULL;
+static cvector_vector_type(driver_t *)drivers = NULL;
 static QueueHandle_t node_queue = NULL;
 
 static void publish_driver(const driver_t *drv)
 {
-    char topic[128] = { 0 };
+    char topic[128] = {0};
     snprintf(topic, sizeof(topic), DRIVER_CONFIG_TOPIC_FMT, drv->name);
     mqtt_publish_json_subtopic(topic, drv->config, 2, 1);
 }
@@ -36,7 +35,7 @@ static void on_set_config(const char *topic, const char *data, size_t data_len, 
         return;
     }
 
-    driver_t *drv = (driver_t *)ctx;
+    driver_t *drv = (driver_t *) ctx;
 
     memcpy(buf, data, data_len);
     buf[data_len] = 0;
@@ -136,10 +135,10 @@ esp_err_t node_init()
     return ESP_OK;
 }
 
-esp_err_t node_online()
+void node_online()
 {
     if (system_mode() == MODE_ONLINE)
-        return ESP_OK;
+        return;
 
     ESP_LOGI(TAG, "Node goes online...");
     system_set_mode(MODE_ONLINE);
@@ -155,7 +154,7 @@ esp_err_t node_online()
         publish_driver(drivers[i]);
 
         // subscribe on driver config
-        char topic[128] = { 0 };
+        char topic[128] = {0};
         snprintf(topic, sizeof(topic), DRIVER_SET_CONFIG_TOPIC_FMT, drivers[i]->name);
         mqtt_subscribe_subtopic(topic, on_set_config, 2, drivers[i]);
     }
@@ -171,17 +170,13 @@ esp_err_t node_online()
             device_publish_discovery(&drivers[i]->devices[d]);
         }
     }
-
-    return ESP_OK;
 }
 
-esp_err_t node_offline()
+void node_offline()
 {
     if (system_mode() == MODE_OFFLINE)
-        return ESP_OK;
+        return;
 
     ESP_LOGI(TAG, "Node goes offline...");
     system_set_mode(MODE_OFFLINE);
-
-    return ESP_OK;
 }

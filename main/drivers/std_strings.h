@@ -17,6 +17,7 @@
 #define OPT_MOISTURE   "moisture"
 #define OPT_ENABLED    "enabled"
 #define OPT_ATTEN      "attenuation"
+#define OPT_INTR       "intr"
 
 // device classes
 #define DEV_CLASS_HUMIDITY    "humidity"

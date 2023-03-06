@@ -7,13 +7,9 @@
 static void callback(struct timeval *tv)
 {
     ESP_LOGI(TAG, "Got time from SNTP, updating HW RTC");
-    setenv("TZ", "UTC", 1);
-    tzset();
     esp_err_t r = hw_rtc_update();
     if (r != ESP_OK)
         ESP_LOGW(TAG, "Error updating HW RTC: %d (%s)", r, esp_err_to_name(r));
-    setenv("TZ", CONFIG_NODE_TZ, 1);
-    tzset();
 }
 #endif
 

@@ -1,0 +1,284 @@
+type: vertical-stack
+cards:
+  - type: horizontal-stack
+    cards:
+      - type: vertical-stack
+        title: Воздух
+        cards:
+          - type: gauge
+            entity: sensor.growtent_dev_aht_t0
+            name: Температура воздуха
+            needle: true
+            min: 10
+            max: 50
+            severity:
+              green: 20
+              yellow: 30
+              red: 40
+          - type: custom:bar-card
+            entities:
+              - entity: sensor.growtent_dev_aht_rh0
+                name: Влажность воздуха
+                icon: mdi:cloud-percent
+                severity:
+                  - from: '0'
+                    to: '20'
+                    color: red
+                  - from: '20'
+                    to: '50'
+                    color: orange
+                  - from: '50'
+                    to: '70'
+                    color: green
+                  - from: '70'
+                    to: '90'
+                    color: orange
+                  - from: '90'
+                    to: '100'
+                    color: red
+          - type: history-graph
+            hours_to_show: 24
+            refresh_interval: 1
+            entities:
+              - entity: sensor.growtent_dev_aht_t0
+                name: Температура воздуха
+              - entity: sensor.growtent_dev_aht_rh0
+                name: Влажность воздуха
+      - type: vertical-stack
+        title: Почва
+        cards:
+          - type: gauge
+            entity: sensor.growtent_dev_b83c01f095d3b728
+            name: Температура почвы
+            needle: true
+            min: 10
+            max: 60
+            severity:
+              green: 20
+              yellow: 40
+              red: 50
+          - type: custom:bar-card
+            entities:
+              - entity: sensor.growtent_dev_ain_moisture0
+                name: Влажность почвы 1
+                icon: mdi:sprout
+                severity:
+                  - from: '0'
+                    to: '20'
+                    color: red
+                    icon: mdi:water-off
+                  - from: '20'
+                    to: '40'
+                    color: orange
+                    icon: mdi:water-remove
+                  - from: '40'
+                    to: '60'
+                    color: green
+                  - from: '60'
+                    to: '80'
+                    color: orange
+                    icon: mdi:water-plus
+                  - from: '80'
+                    to: '100'
+                    color: red
+                    icon: mdi:waves
+              - entity: sensor.growtent_dev_ain_moisture1
+                name: Влажность почвы 2
+                icon: mdi:sprout
+                severity:
+                  - from: '0'
+                    to: '20'
+                    color: red
+                    icon: mdi:water-off
+                  - from: '20'
+                    to: '40'
+                    color: orange
+                    icon: mdi:water-remove
+                  - from: '40'
+                    to: '60'
+                    color: green
+                  - from: '60'
+                    to: '80'
+                    color: orange
+                    icon: mdi:water-plus
+                  - from: '80'
+                    to: '100'
+                    color: red
+                    icon: mdi:waves
+              - entity: sensor.growtent_dev_ain_moisture2
+                name: Влажность почвы 3
+                icon: mdi:sprout
+                severity:
+                  - from: '0'
+                    to: '20'
+                    color: red
+                    icon: mdi:water-off
+                  - from: '20'
+                    to: '40'
+                    color: orange
+                    icon: mdi:water-remove
+                  - from: '40'
+                    to: '60'
+                    color: green
+                  - from: '60'
+                    to: '80'
+                    color: orange
+                    icon: mdi:water-plus
+                  - from: '80'
+                    to: '100'
+                    color: red
+                    icon: mdi:waves
+              - entity: sensor.growtent_dev_ain_moisture3
+                name: Влажность почвы 4
+                icon: mdi:sprout
+                severity:
+                  - from: '0'
+                    to: '20'
+                    color: red
+                    icon: mdi:water-off
+                  - from: '20'
+                    to: '40'
+                    color: orange
+                    icon: mdi:water-remove
+                  - from: '40'
+                    to: '60'
+                    color: green
+                  - from: '60'
+                    to: '80'
+                    color: orange
+                    icon: mdi:water-plus
+                  - from: '80'
+                    to: '100'
+                    color: red
+                    icon: mdi:waves
+          - type: history-graph
+            hours_to_show: 24
+            refresh_interval: 1
+            entities:
+              - entity: sensor.growtent_dev_ain_moisture0
+                name: Влажность почвы 1
+              - entity: sensor.growtent_dev_ain_moisture1
+                name: Влажность почвы 2
+              - entity: sensor.growtent_dev_ain_moisture2
+                name: Влажность почвы 3
+              - entity: sensor.growtent_dev_ain_moisture3
+                name: Влажность почвы 4
+      - type: vertical-stack
+        title: Раствор
+        cards:
+          - type: gauge
+            entity: sensor.growtent_dev_b203168224a8ff28
+            name: Температура раствора
+            needle: true
+            severity:
+              green: 20
+              yellow: 30
+              red: 40
+          - type: custom:bar-card
+            entities:
+              - entity: sensor.growtent_dev_ph0
+                name: pH раствора
+                icon: mdi:ph
+                min: 0
+                max: 14
+                severity:
+                  - from: '0'
+                    to: '1'
+                    color: red
+                  - from: '1'
+                    to: '2'
+                    color: '#e36125'
+                  - from: '2'
+                    to: '3'
+                    color: '#ed9726'
+                  - from: '3'
+                    to: '4'
+                    color: '#f5be1b'
+                  - from: '4'
+                    to: '5'
+                    color: yellow
+                  - from: '5'
+                    to: '6'
+                    color: '#cfec2f'
+                  - from: '6'
+                    to: '7'
+                    color: '#8bd544'
+                  - from: '7'
+                    to: '8'
+                    color: '#2dc74f'
+                  - from: '8'
+                    to: '9'
+                    color: '#0cc055'
+                  - from: '9'
+                    to: '10'
+                    color: '#099c82'
+                  - from: '10'
+                    to: '11'
+                    color: '#0874b4'
+                  - from: '11'
+                    to: '12'
+                    color: '#0657a0'
+                  - from: '12'
+                    to: '13'
+                    color: '#312a91'
+                  - from: '13'
+                    to: '14'
+                    color: '#221972'
+          - type: history-graph
+            entities:
+              - entity: sensor.growtent_dev_ph0
+                name: pH раствора
+            hours_to_show: 48
+      - type: vertical-stack
+        title: Контроль
+        cards:
+          - type: gauge
+            entity: sensor.growtent_dev_133c01f0954ef028
+            name: Температура LED
+            needle: true
+            severity:
+              green: 0
+              yellow: 60
+              red: 90
+          - type: glance
+            show_icon: true
+            show_state: false
+            show_name: true
+            entities:
+              - entity: binary_sensor.growtent_dev_switch0
+                name: Раствор
+                icon: mdi:bucket-outline
+              - entity: binary_sensor.growtent_dev_switch1
+                name: Перелив
+                icon: mdi:bucket
+              - entity: binary_sensor.growtent_dev_switch2
+                name: Насос
+                icon: mdi:pump
+              - entity: binary_sensor.growtent_dev_switch3
+                name: Аэратор
+                icon: mdi:chart-bubble
+          - type: entities
+            title: Группа реле
+            show_header_toggle: false
+            entities:
+              - entity: switch.growtent_dev_relay0
+                name: Свет (реле 0)
+                icon: mdi:ceiling-light
+              - entity: switch.growtent_dev_relay1
+                name: Вентиляция (реле 1)
+                icon: mdi:fan
+              - entity: switch.growtent_dev_relay2
+                name: Реле 2
+                icon: mdi:electric-switch
+              - entity: switch.growtent_dev_relay3
+                name: Реле 3
+                icon: mdi:electric-switch
+              - entity: switch.growtent_dev_relay4
+                name: Реле 4
+                icon: mdi:electric-switch
+              - entity: switch.growtent_dev_relay5
+                name: Реле 5
+                icon: mdi:electric-switch
+              - entity: switch.growtent_dev_relay6
+                name: Реле 6
+                icon: mdi:electric-switch

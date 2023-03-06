@@ -2,6 +2,7 @@
 #include <esp_log.h>
 #include <ds18x20.h>
 #include "settings.h"
+#include "common.h"
 
 #define SENSOR_ADDR_FMT "%08lX%08lX"
 #define SENSOR_ADDR(addr) (uint32_t)(addr >> 32), (uint32_t)addr
@@ -24,9 +25,9 @@ static esp_err_t on_init(driver_t *self)
     sensors_count = 0;
     loop_no = 0;
 
-    gpio = driver_config_get_gpio(cJSON_GetObjectItem(self->config, "gpio"), GPIO_NUM_NC);
+    gpio = driver_config_get_gpio(cJSON_GetObjectItem(self->config, OPT_GPIO), GPIO_NUM_NC);
     scan_interval = driver_config_get_int(cJSON_GetObjectItem(self->config, "scan_interval"), 1);
-    update_period = driver_config_get_int(cJSON_GetObjectItem(self->config, "period"), 1000);
+    update_period = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_PERIOD), 1000);
 
     ESP_LOGI(self->name, "Configured to use GPIO %d with scan_interval %d", gpio, scan_interval);
 
@@ -142,7 +143,8 @@ static void task(driver_t *self)
 
 driver_t drv_ds18b20 = {
     .name = "ds18b20",
-    .defconfig = "{ \"stack_size\": 4096, \"period\": 5000, \"gpio\": 15, \"scan_interval\": 10 }",
+    .defconfig = "{ \"" OPT_STACK_SIZE "\": " STR(CONFIG_DEFAULT_DRIVER_STACK_SIZE) ", \"" OPT_PERIOD "\": 5000, \""
+        OPT_GPIO "\": " STR(CONFIG_DS18X20_GPIO) ", \"scan_interval\": 10 }",
 
     .config = NULL,
     .state = DRIVER_NEW,

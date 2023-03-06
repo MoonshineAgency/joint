@@ -25,6 +25,12 @@ menu "*** iot-node configuration ***"
         config NODE_TZ
             string "Timezone"
             default "UTC"
+            help
+                Warning: POSIX-style timezone definition!
+                The offset specifies the time value you must add to the local time to get a
+                Coordinated Universal Time value.
+
+                E.g., if your timezone is UTC+5, you must use "UTC-5" and so on.
 
         config SNTP_ENABLE
             bool "Enable SNTP date/time sync"
@@ -132,6 +138,10 @@ menu "*** iot-node configuration ***"
         endmenu
 
         menu "DS18x20"
+
+            config DS18X20_GPIO
+                int "Default 1-wire GPIO number"
+                default 15
 
             config DS18X20_MAX_SENSORS
                 int "Maximum number of DS18x20 sensors"

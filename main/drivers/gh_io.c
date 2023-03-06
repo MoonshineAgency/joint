@@ -5,10 +5,19 @@
 #include <tca95x5.h>
 #include "common.h"
 
+#define FMT_RELAY_ID    "relay%d"
+#define FMT_INPUT_ID    "input%d"
+#define FMT_SWITCH_ID   "switch%d"
+
+#define FMT_RELAY_NAME  "%s relay %d"
+#define FMT_INPUT_NAME  "%s isolated input %d"
+#define FMT_SWITCH_NAME "%s input switch %d"
+
 #define RELAYS_COUNT 7
 #define SWITCHES_COUNT 4
 #define INPUTS_COUNT 4
 #define PORT_MODE 0xff00 // low 8 bits = input, high 8 bits = output
+
 #define CHANGED_BITS BIT(0)
 
 static i2c_dev_t expander = { 0 };
@@ -21,8 +30,7 @@ static void IRAM_ATTR on_port_change(void *arg)
 {
     (void)arg;
     BaseType_t hp_task;
-    BaseType_t r = xEventGroupSetBitsFromISR(port_event, CHANGED_BITS, &hp_task);
-    if (r != pdFAIL)
+    if (xEventGroupSetBitsFromISR(port_event, CHANGED_BITS, &hp_task) != pdFAIL)
         portYIELD_FROM_ISR(hp_task);
 }
 
@@ -55,12 +63,12 @@ static esp_err_t on_init(driver_t *self)
         return ESP_ERR_NO_MEM;
     }
 
-    gpio_num_t sda = driver_config_get_gpio(cJSON_GetObjectItem(self->config, "sda"), CONFIG_I2C0_SDA_GPIO);
-    gpio_num_t scl = driver_config_get_gpio(cJSON_GetObjectItem(self->config, "scl"), CONFIG_I2C0_SCL_GPIO);
-    intr = driver_config_get_gpio(cJSON_GetObjectItem(self->config, "intr"), CONFIG_GH_IO_DRIVER_INTR_GPIO);
-    uint8_t addr = driver_config_get_int(cJSON_GetObjectItem(self->config, "address"), TCA95X5_I2C_ADDR_BASE);
-    i2c_port_t port = driver_config_get_int(cJSON_GetObjectItem(self->config, "port"), 0);
-    int freq = driver_config_get_int(cJSON_GetObjectItem(self->config, "frequency"), 0);
+    gpio_num_t sda = driver_config_get_gpio(cJSON_GetObjectItem(self->config, OPT_SDA), CONFIG_I2C0_SDA_GPIO);
+    gpio_num_t scl = driver_config_get_gpio(cJSON_GetObjectItem(self->config, OPT_SCL), CONFIG_I2C0_SCL_GPIO);
+    intr = driver_config_get_gpio(cJSON_GetObjectItem(self->config, OPT_INTR), CONFIG_GH_IO_DRIVER_INTR_GPIO);
+    uint8_t addr = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_ADDRESS), TCA95X5_I2C_ADDR_BASE);
+    i2c_port_t port = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_PORT), 0);
+    int freq = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_FREQ), 0);
 
     memset(&expander, 0, sizeof(expander));
     ESP_RETURN_ON_ERROR(
@@ -97,8 +105,8 @@ static esp_err_t on_init(driver_t *self)
         dev.type = DEV_BINARY_SWITCH;
         dev.internal[0] = (void *)i;
         dev.binary_switch.on_write = on_relay_command;
-        snprintf(dev.uid, sizeof(dev.uid), "relay%d", i);
-        snprintf(dev.name, sizeof(dev.name), "%s relay %d", settings.node.name, i);
+        snprintf(dev.uid, sizeof(dev.uid), FMT_RELAY_ID, i);
+        snprintf(dev.name, sizeof(dev.name), FMT_RELAY_NAME, settings.node.name, i);
         cvector_push_back(self->devices, dev);
     }
 
@@ -107,8 +115,8 @@ static esp_err_t on_init(driver_t *self)
     {
         memset(&dev, 0, sizeof(dev));
         dev.type = DEV_BINARY_SENSOR;
-        snprintf(dev.uid, sizeof(dev.uid), "input%d", i);
-        snprintf(dev.name, sizeof(dev.name), "%s isolated input %d", settings.node.name, i);
+        snprintf(dev.uid, sizeof(dev.uid), FMT_INPUT_ID, i);
+        snprintf(dev.name, sizeof(dev.name), FMT_INPUT_NAME, settings.node.name, i);
         cvector_push_back(self->devices, dev);
     }
 
@@ -117,8 +125,8 @@ static esp_err_t on_init(driver_t *self)
     {
         memset(&dev, 0, sizeof(dev));
         dev.type = DEV_BINARY_SENSOR;
-        snprintf(dev.uid, sizeof(dev.uid), "switch%d", i);
-        snprintf(dev.name, sizeof(dev.name), "%s input switch %d", settings.node.name, i);
+        snprintf(dev.uid, sizeof(dev.uid), FMT_SWITCH_ID, i);
+        snprintf(dev.name, sizeof(dev.name), FMT_SWITCH_NAME, settings.node.name, i);
         cvector_push_back(self->devices, dev);
     }
 
@@ -192,8 +200,8 @@ static esp_err_t on_stop(driver_t *self)
 
 driver_t drv_gh_io = {
     .name = "gh_io",
-    .defconfig = "{ \"stack_size\": 4096, \"port\": 0, \"sda\": " STR(CONFIG_I2C0_SDA_GPIO) ", \"scl\": " STR(CONFIG_I2C0_SCL_GPIO)
-        ", \"intr\": " STR(CONFIG_GH_IO_DRIVER_INTR_GPIO) ", \"address\": 32 }",
+    .defconfig = "{ \"" OPT_STACK_SIZE "\": 4096, \"" OPT_PORT "\": 0, \"" OPT_SDA "\": " STR(CONFIG_I2C0_SDA_GPIO) ", \"" OPT_SCL "\": " STR(CONFIG_I2C0_SCL_GPIO)
+        ", \"" OPT_INTR "\": " STR(CONFIG_GH_IO_DRIVER_INTR_GPIO) ", \"" OPT_ADDRESS "\": 32 }",
 
     .config = NULL,
     .state = DRIVER_NEW,

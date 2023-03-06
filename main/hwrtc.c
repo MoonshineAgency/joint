@@ -32,7 +32,10 @@ esp_err_t hw_rtc_init()
 
     CHECK(pcf8563_get_time(&dev, &ti, &valid));
     if (!valid)
+    {
         ESP_LOGW(TAG, "RTC time is invalid, please reset");
+        return ESP_ERR_INVALID_STATE;
+    }
 
     struct timeval t = {
         .tv_sec = mktime(&ti),

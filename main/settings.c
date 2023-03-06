@@ -2,6 +2,7 @@
 #include "common.h"
 #include <nvs.h>
 #include <nvs_flash.h>
+#include <lwip/ip_addr.h>
 
 settings_t settings;
 
@@ -12,6 +13,7 @@ const settings_t defaults = {
     },
     .node = {
         .name = { 0 },
+        .tz = CONFIG_NODE_TZ,
     },
     .mqtt = {
         .uri = CONFIG_NODE_MQTT_URI,
@@ -42,6 +44,44 @@ const settings_t defaults = {
         },
     },
 };
+
+static const char *OPT_SYSTEM            = "system";
+static const char *OPT_SYSTEM_NAME       = "name";
+static const char *OPT_SYSTEM_FAILSAFE   = "failsafe";
+static const char *OPT_SYSTEM_SAFE_MODE  = "safe_mode";
+static const char *OPT_SYSTEM_TZ         = "timezone";
+static const char *OPT_MQTT              = "mqtt";
+static const char *OPT_MQTT_URI          = "uri";
+static const char *OPT_MQTT_USERNAME     = "username";
+static const char *OPT_MQTT_PASSWORD     = "password";
+static const char *OPT_WIFI              = "wifi";
+static const char *OPT_WIFI_IP           = "ip";
+static const char *OPT_WIFI_IP_DHCP      = "dhcp";
+static const char *OPT_WIFI_IP_IP        = "ip";
+static const char *OPT_WIFI_IP_NETMASK   = "netmask";
+static const char *OPT_WIFI_IP_GATEWAY   = "gateway";
+static const char *OPT_WIFI_IP_DNS       = "dns";
+static const char *OPT_WIFI_AP           = "ap";
+static const char *OPT_WIFI_AP_SSID      = "ssid";
+static const char *OPT_WIFI_AP_CHANNEL   = "channel";
+static const char *OPT_WIFI_AP_PASSWORD  = "password";
+static const char *OPT_WIFI_STA          = "sta";
+static const char *OPT_WIFI_STA_SSID     = "ssid";
+static const char *OPT_WIFI_STA_PASSWORD = "password";
+
+static const char *MSG_FIELD_ERR             = "Field `%s` not found or invalid";
+static const char *MSG_SYSTEM_NAME_ERR       = "Invalid system.name";
+static const char *MSG_SYSTEM_TZ_ERR         = "Invalid system.tz";
+static const char *MSG_MQTT_URI_ERR          = "Invalid mqtt.uri";
+static const char *MSG_MQTT_USERNAME_ERR     = "mqtt.username too long";
+static const char *MSG_MQTT_PASSWORD_ERR     = "mqtt.password too long";
+static const char *MSG_WIFI_AP_SSID_ERR      = "Invalid ap.ssid";
+static const char *MSG_WIFI_AP_CHANNEL_ERR   = "Invalid ap.channel";
+static const char *MSG_WIFI_AP_PASSWORD_ERR  = "ap.password too long";
+static const char *MSG_WIFI_STA_SSID_ERR     = "Invalid sta.ssid";
+static const char *MSG_WIFI_STA_PASSWORD_ERR = "sta.password too long";
+static const char *MSG_SAVE_ERR              = "Error saving settings";
+static const char *MSG_SAVE_OK               = "Settings saved, reboot to apply";
 
 esp_err_t settings_init()
 {
@@ -158,6 +198,222 @@ esp_err_t settings_save_driver_config(const char *name, const char *config)
         nvs_set_str(nvs, name, config),
         TAG, "Error writing '%s' driver configuration: %d (%s)", name, err_rc_, esp_err_to_name(err_rc_));
     nvs_close(nvs);
+
+    return ESP_OK;
+}
+
+esp_err_t settings_reset_driver_config(const char *name)
+{
+    ESP_LOGI(TAG, "Erasing '%s' driver configuration...", name);
+    nvs_handle_t nvs;
+    ESP_RETURN_ON_ERROR(
+        nvs_open(SETTINGS_PARTITION, NVS_READWRITE, &nvs),
+        TAG, "Could not open NVS to write");
+    ESP_RETURN_ON_ERROR(
+        nvs_erase_key(nvs, name),
+        TAG, "Error erasing '%s' driver configuration: %d (%s)", name, err_rc_, esp_err_to_name(err_rc_));
+    nvs_close(nvs);
+
+    return ESP_OK;
+}
+
+static inline bool is_ip(cJSON *json)
+{
+    return cJSON_IsString(json) && ipaddr_addr(cJSON_GetStringValue(json)) != IPADDR_NONE;
+}
+
+static void report_err(const char *err_msg, char *msg)
+{
+    snprintf(msg, SETTINGS_JSON_MSG_SIZE, "%s", err_msg);
+    ESP_LOGE(TAG, "%s", msg);
+}
+
+static void report_json_field_err(const char *field, char *msg)
+{
+    snprintf(msg, SETTINGS_JSON_MSG_SIZE, MSG_FIELD_ERR, field);
+    ESP_LOGE(TAG, "%s", msg);
+}
+
+#define GET_JSON_ITEM(VAR, SRC, NAME, CHECK) \
+    cJSON *VAR = cJSON_GetObjectItem(SRC, NAME); \
+    if (!CHECK(VAR)) { report_json_field_err(NAME, msg); return ESP_ERR_INVALID_ARG; }
+
+
+esp_err_t settings_from_json(cJSON *src, char *msg)
+{
+    CHECK_ARG(src);
+
+    // 1. Parse
+    GET_JSON_ITEM(system, src, OPT_SYSTEM, );
+    GET_JSON_ITEM(sys_name_item, system, OPT_SYSTEM_NAME, cJSON_IsString);
+    GET_JSON_ITEM(sys_failsafe_item, system, OPT_SYSTEM_FAILSAFE, cJSON_IsBool);
+    GET_JSON_ITEM(sys_safe_mode_item, system, OPT_SYSTEM_SAFE_MODE, cJSON_IsBool);
+    GET_JSON_ITEM(sys_tz_item, system, OPT_SYSTEM_TZ, cJSON_IsString);
+
+    GET_JSON_ITEM(mqtt, src, OPT_MQTT, );
+    GET_JSON_ITEM(mqtt_uri_item, mqtt, OPT_MQTT_URI, cJSON_IsString);
+    GET_JSON_ITEM(mqtt_username_item, mqtt, OPT_MQTT_USERNAME, cJSON_IsString);
+    GET_JSON_ITEM(mqtt_password_item, mqtt, OPT_MQTT_PASSWORD, cJSON_IsString);
+
+    GET_JSON_ITEM(wifi, src, OPT_WIFI, );
+
+    GET_JSON_ITEM(wifi_ip, wifi, OPT_WIFI_IP, );
+    GET_JSON_ITEM(wifi_ip_dhcp_item, wifi_ip, OPT_WIFI_IP_DHCP, cJSON_IsBool);
+    GET_JSON_ITEM(wifi_ip_ip_item, wifi_ip, OPT_WIFI_IP_IP, is_ip);
+    GET_JSON_ITEM(wifi_ip_netmask_item, wifi_ip, OPT_WIFI_IP_NETMASK, is_ip);
+    GET_JSON_ITEM(wifi_ip_gateway_item, wifi_ip, OPT_WIFI_IP_GATEWAY, is_ip);
+    GET_JSON_ITEM(wifi_ip_dns_item, wifi_ip, OPT_WIFI_IP_DNS, is_ip);
+
+    GET_JSON_ITEM(wifi_ap, wifi, OPT_WIFI_AP, );
+    GET_JSON_ITEM(wifi_ap_ssid, wifi_ap, OPT_WIFI_AP_SSID, cJSON_IsString);
+    GET_JSON_ITEM(wifi_ap_channel, wifi_ap, OPT_WIFI_AP_CHANNEL, cJSON_IsNumber);
+    GET_JSON_ITEM(wifi_ap_password, wifi_ap, OPT_WIFI_AP_PASSWORD, cJSON_IsString);
+
+    GET_JSON_ITEM(wifi_sta, wifi, OPT_WIFI_STA, );
+    GET_JSON_ITEM(wifi_sta_ssid, wifi_sta, OPT_WIFI_STA_SSID, cJSON_IsString);
+    GET_JSON_ITEM(wifi_sta_password, wifi_sta, OPT_WIFI_STA_PASSWORD, cJSON_IsString);
+
+    // 2. Check
+    const char *sys_name = cJSON_GetStringValue(sys_name_item);
+    size_t len = strlen(sys_name);
+    if (!len || len >= sizeof(settings.node.name))
+    {
+        report_err(MSG_SYSTEM_NAME_ERR, msg);
+        return ESP_ERR_INVALID_ARG;
+    }
+    const char *sys_tz = cJSON_GetStringValue(sys_tz_item);
+    len = strlen(sys_tz);
+    if (len >= sizeof(settings.node.name))
+    {
+        report_err(MSG_SYSTEM_TZ_ERR, msg);
+        return ESP_ERR_INVALID_ARG;
+    }
+    else if (!len)
+        sys_tz = CONFIG_NODE_TZ;
+
+    const char *mqtt_uri = cJSON_GetStringValue(mqtt_uri_item);
+    len = strlen(mqtt_uri);
+    if (!len || len >= sizeof(settings.mqtt.uri))
+    {
+        report_err(MSG_MQTT_URI_ERR, msg);
+        return ESP_ERR_INVALID_ARG;
+    }
+    const char *mqtt_username = cJSON_GetStringValue(mqtt_username_item);
+    if (strlen(mqtt_username) >= sizeof(settings.mqtt.username))
+    {
+        report_err(MSG_MQTT_USERNAME_ERR, msg);
+        return ESP_ERR_INVALID_ARG;
+    }
+    const char *mqtt_password = cJSON_GetStringValue(mqtt_password_item);
+    if (strlen(mqtt_password) >= sizeof(settings.mqtt.password))
+    {
+        report_err(MSG_MQTT_PASSWORD_ERR, msg);
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    const char *ap_ssid = cJSON_GetStringValue(wifi_ap_ssid);
+    len = strlen(ap_ssid);
+    if (!len || len >= sizeof(settings.wifi.ap.ssid))
+    {
+        report_err(MSG_WIFI_AP_SSID_ERR, msg);
+        return ESP_ERR_INVALID_ARG;
+    }
+    uint8_t ap_channel = (uint8_t)cJSON_GetNumberValue(wifi_ap_channel);
+    if (ap_channel > 32)
+    {
+        report_err(MSG_WIFI_AP_CHANNEL_ERR, msg);
+        return ESP_ERR_INVALID_ARG;
+    }
+    const char *ap_password = cJSON_GetStringValue(wifi_ap_password);
+    if (strlen(ap_password) >= sizeof(settings.wifi.ap.password))
+    {
+        report_err(MSG_WIFI_AP_PASSWORD_ERR, msg);
+        return ESP_ERR_INVALID_ARG;
+    }
+    const char *sta_ssid = cJSON_GetStringValue(wifi_sta_ssid);
+    len = strlen(sta_ssid);
+    if (!len || len >= sizeof(settings.wifi.sta.ssid))
+    {
+        report_err(MSG_WIFI_STA_SSID_ERR, msg);
+        return ESP_ERR_INVALID_ARG;
+    }
+    const char *sta_password = cJSON_GetStringValue(wifi_sta_password);
+    if (strlen(sta_password) >= sizeof(settings.wifi.sta.password))
+    {
+        report_err(MSG_WIFI_STA_PASSWORD_ERR, msg);
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    // 3. Update
+    strncpy(settings.node.name, sys_name, sizeof(settings.node.name) - 1);
+    settings.node.name[sizeof(settings.node.name) - 1] = '\0';
+    settings.system.failsafe = cJSON_IsTrue(sys_failsafe_item);
+    settings.system.safe_mode = cJSON_IsTrue(sys_safe_mode_item);
+    strncpy(settings.node.tz, sys_tz, sizeof(settings.node.tz) - 1);
+    settings.node.name[sizeof(settings.node.tz) - 1] = '\0';
+
+    strncpy(settings.mqtt.uri, mqtt_uri, sizeof(settings.mqtt.uri) - 1);
+    settings.mqtt.uri[sizeof(settings.mqtt.uri) - 1] = '\0';
+    strncpy(settings.mqtt.username, mqtt_username, sizeof(settings.mqtt.username) - 1);
+    settings.mqtt.username[sizeof(settings.mqtt.username) - 1] = '\0';
+    strncpy(settings.mqtt.password, mqtt_password, sizeof(settings.mqtt.password) - 1);
+    settings.mqtt.password[sizeof(settings.mqtt.password) - 1] = '\0';
+
+    settings.wifi.ip.dhcp = cJSON_IsTrue(wifi_ip_dhcp_item);
+    strncpy(settings.wifi.ip.ip, cJSON_GetStringValue(wifi_ip_ip_item), sizeof(settings.wifi.ip.ip) - 1);
+    strncpy(settings.wifi.ip.netmask, cJSON_GetStringValue(wifi_ip_netmask_item), sizeof(settings.wifi.ip.netmask) - 1);
+    strncpy(settings.wifi.ip.gateway, cJSON_GetStringValue(wifi_ip_gateway_item), sizeof(settings.wifi.ip.gateway) - 1);
+    strncpy(settings.wifi.ip.dns, cJSON_GetStringValue(wifi_ip_dns_item), sizeof(settings.wifi.ip.dns) - 1);
+    settings.wifi.ap.channel = ap_channel;
+    memset(settings.wifi.ap.ssid, 0, sizeof(settings.wifi.ap.ssid));
+    memset(settings.wifi.ap.password, 0, sizeof(settings.wifi.ap.password));
+    memset(settings.wifi.sta.ssid, 0, sizeof(settings.wifi.sta.ssid));
+    memset(settings.wifi.sta.password, 0, sizeof(settings.wifi.sta.password));
+    strncpy((char *) settings.wifi.ap.ssid, ap_ssid, sizeof(settings.wifi.ap.ssid) - 1);
+    strncpy((char *) settings.wifi.ap.password, ap_password, sizeof(settings.wifi.ap.password) - 1);
+    strncpy((char *) settings.wifi.sta.ssid, sta_ssid, sizeof(settings.wifi.sta.ssid) - 1);
+    strncpy((char *) settings.wifi.sta.password, sta_password, sizeof(settings.wifi.sta.password) - 1);
+
+    esp_err_t err = settings_save();
+    report_err(err == ESP_OK ? MSG_SAVE_OK : MSG_SAVE_ERR, msg);
+
+    return err;
+}
+
+esp_err_t settings_to_json(cJSON **tgt)
+{
+    CHECK_ARG(tgt);
+
+    *tgt = cJSON_CreateObject();
+
+    cJSON *system = cJSON_AddObjectToObject(*tgt, OPT_SYSTEM);
+    cJSON_AddStringToObject(system, OPT_SYSTEM_NAME, settings.node.name);
+    cJSON_AddBoolToObject(system, OPT_SYSTEM_FAILSAFE, settings.system.failsafe);
+    cJSON_AddBoolToObject(system, OPT_SYSTEM_SAFE_MODE, settings.system.safe_mode);
+    cJSON_AddStringToObject(system, OPT_SYSTEM_TZ, settings.node.tz);
+
+    cJSON *mqtt = cJSON_AddObjectToObject(*tgt, OPT_MQTT);
+    cJSON_AddStringToObject(mqtt, OPT_MQTT_URI, settings.mqtt.uri);
+    cJSON_AddStringToObject(mqtt, OPT_MQTT_USERNAME, settings.mqtt.username);
+    cJSON_AddStringToObject(mqtt, OPT_MQTT_PASSWORD, settings.mqtt.password);
+
+    cJSON *wifi = cJSON_AddObjectToObject(*tgt, OPT_WIFI);
+
+    cJSON *ip = cJSON_AddObjectToObject(wifi, OPT_WIFI_IP);
+    cJSON_AddBoolToObject(ip, OPT_WIFI_IP_DHCP, settings.wifi.ip.dhcp);
+    cJSON_AddStringToObject(ip, OPT_WIFI_IP_IP, settings.wifi.ip.ip);
+    cJSON_AddStringToObject(ip, OPT_WIFI_IP_NETMASK, settings.wifi.ip.netmask);
+    cJSON_AddStringToObject(ip, OPT_WIFI_IP_GATEWAY, settings.wifi.ip.gateway);
+    cJSON_AddStringToObject(ip, OPT_WIFI_IP_DNS, settings.wifi.ip.dns);
+
+    cJSON *ap = cJSON_AddObjectToObject(wifi, OPT_WIFI_AP);
+    cJSON_AddStringToObject(ap, OPT_WIFI_AP_SSID, (char *)settings.wifi.ap.ssid);
+    cJSON_AddNumberToObject(ap, OPT_WIFI_AP_CHANNEL, settings.wifi.ap.channel);
+    cJSON_AddStringToObject(ap, OPT_WIFI_AP_PASSWORD, (char *)settings.wifi.ap.password);
+
+    cJSON *sta = cJSON_AddObjectToObject(wifi, OPT_WIFI_STA);
+    cJSON_AddStringToObject(sta, OPT_WIFI_STA_SSID, (char *)settings.wifi.sta.ssid);
+    cJSON_AddStringToObject(sta, OPT_WIFI_STA_PASSWORD, (char *)settings.wifi.sta.password);
 
     return ESP_OK;
 }
