@@ -25,9 +25,15 @@ esp_err_t hw_rtc_init()
     setenv("TZ", CONFIG_NODE_TZ, 1);
     tzset();
 
-    CHECK(pcf8563_init_desc(&dev, 0, CONFIG_I2C0_SDA_GPIO, CONFIG_I2C0_SCL_GPIO));
+#ifdef HW_RTC_NONE
+    ESP_LOGW(TAG, "Hardware RTC is not available");
+#endif
 
-    struct tm ti;
+    struct tm ti = { 0 };
+
+#ifdef HW_RTC_PCF8574
+    CHECK(pcf8563_init_desc(&dev, HW_INTERNAL_PORT, HW_INTERNAL_SDA_GPIO, HW_INTERNAL_SCL_GPIO));
+
     bool valid;
 
     CHECK(pcf8563_get_time(&dev, &ti, &valid));
@@ -36,7 +42,9 @@ esp_err_t hw_rtc_init()
         ESP_LOGW(TAG, "RTC time is invalid, please reset");
         return ESP_ERR_INVALID_STATE;
     }
+#endif
 
+#ifdef HW_RTC_PCF8574
     struct timeval t = {
         .tv_sec = mktime(&ti),
         .tv_usec = 0
@@ -47,6 +55,7 @@ esp_err_t hw_rtc_init()
         return ESP_FAIL;
     }
     hw_rtc_valid = true;
+#endif
 
     log_localtime();
 
@@ -55,6 +64,14 @@ esp_err_t hw_rtc_init()
 
 esp_err_t hw_rtc_update()
 {
+#ifdef HW_RTC_NONE
+    ESP_LOGW(TAG, "Hardware RTC is not available");
+
+    log_localtime();
+
+    return ESP_OK;
+#endif
+
     if (!hw_rtc_valid)
     {
         ESP_LOGE(TAG, "RTC is not available");
@@ -66,7 +83,10 @@ esp_err_t hw_rtc_update()
 
     time(&now);
     gmtime_r(&now, &t);
+
+#ifdef HW_RTC_PCF8574
     CHECK(pcf8563_set_time(&dev, &t));
+#endif
 
     log_localtime();
 

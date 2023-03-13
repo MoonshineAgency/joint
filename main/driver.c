@@ -100,9 +100,6 @@ esp_err_t driver_init(driver_t *drv, const char *config, size_t cfg_len)
     if (drv->eg)
         vEventGroupDelete(drv->eg);
 
-    uint32_t stack_size = driver_config_get_int(cJSON_GetObjectItem(drv->config, "stack_size"), CONFIG_DEFAULT_DRIVER_STACK_SIZE);
-    UBaseType_t priority = driver_config_get_int(cJSON_GetObjectItem(drv->config, "priority"), tskIDLE_PRIORITY + 1);
-
     drv->eg = xEventGroupCreate();
     if (!drv->eg)
     {
@@ -120,8 +117,8 @@ esp_err_t driver_init(driver_t *drv, const char *config, size_t cfg_len)
             vTaskDelete(drv->handle);
     }
 
-    ESP_LOGI(TAG, "[%s] Creating driver task (stack_size=%" PRIu32 ", priority=%d)", drv->name, stack_size, priority);
-    int res = xTaskCreatePinnedToCore(driver_task, NULL, stack_size, drv, priority, &drv->handle, APP_CPU_NUM);
+    ESP_LOGI(TAG, "[%s] Creating driver task (stack_size=%" PRIu32 ", priority=%d)", drv->name, drv->stack_size, drv->priority);
+    int res = xTaskCreatePinnedToCore(driver_task, NULL, drv->stack_size, drv, drv->priority, &drv->handle, APP_CPU_NUM);
     if (res != pdPASS)
     {
         ESP_LOGE(TAG, "[%s] Error creating task for driver", drv->name);

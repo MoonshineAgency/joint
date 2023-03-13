@@ -22,7 +22,6 @@
 
 static i2c_dev_t expander = { 0 };
 static EventGroupHandle_t port_event = NULL;
-static gpio_num_t intr;
 static device_t *switches;
 static device_t *inputs;
 
@@ -63,20 +62,14 @@ static esp_err_t on_init(driver_t *self)
         return ESP_ERR_NO_MEM;
     }
 
-    gpio_num_t sda = driver_config_get_gpio(cJSON_GetObjectItem(self->config, OPT_SDA), CONFIG_I2C0_SDA_GPIO);
-    gpio_num_t scl = driver_config_get_gpio(cJSON_GetObjectItem(self->config, OPT_SCL), CONFIG_I2C0_SCL_GPIO);
-    intr = driver_config_get_gpio(cJSON_GetObjectItem(self->config, OPT_INTR), CONFIG_GH_IO_DRIVER_INTR_GPIO);
-    uint8_t addr = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_ADDRESS), TCA95X5_I2C_ADDR_BASE);
-    i2c_port_t port = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_PORT), 0);
-    int freq = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_FREQ), 0);
-
     memset(&expander, 0, sizeof(expander));
     ESP_RETURN_ON_ERROR(
-        tca95x5_init_desc(&expander, addr, port, sda, scl),
+        tca95x5_init_desc(&expander, DRIVER_GH_IO_ADDRESS, HW_INTERNAL_PORT, HW_INTERNAL_SDA_GPIO, HW_INTERNAL_SCL_GPIO),
         self->name, "Error initializing device descriptor: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
     );
-    if (freq)
-        expander.cfg.master.clk_speed = freq;
+#if (DRIVER_GH_IO_FREQUENCY)
+        expander.cfg.master.clk_speed = DRIVER_GH_IO_FREQUENCY;
+#endif
     ESP_RETURN_ON_ERROR(
         tca95x5_port_write(&expander, 0),
         self->name, "Error writing to port: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
@@ -86,27 +79,28 @@ static esp_err_t on_init(driver_t *self)
         self->name, "Error setting up port mode: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
     );
 
-    ESP_LOGI(self->name, "Initialized TCA9555: ADDR=0x%02x, PORT=%d, SDA=%d, SCL=%d, FREQ=%d", addr, port, sda, scl, freq);
+    ESP_LOGI(self->name, "Initialized TCA9555: ADDR=0x%02x, PORT=%d, SDA=%d, SCL=%d, FREQ=%d",
+        DRIVER_GH_IO_ADDRESS, HW_INTERNAL_PORT, HW_INTERNAL_SDA_GPIO, HW_INTERNAL_SCL_GPIO, DRIVER_GH_IO_FREQUENCY);
 
     ESP_RETURN_ON_ERROR(
-        gpio_reset_pin(intr),
-        self->name, "Error reset INTR GPIO %d: %d (%s)", intr, err_rc_, esp_err_to_name(err_rc_)
+        gpio_reset_pin(DRIVER_GH_IO_INTR_GPIO),
+        self->name, "Error reset INTR GPIO %d: %d (%s)", DRIVER_GH_IO_INTR_GPIO, err_rc_, esp_err_to_name(err_rc_)
     );
-    gpio_set_direction(intr, GPIO_MODE_INPUT);
-    gpio_set_intr_type(intr, GPIO_INTR_NEGEDGE);
+    gpio_set_direction(DRIVER_GH_IO_INTR_GPIO, GPIO_MODE_INPUT);
+    gpio_set_intr_type(DRIVER_GH_IO_INTR_GPIO, GPIO_INTR_NEGEDGE);
     gpio_install_isr_service(0);
-    gpio_isr_handler_add(intr, on_port_change, NULL);
+    gpio_isr_handler_add(DRIVER_GH_IO_INTR_GPIO, on_port_change, NULL);
 
     device_t dev;
 
-    for (int i = 0; i < RELAYS_COUNT; i++)
+    for (uint32_t i = 0; i < RELAYS_COUNT; i++)
     {
         memset(&dev, 0, sizeof(dev));
         dev.type = DEV_BINARY_SWITCH;
         dev.internal[0] = (void *)i;
         dev.binary_switch.on_write = on_relay_command;
-        snprintf(dev.uid, sizeof(dev.uid), FMT_RELAY_ID, i);
-        snprintf(dev.name, sizeof(dev.name), FMT_RELAY_NAME, settings.node.name, i);
+        snprintf(dev.uid, sizeof(dev.uid), FMT_RELAY_ID, (int)i);
+        snprintf(dev.name, sizeof(dev.name), FMT_RELAY_NAME, settings.node.name, (int)i);
         cvector_push_back(self->devices, dev);
     }
 
@@ -188,7 +182,7 @@ static void task(driver_t *self)
 
 static esp_err_t on_stop(driver_t *self)
 {
-    gpio_isr_handler_remove(intr);
+    gpio_isr_handler_remove(DRIVER_GH_IO_INTR_GPIO);
     vEventGroupDelete(port_event);
     port_event = NULL;
     esp_err_t r = tca95x5_free_desc(&expander);
@@ -200,8 +194,9 @@ static esp_err_t on_stop(driver_t *self)
 
 driver_t drv_gh_io = {
     .name = "gh_io",
-    .defconfig = "{ \"" OPT_STACK_SIZE "\": 4096, \"" OPT_PORT "\": 0, \"" OPT_SDA "\": " STR(CONFIG_I2C0_SDA_GPIO) ", \"" OPT_SCL "\": " STR(CONFIG_I2C0_SCL_GPIO)
-        ", \"" OPT_INTR "\": " STR(CONFIG_GH_IO_DRIVER_INTR_GPIO) ", \"" OPT_ADDRESS "\": 32 }",
+    .stack_size = DRIVER_GH_IO_STACK_SIZE,
+    .priority = tskIDLE_PRIORITY + 1,
+    .defconfig = "{}",
 
     .config = NULL,
     .state = DRIVER_NEW,

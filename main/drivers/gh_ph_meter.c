@@ -15,15 +15,18 @@ static float ph;
 static uint32_t last_update_time;
 static int update_period;
 
+#define PH_METER_ID  "ph0"
+#define PH_RAW_ID    "ph0_raw"
+
+#define FMT_PH_METER_NAME "%s pH 0"
+#define FMT_PH_RAW_NAME   "%s pH 0 raw voltage"
+
+#define MU_PH_METER "pH"
+
 static esp_err_t on_init(driver_t *self)
 {
     cvector_free(self->devices);
 
-    gpio_num_t sda = driver_config_get_gpio(cJSON_GetObjectItem(self->config, OPT_SDA), CONFIG_I2C0_SDA_GPIO);
-    gpio_num_t scl = driver_config_get_gpio(cJSON_GetObjectItem(self->config, OPT_SCL), CONFIG_I2C0_SCL_GPIO);
-    uint8_t addr = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_ADDRESS), ADS111X_ADDR_GND);
-    i2c_port_t port = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_PORT), 0);
-    int freq = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_FREQ), 0);
     samples = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_SAMPLES), 32);
     update_period = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_PERIOD), 1000);
 
@@ -36,11 +39,12 @@ static esp_err_t on_init(driver_t *self)
 
     memset(&adc, 0, sizeof(adc));
     ESP_RETURN_ON_ERROR(
-        ads111x_init_desc(&adc, addr, port, sda, scl),
+        ads111x_init_desc(&adc, DRIVER_GH_PH_METER_ADDRESS, HW_INTERNAL_PORT, HW_INTERNAL_SDA_GPIO, HW_INTERNAL_SCL_GPIO),
         self->name, "Error initializing device descriptor: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
     );
-    if (freq)
-        adc.cfg.master.clk_speed = freq;
+#if (DRIVER_GH_PH_METER_FREQUENCY)
+    adc.cfg.master.clk_speed = DRIVER_GH_PH_METER_FREQUENCY;
+#endif
     ESP_RETURN_ON_ERROR(
         ads111x_set_gain(&adc, GAIN),
         self->name, "Error setting gain: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
@@ -55,20 +59,20 @@ static esp_err_t on_init(driver_t *self)
     );
 
     device_t dev = { 0 };
-    snprintf(dev.uid, sizeof(dev.uid), "ph0");
+    strncpy(dev.uid, PH_METER_ID, sizeof(dev.uid));
     dev.type = DEV_SENSOR;
-    snprintf(dev.name, sizeof(dev.name), "%s pH 0", settings.node.name);
-    strncpy(dev.sensor.measurement_unit, "pH", sizeof(dev.sensor.measurement_unit));
+    snprintf(dev.name, sizeof(dev.name), FMT_PH_METER_NAME, settings.node.name);
+    strncpy(dev.sensor.measurement_unit, MU_PH_METER, sizeof(dev.sensor.measurement_unit));
     dev.sensor.precision = 2;
     dev.sensor.update_period = update_period;
     cvector_push_back(self->devices, dev);
 
     memset(&dev, 0, sizeof(dev));
-    snprintf(dev.uid, sizeof(dev.uid), "ph0_raw");
+    strncpy(dev.uid, PH_RAW_ID, sizeof(dev.uid));
     dev.type = DEV_SENSOR;
-    snprintf(dev.name, sizeof(dev.name), "%s pH 0 raw voltage", settings.node.name);
-    strncpy(dev.device_class, "voltage", sizeof(dev.device_class));
-    strncpy(dev.sensor.measurement_unit, "V", sizeof(dev.sensor.measurement_unit));
+    snprintf(dev.name, sizeof(dev.name), FMT_PH_RAW_NAME, settings.node.name);
+    strncpy(dev.device_class, DEV_CLASS_VOLTAGE, sizeof(dev.device_class));
+    strncpy(dev.sensor.measurement_unit, DEV_MU_VOLTAGE, sizeof(dev.sensor.measurement_unit));
     dev.sensor.precision = 4;
     dev.sensor.update_period = update_period;
     cvector_push_back(self->devices, dev);
@@ -159,8 +163,9 @@ static esp_err_t on_stop(driver_t *self)
 
 driver_t drv_ph_meter = {
     .name = "gh_ph_meter",
-    .defconfig = "{ \"" OPT_STACK_SIZE "\": 4096, \"" OPT_PERIOD "\": 5000, \"" OPT_PORT "\": 0, \"" OPT_SDA "\": " STR(CONFIG_I2C0_SDA_GPIO)
-        ", \"" OPT_SCL "\": " STR(CONFIG_I2C0_SCL_GPIO) ", \"" OPT_ADDRESS "\": 72, \"ph7_voltage\": 0, \"ph4_voltage\": 0.17143, \"" OPT_SAMPLES "\": 32 }",
+    .stack_size = DRIVER_GH_PH_METER_STACK_SIZE,
+    .priority = tskIDLE_PRIORITY + 1,
+    .defconfig = "{ \"" OPT_PERIOD "\": 5000, \"ph7_voltage\": 0, \"ph4_voltage\": 0.17143, \"" OPT_SAMPLES "\": 32 }",
 
     .config = NULL,
     .state = DRIVER_NEW,

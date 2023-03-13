@@ -6,12 +6,24 @@
 #include "driver.h"
 #include "mqtt.h"
 
+#ifdef DRIVER_GH_IO
 #include "drivers/gh_io.h"
+#endif
+#ifdef DRIVER_GH_ADC
 #include "drivers/gh_adc.h"
+#endif
+#ifdef DRIVER_GH_PH_METER
 #include "drivers/gh_ph_meter.h"
+#endif
+#ifdef DRIVER_AHTXX
 #include "drivers/ahtxx.h"
+#endif
+#ifdef DRIVER_DS18B20
 #include "drivers/ds18b20.h"
+#endif
+#ifdef DRIVER_DHTXX
 #include "drivers/dhtxx.h"
+#endif
 
 #define DRIVER_CONFIG_TOPIC_FMT      "drivers/%s/config"
 #define DRIVER_SET_CONFIG_TOPIC_FMT  "drivers/%s/set_config"
@@ -108,12 +120,24 @@ esp_err_t node_init()
         return ESP_ERR_NO_MEM;
     }
 
+#ifdef DRIVER_GH_IO
     cvector_push_back(drivers, &drv_gh_io);
+#endif
+#ifdef DRIVER_GH_ADC
     cvector_push_back(drivers, &drv_gh_adc);
+#endif
+#ifdef DRIVER_GH_PH_METER
     cvector_push_back(drivers, &drv_ph_meter);
+#endif
+#ifdef DRIVER_AHTXX
     cvector_push_back(drivers, &drv_aht);
+#endif
+#ifdef DRIVER_DS18B20
     cvector_push_back(drivers, &drv_ds18b20);
+#endif
+#ifdef DRIVER_DHTXX
     cvector_push_back(drivers, &drv_dht);
+#endif
 
     system_set_mode(MODE_OFFLINE);
 

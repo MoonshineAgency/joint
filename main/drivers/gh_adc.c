@@ -16,6 +16,7 @@
 #define ADC_WIDTH ADC_BITWIDTH_12
 #define TDS_ATTEN ADC_ATTEN_DB_6 // 1.75V max
 #define AIN_COUNT 4
+#define TDS_CHANNEL ADC_CHANNEL_3
 
 static adc_oneshot_unit_handle_t adc_handle = NULL;
 static adc_cali_handle_t cali_handle = NULL;
@@ -26,10 +27,10 @@ static const adc_oneshot_unit_init_cfg_t unit_cfg = {
 };
 
 static const adc_channel_t ain_channels[AIN_COUNT] = {
-    CONFIG_ADC_DRIVER_AIN0_CHANNEL,
-    CONFIG_ADC_DRIVER_AIN1_CHANNEL,
-    CONFIG_ADC_DRIVER_AIN2_CHANNEL,
-    CONFIG_ADC_DRIVER_AIN3_CHANNEL,
+    ADC_CHANNEL_4,
+    ADC_CHANNEL_5,
+    ADC_CHANNEL_6,
+    ADC_CHANNEL_7,
 };
 
 static size_t samples;
@@ -84,7 +85,7 @@ static esp_err_t on_init(driver_t *self)
     // TDS measure channel
     chan_cfg.atten = TDS_ATTEN;
     ESP_RETURN_ON_ERROR(
-        adc_oneshot_config_channel(adc_handle, CONFIG_ADC_DRIVER_TDS_CHANNEL, &chan_cfg),
+        adc_oneshot_config_channel(adc_handle, TDS_CHANNEL, &chan_cfg),
         self->name, "Error configuring ADC channel: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
     );
 
@@ -182,7 +183,7 @@ static void task(driver_t *self)
             for (size_t c = 0; c < AIN_COUNT; c++)
                 ain_voltages[c] += adc_read_voltage(self, ain_channels[c]);
 
-            tds_voltage += adc_read_voltage(self, CONFIG_ADC_DRIVER_TDS_CHANNEL);
+            tds_voltage += adc_read_voltage(self, TDS_CHANNEL);
         }
 
         for (size_t c = 0; c < AIN_COUNT; c++)
@@ -220,7 +221,9 @@ static void task(driver_t *self)
 
 driver_t drv_gh_adc = {
     .name = "gh_adc",
-    .defconfig = "{ \"" OPT_STACK_SIZE "\": 4096, \"" OPT_PERIOD "\": 2000, \"" OPT_SAMPLES "\": 64, \"" OPT_ATTEN "\": 3, " \
+    .stack_size = DRIVER_GH_ADC_STACK_SIZE,
+    .priority = tskIDLE_PRIORITY + 1,
+    .defconfig = "{ \"" OPT_PERIOD "\": 2000, \"" OPT_SAMPLES "\": 64, \"" OPT_ATTEN "\": 3, " \
         "\"" OPT_MOISTURE "\": { \"voltage_0\": 2.2, \"voltage_100\": 0.9, \"" OPT_ENABLED "\": true } }",
 
     .config = NULL,

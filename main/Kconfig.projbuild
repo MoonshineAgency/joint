@@ -1,4 +1,13 @@
-menu "*** iot-node configuration ***"
+menu "*** Joint configuration ***"
+
+    choice BOARD
+        prompt "Target board"
+        default BOARD_GH_3X
+
+        config BOARD_GH_3X
+            bool "Greenhouse v3.x"
+
+    endchoice
 
     menu "System configuration"
 
@@ -34,7 +43,7 @@ menu "*** iot-node configuration ***"
 
         config SNTP_ENABLE
             bool "Enable SNTP date/time sync"
-            default yes
+            default y
 
         config SNTP_TIME_SERVER
             string "SNTP time server"
@@ -48,7 +57,7 @@ menu "*** iot-node configuration ***"
         
             config NODE_WIFI_AP_SSID
                 string "SSID"
-                default "iot-node"
+                default "Joint"
                 
             config NODE_WIFI_AP_PASSWD
                 string "Password"
@@ -108,94 +117,6 @@ menu "*** iot-node configuration ***"
         config NODE_MQTT_PASSWORD
             string "Password"
             default "node"
-
-    endmenu
-
-    menu "Driver settings"
-
-        config DEFAULT_DRIVER_STACK_SIZE
-            int "Default stack size for driver tasks"
-            default 4096
-
-        config I2C0_SDA_GPIO
-            int "I2C0 SDA GPIO"
-            default 16
-
-        config I2C0_SCL_GPIO
-            int "I2C0 SCL GPIO"
-            default 17
-
-        menu "AHT"
-
-            config AHT_DRIVER_DEFAULT_STACK_SIZE
-                int "AHT driver stack size"
-                default 4096
-
-            config AHT_DRIVER_MAX_DEVICES
-                int "Maximal AHT devices count"
-                default 8
-
-        endmenu
-
-        menu "DS18x20"
-
-            config DS18X20_GPIO
-                int "Default 1-wire GPIO number"
-                default 15
-
-            config DS18X20_MAX_SENSORS
-                int "Maximum number of DS18x20 sensors"
-                default 64
-
-        endmenu
-
-        menu "GH IO"
-
-            config GH_IO_DRIVER_INTR_GPIO
-                int "GPIO for TCA9555 INTR pin"
-                default 27
-
-            config GH_IO_DRIVER_INPUTS_TOPIC
-                string "Subtopic for publishing isolated inputs state"
-                default "isolated_inputs"
-
-            config GH_IO_DRIVER_SWITCHES_TOPIC
-                string "Subtopic for publishing switches state"
-                default "switches"
-
-            config GH_IO_DRIVER_RELAYS_CMD_TOPIC
-                string "Subtopic for controlling relays"
-                default "relays/%d/command"
-
-            config GH_IO_DRIVER_RELAYS_STATE_TOPIC
-                string "Subtopic publishing relays state"
-                default "relays/%d/state"
-
-        endmenu
-
-        menu "ADC"
-
-            config ADC_DRIVER_TDS_CHANNEL
-                int "ADC1 channel for TDS meter"
-                default 3
-
-            config ADC_DRIVER_AIN0_CHANNEL
-                int "ADC1 channel AIN0"
-                default 4
-
-            config ADC_DRIVER_AIN1_CHANNEL
-                int "ADC1 channel AIN1"
-                default 5
-
-            config ADC_DRIVER_AIN2_CHANNEL
-                int "ADC1 channel AIN2"
-                default 6
-
-            config ADC_DRIVER_AIN3_CHANNEL
-                int "ADC1 channel AIN3"
-                default 7
-
-        endmenu
 
     endmenu
 

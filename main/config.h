@@ -8,12 +8,20 @@
 #define SYSTEM_ID_LEN 64
 
 ////////////////////////////////////////////////////////////////////////////////
+/// Hardware
+
+#if CONFIG_BOARD_GH_3X
+#include "boards/gh_3x.h"
+#else
+#error Invalid target board
+#endif
+
+////////////////////////////////////////////////////////////////////////////////
 /// Settings
 
 #define SETTINGS_PARTITION "settings"
 #define SETTINGS_MAGIC_KEY "magic"
 #define SETTINGS_DATA_KEY "data"
-#define SETTINGS_DRIVER_KEY "config"
 #define SETTINGS_MAGIC_VAL 0xC0DE0002
 
 #if CONFIG_NODE_WIFI_DHCP

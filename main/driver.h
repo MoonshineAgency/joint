@@ -34,6 +34,8 @@ struct driver
 {
     char name[32];
     const char *defconfig;
+    uint32_t stack_size;
+    UBaseType_t priority;
     cJSON *config;
     driver_state_t state;
     QueueHandle_t event_queue;

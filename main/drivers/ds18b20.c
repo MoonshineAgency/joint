@@ -6,12 +6,12 @@
 
 #define SENSOR_ADDR_FMT "%08lX%08lX"
 #define SENSOR_ADDR(addr) (uint32_t)(addr >> 32), (uint32_t)addr
+#define SENSOR_NAME_FMT "%s temperature (DS18x20 " SENSOR_ADDR_FMT ")"
 
-static gpio_num_t gpio;
 static size_t scan_interval;
 
-static ds18x20_addr_t sensors[CONFIG_DS18X20_MAX_SENSORS] = { 0 };
-static float results[CONFIG_DS18X20_MAX_SENSORS] = { 0 };
+static ds18x20_addr_t sensors[DRIVER_DS18B20_MAX_SENSORS] = { 0 };
+static float results[DRIVER_DS18B20_MAX_SENSORS] = { 0 };
 
 static size_t sensors_count = 0;
 static size_t loop_no = 0;
@@ -25,15 +25,14 @@ static esp_err_t on_init(driver_t *self)
     sensors_count = 0;
     loop_no = 0;
 
-    gpio = driver_config_get_gpio(cJSON_GetObjectItem(self->config, OPT_GPIO), GPIO_NUM_NC);
-    scan_interval = driver_config_get_int(cJSON_GetObjectItem(self->config, "scan_interval"), 1);
     update_period = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_PERIOD), 1000);
+    scan_interval = driver_config_get_int(cJSON_GetObjectItem(self->config, "scan_interval"), 1);
 
-    ESP_LOGI(self->name, "Configured to use GPIO %d with scan_interval %d", gpio, scan_interval);
+    ESP_LOGI(self->name, "Configured to use GPIO %d with scan_interval %d", DRIVER_DS18B20_GPIO, scan_interval);
 
-    esp_err_t r = gpio_reset_pin(gpio);
+    esp_err_t r = gpio_reset_pin(DRIVER_DS18B20_GPIO);
     if (r != ESP_OK)
-        ESP_LOGE(self->name, "Error reset GPIO pin %d: %d (%s)", gpio, r, esp_err_to_name(r));
+        ESP_LOGE(self->name, "Error reset GPIO pin %d: %d (%s)", DRIVER_DS18B20_GPIO, r, esp_err_to_name(r));
 
     return r;
 }
@@ -43,9 +42,9 @@ static void scan(driver_t *self)
     esp_err_t r;
 
     size_t result_count = 0;
-    ds18x20_addr_t scan_result[CONFIG_DS18X20_MAX_SENSORS] = { 0 };
+    ds18x20_addr_t scan_result[DRIVER_DS18B20_MAX_SENSORS] = { 0 };
 
-    r = ds18x20_scan_devices(gpio, scan_result, CONFIG_DS18X20_MAX_SENSORS, &result_count);
+    r = ds18x20_scan_devices(DRIVER_DS18B20_GPIO, scan_result, DRIVER_DS18B20_MAX_SENSORS, &result_count);
     if (r != ESP_OK)
     {
         ESP_LOGW(self->name, "Error scanning bus: %d (%s)", r, esp_err_to_name(r));
@@ -84,8 +83,9 @@ static void scan(driver_t *self)
         device_t dev = { 0 };
         dev.type = DEV_SENSOR;
         snprintf(dev.uid, sizeof(dev.uid), SENSOR_ADDR_FMT, SENSOR_ADDR(scan_result[i]));
-        snprintf(dev.name, sizeof(dev.name), "%s temperature (DS18x20 " SENSOR_ADDR_FMT ")", settings.node.name, SENSOR_ADDR(scan_result[i]));
-        strncpy(dev.sensor.measurement_unit, "°C", sizeof(dev.sensor.measurement_unit));
+        snprintf(dev.name, sizeof(dev.name), SENSOR_NAME_FMT, settings.node.name, SENSOR_ADDR(scan_result[i]));
+        strncpy(dev.device_class, DEV_CLASS_TEMPERATURE, sizeof(dev.device_class));
+        strncpy(dev.sensor.measurement_unit, DEV_MU_TEMPERATURE, sizeof(dev.sensor.measurement_unit));
         dev.sensor.precision = 2;
         dev.sensor.update_period = update_period;
         cvector_push_back(self->devices, dev);
@@ -122,7 +122,7 @@ static void task(driver_t *self)
         if (!(loop_no++ % scan_interval) || !sensors_count)
             scan(self);
 
-        esp_err_t r = ds18x20_measure_and_read_multi(gpio, sensors, sensors_count, results);
+        esp_err_t r = ds18x20_measure_and_read_multi(DRIVER_DS18B20_GPIO, sensors, sensors_count, results);
         if (r == ESP_OK)
             for (size_t i = 0; i < sensors_count; i++)
             {
@@ -143,8 +143,9 @@ static void task(driver_t *self)
 
 driver_t drv_ds18b20 = {
     .name = "ds18b20",
-    .defconfig = "{ \"" OPT_STACK_SIZE "\": " STR(CONFIG_DEFAULT_DRIVER_STACK_SIZE) ", \"" OPT_PERIOD "\": 5000, \""
-        OPT_GPIO "\": " STR(CONFIG_DS18X20_GPIO) ", \"scan_interval\": 10 }",
+    .stack_size = DRIVER_DS18B20_STACK_SIZE,
+    .priority = tskIDLE_PRIORITY + 1,
+    .defconfig = "{ \"" OPT_PERIOD "\": 5000, \"scan_interval\": 10 }",
 
     .config = NULL,
     .state = DRIVER_NEW,
