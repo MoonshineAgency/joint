@@ -24,6 +24,9 @@
 #ifdef DRIVER_DHTXX
 #include "drivers/dhtxx.h"
 #endif
+#ifdef DRIVER_GH_DIMMER
+#include "drivers/gh_dimmer.h"
+#endif
 
 #define DRIVER_CONFIG_TOPIC_FMT      "drivers/%s/config"
 #define DRIVER_SET_CONFIG_TOPIC_FMT  "drivers/%s/set_config"

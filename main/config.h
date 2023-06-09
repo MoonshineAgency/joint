@@ -12,6 +12,8 @@
 
 #if CONFIG_BOARD_GH_3X
 #include "boards/gh_3x.h"
+#elif CONFIG_BOARD_GH_4DEV
+#include "boards/gh_4dev.h"
 #else
 #error Invalid target board
 #endif

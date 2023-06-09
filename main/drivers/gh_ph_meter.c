@@ -15,6 +15,9 @@ static float ph;
 static uint32_t last_update_time;
 static int update_period;
 
+#define OPT_PH7_VOLTAGE "ph7_voltage"
+#define OPT_PH4_VOLTAGE "ph4_voltage"
+
 #define PH_METER_ID  "ph0"
 #define PH_RAW_ID    "ph0_raw"
 
@@ -30,8 +33,8 @@ static esp_err_t on_init(driver_t *self)
     samples = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_SAMPLES), 32);
     update_period = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_PERIOD), 1000);
 
-    e1 = driver_config_get_float(cJSON_GetObjectItem(self->config, "ph7_voltage"), 0.0f);
-    float e2 = driver_config_get_float(cJSON_GetObjectItem(self->config, "ph4_voltage"), 0.17143f);
+    e1 = driver_config_get_float(cJSON_GetObjectItem(self->config, OPT_PH7_VOLTAGE), 0.0f);
+    float e2 = driver_config_get_float(cJSON_GetObjectItem(self->config, OPT_PH4_VOLTAGE), 0.17143f);
 
     slope = (4.0f - 7.0f) / (e2 - e1);
 
@@ -165,7 +168,7 @@ driver_t drv_ph_meter = {
     .name = "gh_ph_meter",
     .stack_size = DRIVER_GH_PH_METER_STACK_SIZE,
     .priority = tskIDLE_PRIORITY + 1,
-    .defconfig = "{ \"" OPT_PERIOD "\": 5000, \"ph7_voltage\": 0, \"ph4_voltage\": 0.17143, \"" OPT_SAMPLES "\": 32 }",
+    .defconfig = "{ \"" OPT_PERIOD "\": 5000, \"" OPT_PH7_VOLTAGE "\": 0, \"" OPT_PH7_VOLTAGE "\": 0.17143, \"" OPT_SAMPLES "\": 32 }",
 
     .config = NULL,
     .state = DRIVER_NEW,

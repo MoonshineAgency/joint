@@ -17,12 +17,15 @@ idf_component_register(
         device.c
         driver.c
 
+        hwrtc/rtc_pcf8563.c
+
         drivers/ahtxx.c
         drivers/ds18b20.c
         drivers/gh_io.c
         drivers/gh_adc.c
         drivers/gh_ph_meter.c
         drivers/dhtxx.c
+        drivers/gh_dimmer.c
 
     INCLUDE_DIRS
         .

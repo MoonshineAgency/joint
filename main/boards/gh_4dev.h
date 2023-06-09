@@ -1,5 +1,5 @@
-#ifndef BOARD_GH_3X_H_
-#define BOARD_GH_3X_H_
+#ifndef BOARD_GH_4DEV_H_
+#define BOARD_GH_4DEV_H_
 
 ////////////////////////////////////////////
 #define HW_INTERNAL_SDA_GPIO 16
@@ -53,5 +53,9 @@
 #define DRIVER_GH_PH_METER_FREQUENCY 0 // default
 
 ////////////////////////////////////////////
+#define DRIVER_GH_DIMMER
+#define DRIVER_GH_DIMMER_STACK_SIZE 4096
+#define DRIVER_GH_DIMMER_ZERO_GPIO 26
+#define DRIVER_GH_DIMMER_CTRL_GPIO 25
 
-#endif /* BOARD_GH_3X_H_ */
+#endif /* BOARD_GH_4DEV_H_ */

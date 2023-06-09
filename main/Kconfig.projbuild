@@ -7,6 +7,9 @@ menu "*** Joint configuration ***"
         config BOARD_GH_3X
             bool "Greenhouse v3.x"
 
+        config BOARD_GH_4DEV
+            bool "Greenhouse v4DEV"
+
     endchoice
 
     menu "System configuration"
