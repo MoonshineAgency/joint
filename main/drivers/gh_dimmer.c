@@ -8,12 +8,9 @@
 #define FMT_DIMMER_ID    "dimmer"
 #define FMT_DIMMER_NAME  "%s dimmer"
 
-#define RELAYS_COUNT 7
-#define SWITCHES_COUNT 4
-#define INPUTS_COUNT 4
-#define PORT_MODE 0xff00 // low 8 bits = input, high 8 bits = output
-
 #define ZERO_CROSSING_BIT BIT(0)
+
+#define TRIAC_ON_PERIOD_US 10
 
 static EventGroupHandle_t zc_group = NULL;
 static int ac_freq = 0;
@@ -97,10 +94,14 @@ static void task(driver_t *self)
         }
         xEventGroupClearBits(zc_group, ZERO_CROSSING_BIT);
 
-        uint32_t delay = (100 - (int)self->devices[0].number.value) * (1000000 / ac_freq / 100);
-        ets_delay_us(delay);
+        if (self->devices[0].number.value < 1)
+            continue;
+
+        uint32_t delay = (100 - (int)self->devices[0].number.value) * (500000 / ac_freq / 100);
+        if (delay)
+            ets_delay_us(delay);
         gpio_set_level(DRIVER_GH_DIMMER_CTRL_GPIO, 1);
-        ets_delay_us(10);
+        ets_delay_us(TRIAC_ON_PERIOD_US);
         gpio_set_level(DRIVER_GH_DIMMER_CTRL_GPIO, 0);
     }
 }

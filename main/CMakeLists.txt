@@ -17,8 +17,6 @@ idf_component_register(
         device.c
         driver.c
 
-        hwrtc/rtc_pcf8563.c
-
         drivers/ahtxx.c
         drivers/ds18b20.c
         drivers/gh_io.c

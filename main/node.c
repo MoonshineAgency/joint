@@ -141,6 +141,9 @@ esp_err_t node_init()
 #ifdef DRIVER_DHTXX
     cvector_push_back(drivers, &drv_dht);
 #endif
+#ifdef DRIVER_GH_DIMMER
+    cvector_push_back(drivers, &drv_gh_dimmer);
+#endif
 
     system_set_mode(MODE_OFFLINE);
 

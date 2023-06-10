@@ -3,8 +3,10 @@
 #include <sys/time.h>
 #include <errno.h>
 
-#ifdef HW_RTC_PCF8563
+#if defined(HW_RTC_PCF8563)
 #include "hwrtc/rtc_pcf8563.h"
+#elif defined(HW_RTC_DS3231)
+#include "hwrtc/rtc_ds3231.h"
 #else
 #define HW_RTC_NONE
 #endif
