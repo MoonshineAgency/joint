@@ -2,6 +2,7 @@
 #include <esp_log.h>
 #include <esp_check.h>
 #include <ets_sys.h>
+#include <math.h>
 #include "settings.h"
 #include "common.h"
 
@@ -14,6 +15,7 @@
 
 static EventGroupHandle_t zc_group = NULL;
 static int ac_freq = 0;
+static uint32_t delay = 0;
 
 static void IRAM_ATTR on_zero_cross(void *arg)
 {
@@ -27,6 +29,7 @@ static void on_value_change(device_t *dev, float val)
 {
     dev->number.value = val;
     driver_send_device_update(&drv_gh_dimmer, dev);
+    delay = (100 - (int)roundf(dev->number.value)) * (500000 / ac_freq / 100);
 }
 
 static esp_err_t on_init(driver_t *self)
@@ -46,6 +49,11 @@ static esp_err_t on_init(driver_t *self)
     }
 
     ac_freq = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_FREQ), 50);
+    if (ac_freq < 50 || ac_freq > 300)
+    {
+        ESP_LOGE(self->name, "Invalid AC frequency: %d Hz", ac_freq);
+        return ESP_ERR_INVALID_ARG;
+    }
     ESP_LOGI(self->name, "AC frequency: %d Hz", ac_freq);
 
     gpio_reset_pin(DRIVER_GH_DIMMER_ZERO_GPIO);
@@ -62,11 +70,11 @@ static esp_err_t on_init(driver_t *self)
     dev.type = DEV_NUMBER;
     strncpy(dev.uid, FMT_DIMMER_ID, sizeof(dev.uid));
     snprintf(dev.name, sizeof(dev.name), FMT_DIMMER_NAME, settings.node.name);
-    dev.number.measurement_unit[0] = '%';
+    strncpy(dev.number.measurement_unit, DEV_MU_DIMMER, sizeof(dev.number.measurement_unit));
     dev.number.min = 0.0f;
     dev.number.max = 100.0f;
     dev.number.step = 1.0f;
-    dev.number.value = 50.0f;
+    dev.number.value = 0.0f;
     dev.number.on_write = on_value_change;
 
     cvector_push_back(self->devices, dev);
@@ -76,8 +84,7 @@ static esp_err_t on_init(driver_t *self)
 
 static esp_err_t on_start(driver_t *self)
 {
-    for (size_t i = 0; i < cvector_size(self->devices); i++)
-        driver_send_device_update(self, &self->devices[i]);
+    on_value_change(&self->devices[0], self->devices[0].number.value);
 
     return ESP_OK;
 }
@@ -97,7 +104,6 @@ static void task(driver_t *self)
         if (self->devices[0].number.value < 1)
             continue;
 
-        uint32_t delay = (100 - (int)self->devices[0].number.value) * (500000 / ac_freq / 100);
         if (delay)
             ets_delay_us(delay);
         gpio_set_level(DRIVER_GH_DIMMER_CTRL_GPIO, 1);

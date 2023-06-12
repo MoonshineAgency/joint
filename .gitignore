@@ -3,7 +3,8 @@ build/
 cmake-build-debug/
 /sdkconfig
 /sdkconfig.old
-/hardware/GH-3.3/fp-info-cache
+fp-info-cache
 /hardware/GH-3.3/greenhouse-backups/
 /hardware/GH-4DEV/greenhouse-backups/
-/hardware/GH-4DEV/fp-info-cache
+/hardware/TDS-meter/tds_meter-backups/
+/hardware/pH-meter/ph_meter-backups/
