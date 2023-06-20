@@ -106,7 +106,7 @@ static void handler(void *arg, esp_event_base_t event_base, int32_t event_id, vo
     }
 }
 
-inline void full_topic(char *buf, const char *subtopic)
+inline static void full_topic(char *buf, const char *subtopic)
 {
     snprintf(buf, MAX_TOPIC_LEN, "%s/%s", settings.node.name, subtopic);
 }

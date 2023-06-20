@@ -9,21 +9,27 @@
 #ifdef DRIVER_GH_IO
 #include "drivers/gh_io.h"
 #endif
+
 #ifdef DRIVER_GH_ADC
 #include "drivers/gh_adc.h"
 #endif
+
 #ifdef DRIVER_GH_PH_METER
 #include "drivers/gh_ph_meter.h"
 #endif
+
 #ifdef DRIVER_AHTXX
 #include "drivers/ahtxx.h"
 #endif
+
 #ifdef DRIVER_DS18B20
 #include "drivers/ds18b20.h"
 #endif
+
 #ifdef DRIVER_DHTXX
 #include "drivers/dhtxx.h"
 #endif
+
 #ifdef DRIVER_GH_DIMMER
 #include "drivers/gh_dimmer.h"
 #endif

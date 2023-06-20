@@ -11,7 +11,8 @@
 
 #define ZERO_CROSSING_BIT BIT(0)
 
-#define TRIAC_ON_PERIOD_US 10
+#define TRIAC_ON_PERIOD_US  10
+#define ZERO_CROSS_DELAY_US 20
 
 static EventGroupHandle_t zc_group = NULL;
 static int ac_freq = 0;
@@ -58,7 +59,7 @@ static esp_err_t on_init(driver_t *self)
 
     gpio_reset_pin(DRIVER_GH_DIMMER_ZERO_GPIO);
     gpio_set_direction(DRIVER_GH_DIMMER_ZERO_GPIO, GPIO_MODE_INPUT);
-    gpio_set_intr_type(DRIVER_GH_DIMMER_ZERO_GPIO, GPIO_INTR_POSEDGE);
+    gpio_set_intr_type(DRIVER_GH_DIMMER_ZERO_GPIO, GPIO_INTR_NEGEDGE);
     gpio_install_isr_service(0);
     gpio_isr_handler_add(DRIVER_GH_DIMMER_ZERO_GPIO, on_zero_cross, NULL);
 
@@ -89,6 +90,13 @@ static esp_err_t on_start(driver_t *self)
     return ESP_OK;
 }
 
+static inline void open_triac()
+{
+    gpio_set_level(DRIVER_GH_DIMMER_CTRL_GPIO, 1);
+    ets_delay_us(TRIAC_ON_PERIOD_US);
+    gpio_set_level(DRIVER_GH_DIMMER_CTRL_GPIO, 0);
+}
+
 static void task(driver_t *self)
 {
     while (true)
@@ -104,11 +112,10 @@ static void task(driver_t *self)
         if (self->devices[0].number.value < 1)
             continue;
 
+        ets_delay_us(ZERO_CROSS_DELAY_US);
         if (delay)
             ets_delay_us(delay);
-        gpio_set_level(DRIVER_GH_DIMMER_CTRL_GPIO, 1);
-        ets_delay_us(TRIAC_ON_PERIOD_US);
-        gpio_set_level(DRIVER_GH_DIMMER_CTRL_GPIO, 0);
+        open_triac();
     }
 }
 
