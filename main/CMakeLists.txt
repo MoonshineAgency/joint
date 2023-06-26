@@ -23,7 +23,6 @@ idf_component_register(
         drivers/gh_adc.c
         drivers/gh_ph_meter.c
         drivers/dhtxx.c
-        drivers/gh_dimmer.c
 
     INCLUDE_DIRS
         .

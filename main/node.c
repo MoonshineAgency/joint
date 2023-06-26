@@ -30,10 +30,6 @@
 #include "drivers/dhtxx.h"
 #endif
 
-#ifdef DRIVER_GH_DIMMER
-#include "drivers/gh_dimmer.h"
-#endif
-
 #define DRIVER_CONFIG_TOPIC_FMT      "drivers/%s/config"
 #define DRIVER_SET_CONFIG_TOPIC_FMT  "drivers/%s/set_config"
 
@@ -146,9 +142,6 @@ esp_err_t node_init()
 #endif
 #ifdef DRIVER_DHTXX
     cvector_push_back(drivers, &drv_dht);
-#endif
-#ifdef DRIVER_GH_DIMMER
-    cvector_push_back(drivers, &drv_gh_dimmer);
 #endif
 
     system_set_mode(MODE_OFFLINE);

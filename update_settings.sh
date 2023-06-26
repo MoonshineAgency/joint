@@ -28,8 +28,8 @@ curl -X POST -i 'http://192.168.1.1/api/settings' --data '{
 			"password": ""
 		},
 		"sta": {
-			"ssid": "' "$1" '",
-			"password": "' "$2" '"
+			"ssid": "'${1}'",
+			"password": "'${2}'"
 		}
 	}
 }'

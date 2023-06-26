@@ -2,6 +2,7 @@
 #include "common.h"
 #include <sys/time.h>
 #include <errno.h>
+#include "settings.h"
 
 #if defined(HW_RTC_PCF8563)
 #include "hwrtc/rtc_pcf8563.h"
@@ -23,12 +24,12 @@ static void log_localtime()
     localtime_r(&now, &ti);
     strftime(buf, sizeof(buf), "%c", &ti);
 
-    ESP_LOGI(TAG, "Local time (%s): %s", CONFIG_NODE_TZ, buf);
+    ESP_LOGI(TAG, "Local time (%s): %s", settings.node.tz, buf);
 }
 
 esp_err_t hw_rtc_init()
 {
-    setenv("TZ", CONFIG_NODE_TZ, 1);
+    setenv("TZ", settings.node.tz, 1);
     tzset();
 
 #ifdef HW_RTC_NONE

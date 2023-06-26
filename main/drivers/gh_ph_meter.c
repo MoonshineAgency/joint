@@ -168,7 +168,7 @@ driver_t drv_ph_meter = {
     .name = "gh_ph_meter",
     .stack_size = DRIVER_GH_PH_METER_STACK_SIZE,
     .priority = tskIDLE_PRIORITY + 1,
-    .defconfig = "{ \"" OPT_PERIOD "\": 5000, \"" OPT_PH7_VOLTAGE "\": 0, \"" OPT_PH7_VOLTAGE "\": 0.17143, \"" OPT_SAMPLES "\": 32 }",
+    .defconfig = "{ \"" OPT_PERIOD "\": 5000, \"" OPT_PH7_VOLTAGE "\": 0, \"" OPT_PH4_VOLTAGE "\": 0.17143, \"" OPT_SAMPLES "\": 32 }",
 
     .config = NULL,
     .state = DRIVER_NEW,
