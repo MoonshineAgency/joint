@@ -10,9 +10,13 @@
 #define FMT_HUMIDITY_SENSOR_NAME    "%s humidity (AHT %d)"
 #define FMT_TEMPERATURE_SENSOR_NAME "%s temperature (AHT %d)"
 
+#define OPT_THRESHOLD               "temp_bad_threshold"
+
 static cvector_vector_type(aht_t) sensors = NULL;
 
 static int update_period;
+static int samples;
+static int threshold;
 
 static esp_err_t on_init(driver_t *self)
 {
@@ -20,6 +24,8 @@ static esp_err_t on_init(driver_t *self)
     cvector_free(sensors);
 
     update_period = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_PERIOD), 1000);
+    samples = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_SAMPLES), 8);
+    threshold = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_THRESHOLD), 120);
 
     // Init devices
     cJSON *sensors_j = cJSON_GetObjectItem(self->config, OPT_SENSORS);
@@ -89,19 +95,32 @@ static void task(driver_t *self)
 
         for (size_t i = 0; i < cvector_size(sensors); i++)
         {
-            float t = 0, rh = 0;
-            esp_err_t r = aht_get_data(&sensors[i], &t, &rh);
-            if (r != ESP_OK)
+            float t_sum = 0, rh_sum = 0;
+            int real_samples = 0;
+            for (int c = 0; c < samples; c++)
             {
-                ESP_LOGW(self->name, "Error reading device %d: %d (%s)", i, r, esp_err_to_name(r));
-                continue;
+                float t = 0, rh = 0;
+                esp_err_t r = aht_get_data(&sensors[i], &t, &rh);
+                if (r != ESP_OK)
+                {
+                    ESP_LOGW(self->name, "Error reading device %d: %d (%s)", i, r, esp_err_to_name(r));
+                    continue;
+                }
+                if (t >= (float)threshold)
+                {
+                    ESP_LOGW(self->name, "Bad temperature value: %.2f >= %d, dropping", t, threshold);
+                    continue;
+                }
+                t_sum += t;
+                rh_sum += rh;
+                real_samples++;
             }
 
             device_t *dev = &self->devices[i * 2];
-            dev->sensor.value = rh;
+            dev->sensor.value = rh_sum / (float)real_samples;
             driver_send_device_update(self, dev);
             dev = &self->devices[i * 2 + 1];
-            dev->sensor.value = t;
+            dev->sensor.value = t_sum / (float)real_samples;
             driver_send_device_update(self, dev);
         }
 
@@ -130,7 +149,7 @@ driver_t drv_aht = {
     .name = "ahtxx",
     .stack_size = DRIVER_AHTXX_STACK_SIZE,
     .priority = tskIDLE_PRIORITY + 1,
-    .defconfig = "{ \"" OPT_PERIOD "\": 5000, \"" OPT_SENSORS "\": " \
+    .defconfig = "{ \"" OPT_PERIOD "\": 5000, \"" OPT_SAMPLES "\": 8, \"" OPT_THRESHOLD "\": 120, \"" OPT_SENSORS "\": " \
         "[{ \"" OPT_TYPE "\": 0, \"" OPT_ADDRESS "\": 56 }] }",
 
     .config = NULL,

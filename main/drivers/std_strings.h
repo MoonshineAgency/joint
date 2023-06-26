@@ -26,6 +26,5 @@
 #define DEV_MU_TEMPERATURE "°C"
 #define DEV_MU_VOLTAGE     "V"
 #define DEV_MU_MOISTURE    "%"
-#define DEV_MU_DIMMER      "%"
 
 #endif // JOINT_DRV_STD_STRINGS_H_

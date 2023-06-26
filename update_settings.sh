@@ -4,10 +4,10 @@
 
 curl -X POST -i 'http://192.168.1.1/api/settings' --data '{
 	"system": {
-		"name": "Growtent-dev",
+		"name": "Greenhouse",
 		"failsafe":     true,
 		"safe_mode":    false,
-		"timezone":     "UTC-05"
+		"timezone":     "UTC-5"
 	},
 	"mqtt": {
 		"uri":  "mqtt://192.168.88.200:1883",
