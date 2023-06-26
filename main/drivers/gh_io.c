@@ -68,7 +68,7 @@ static esp_err_t on_init(driver_t *self)
         self->name, "Error initializing device descriptor: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
     );
 #if (DRIVER_GH_IO_FREQUENCY)
-        expander.cfg.master.clk_speed = DRIVER_GH_IO_FREQUENCY;
+    expander.cfg.master.clk_speed = DRIVER_GH_IO_FREQUENCY;
 #endif
     ESP_RETURN_ON_ERROR(
         tca95x5_port_write(&expander, 0),
@@ -196,7 +196,7 @@ driver_t drv_gh_io = {
     .name = "gh_io",
     .stack_size = DRIVER_GH_IO_STACK_SIZE,
     .priority = tskIDLE_PRIORITY + 1,
-    .defconfig = "{}",
+    .defconfig = NULL,
 
     .config = NULL,
     .state = DRIVER_NEW,

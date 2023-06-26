@@ -39,6 +39,9 @@ static QueueHandle_t node_queue = NULL;
 
 static void publish_driver(const driver_t *drv)
 {
+    if (!drv->config)
+        return;
+
     char topic[128] = {0};
     snprintf(topic, sizeof(topic), DRIVER_CONFIG_TOPIC_FMT, drv->name);
     mqtt_publish_json_subtopic(topic, drv->config, 2, 1);
@@ -52,7 +55,12 @@ static void on_set_config(const char *topic, const char *data, size_t data_len, 
         return;
     }
 
-    driver_t *drv = (driver_t *) ctx;
+    driver_t *drv = (driver_t *)ctx;
+    if (!drv->defconfig)
+    {
+        ESP_LOGE(TAG, "Driver '%s' not supporting config", drv->name);
+        return;
+    }
 
     memcpy(buf, data, data_len);
     buf[data_len] = 0;
@@ -146,14 +154,22 @@ esp_err_t node_init()
 
     system_set_mode(MODE_OFFLINE);
 
+    esp_err_t r;
     for (size_t i = 0; i < cvector_size(drivers); i++)
     {
         drivers[i]->event_queue = node_queue;
-        esp_err_t r = settings_load_driver_config(drivers[i]->name, buf, sizeof(buf));
-        if (r != ESP_OK)
+        if (drivers[i]->defconfig)
         {
-            settings_save_driver_config(drivers[i]->name, drivers[i]->defconfig);
-            memcpy(buf, drivers[i]->defconfig, strlen(drivers[i]->defconfig) + 1);
+            r = settings_load_driver_config(drivers[i]->name, buf, sizeof(buf));
+            if (r != ESP_OK)
+            {
+                settings_save_driver_config(drivers[i]->name, drivers[i]->defconfig);
+                memcpy(buf, drivers[i]->defconfig, strlen(drivers[i]->defconfig) + 1);
+            }
+        }
+        else
+        {
+            buf[0] = 0;
         }
 
         r = driver_init(drivers[i], buf, strlen(buf));

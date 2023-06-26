@@ -87,15 +87,18 @@ esp_err_t driver_init(driver_t *drv, const char *config, size_t cfg_len)
     if (config && cfg_len)
         drv->config = cJSON_ParseWithLength(config, cfg_len);
 
-    if (!drv->config)
+    if (drv->defconfig)
     {
-        ESP_LOGW(TAG, "[%s] Invalid or empty driver config, using default", drv->name);
-        drv->config = cJSON_Parse(drv->defconfig);
-    }
+        if (!drv->config)
+        {
+            ESP_LOGW(TAG, "[%s] Invalid or empty driver config, using default", drv->name);
+            drv->config = cJSON_Parse(drv->defconfig);
+        }
 
-    char *buf = cJSON_PrintUnformatted(drv->config);
-    ESP_LOGI(TAG, "[%s] Driver config: %s", drv->name, buf);
-    cJSON_free(buf);
+        char *buf = cJSON_PrintUnformatted(drv->config);
+        ESP_LOGI(TAG, "[%s] Driver config: %s", drv->name, buf);
+        cJSON_free(buf);
+    }
 
     if (drv->eg)
         vEventGroupDelete(drv->eg);
