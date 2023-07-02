@@ -1,5 +1,7 @@
 #include "dhtxx.h"
-#include "common.h"
+
+#ifdef DRIVER_DHTXX
+
 #include "driver.h"
 #include "settings.h"
 #include <dht.h>
@@ -131,3 +133,5 @@ driver_t drv_dht = {
 
     .task = task
 };
+
+#endif

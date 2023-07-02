@@ -1,9 +1,11 @@
 #include "gh_adc.h"
+
+#ifdef DRIVER_GH_ADC
+
 #include <esp_log.h>
 #include <esp_adc/adc_oneshot.h>
 #include <esp_adc/adc_cali_scheme.h>
 #include "settings.h"
-#include "common.h"
 
 #define FMT_ADC_SENSOR_ID        "ain%d"
 #define FMT_MOISTURE_SENSOR_ID   "ain_moisture%d"
@@ -240,3 +242,5 @@ driver_t drv_gh_adc = {
 
     .task = task
 };
+
+#endif

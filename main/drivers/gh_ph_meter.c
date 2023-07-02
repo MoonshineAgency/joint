@@ -1,9 +1,11 @@
 #include "gh_ph_meter.h"
+
+#ifdef DRIVER_GH_PH_METER
+
 #include <esp_check.h>
 #include <esp_timer.h>
 #include <ads111x.h>
 #include "settings.h"
-#include "common.h"
 
 #define GAIN ADS111X_GAIN_0V512
 
@@ -184,3 +186,5 @@ driver_t drv_ph_meter = {
 
     .task = task
 };
+
+#endif

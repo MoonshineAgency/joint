@@ -1,9 +1,11 @@
 #include "gh_io.h"
+
+#ifdef DRIVER_GH_IO
+
 #include <esp_log.h>
 #include <esp_check.h>
 #include "settings.h"
 #include <tca95x5.h>
-#include "common.h"
 
 #define FMT_RELAY_ID    "relay%d"
 #define FMT_INPUT_ID    "input%d"
@@ -212,3 +214,5 @@ driver_t drv_gh_io = {
 
     .task = task
 };
+
+#endif

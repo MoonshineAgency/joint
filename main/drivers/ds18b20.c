@@ -1,8 +1,10 @@
 #include "ds18b20.h"
+
+#ifdef DRIVER_DS18B20
+
 #include <esp_log.h>
 #include <ds18x20.h>
 #include "settings.h"
-#include "common.h"
 
 #define SENSOR_ADDR_FMT "%08lX%08lX"
 #define SENSOR_ADDR(addr) (uint32_t)(addr >> 32), (uint32_t)addr
@@ -161,3 +163,5 @@ driver_t drv_ds18b20 = {
 
     .task = task
 };
+
+#endif

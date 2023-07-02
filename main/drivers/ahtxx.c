@@ -1,5 +1,7 @@
 #include "ahtxx.h"
-#include "common.h"
+
+#ifdef DRIVER_AHTXX
+
 #include "driver.h"
 #include "settings.h"
 #include <aht.h>
@@ -166,3 +168,5 @@ driver_t drv_aht = {
 
     .task = task
 };
+
+#endif
