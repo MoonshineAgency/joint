@@ -85,7 +85,7 @@ static void scan(driver_t *self)
         device_t dev = { 0 };
         dev.type = DEV_SENSOR;
         snprintf(dev.uid, sizeof(dev.uid), SENSOR_ADDR_FMT, SENSOR_ADDR(scan_result[i]));
-        snprintf(dev.name, sizeof(dev.name), SENSOR_NAME_FMT, settings.node.name, SENSOR_ADDR(scan_result[i]));
+        snprintf(dev.name, sizeof(dev.name), SENSOR_NAME_FMT, settings.system.name, SENSOR_ADDR(scan_result[i]));
         strncpy(dev.device_class, DEV_CLASS_TEMPERATURE, sizeof(dev.device_class));
         strncpy(dev.sensor.measurement_unit, DEV_MU_TEMPERATURE, sizeof(dev.sensor.measurement_unit));
         dev.sensor.precision = 2;

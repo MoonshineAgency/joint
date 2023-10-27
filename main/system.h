@@ -17,11 +17,11 @@ typedef enum
 
 esp_err_t system_init();
 
-void system_set_mode(mode_t mode);
+void system_set_mode(system_mode_t mode);
 
-const char *system_mode_name(mode_t val);
+const char *system_mode_name(system_mode_t val);
 
-mode_t system_mode();
+system_mode_t system_mode();
 
 #define SYSTEM_CHECK(x)                                                         \
     do {                                                                        \

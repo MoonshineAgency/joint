@@ -102,7 +102,7 @@ static esp_err_t on_init(driver_t *self)
         dev.internal[0] = (void *)i;
         dev.binary_switch.on_write = on_relay_command;
         snprintf(dev.uid, sizeof(dev.uid), FMT_RELAY_ID, (int)i);
-        snprintf(dev.name, sizeof(dev.name), FMT_RELAY_NAME, settings.node.name, (int)i);
+        snprintf(dev.name, sizeof(dev.name), FMT_RELAY_NAME, settings.system.name, (int)i);
         cvector_push_back(self->devices, dev);
     }
 
@@ -112,7 +112,7 @@ static esp_err_t on_init(driver_t *self)
         memset(&dev, 0, sizeof(dev));
         dev.type = DEV_BINARY_SENSOR;
         snprintf(dev.uid, sizeof(dev.uid), FMT_INPUT_ID, i);
-        snprintf(dev.name, sizeof(dev.name), FMT_INPUT_NAME, settings.node.name, i);
+        snprintf(dev.name, sizeof(dev.name), FMT_INPUT_NAME, settings.system.name, i);
         cvector_push_back(self->devices, dev);
     }
 
@@ -122,7 +122,7 @@ static esp_err_t on_init(driver_t *self)
         memset(&dev, 0, sizeof(dev));
         dev.type = DEV_BINARY_SENSOR;
         snprintf(dev.uid, sizeof(dev.uid), FMT_SWITCH_ID, i);
-        snprintf(dev.name, sizeof(dev.name), FMT_SWITCH_NAME, settings.node.name, i);
+        snprintf(dev.name, sizeof(dev.name), FMT_SWITCH_NAME, settings.system.name, i);
         cvector_push_back(self->devices, dev);
     }
 

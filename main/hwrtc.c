@@ -24,12 +24,12 @@ static void log_localtime()
     localtime_r(&now, &ti);
     strftime(buf, sizeof(buf), "%c", &ti);
 
-    ESP_LOGI(TAG, "Local time (%s): %s", settings.node.tz, buf);
+    ESP_LOGI(TAG, "Local time (%s): %s", settings.sntp.tz, buf);
 }
 
 esp_err_t hw_rtc_init()
 {
-    setenv("TZ", settings.node.tz, 1);
+    setenv("TZ", settings.sntp.tz, 1);
     tzset();
 
 #ifdef HW_RTC_NONE

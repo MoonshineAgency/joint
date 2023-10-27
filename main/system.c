@@ -12,12 +12,12 @@ static const char *const mode_names[] = {
     [MODE_ONLINE]  = "ONLINE"
 };
 
-static mode_t cur_mode = MODE_INIT;
-static mode_t prev_mode = MODE_INIT;
+static system_mode_t cur_mode = MODE_INIT;
+static system_mode_t prev_mode = MODE_INIT;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const char *system_mode_name(mode_t val)
+const char *system_mode_name(system_mode_t val)
 {
     return val < MODE_MAX ? mode_names[val] : NULL;
 }
@@ -48,7 +48,7 @@ esp_err_t system_init()
     return ESP_OK;
 }
 
-void system_set_mode(mode_t mode)
+void system_set_mode(system_mode_t mode)
 {
     if (mode == cur_mode)
         return;
@@ -62,7 +62,7 @@ void system_set_mode(mode_t mode)
                "Error sending event");
 }
 
-mode_t system_mode()
+system_mode_t system_mode()
 {
     return cur_mode;
 }

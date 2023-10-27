@@ -29,13 +29,13 @@ static const char * const dev_type_names [] = {
 
 static const char *device_state_topic(const device_t *dev, char *buf, size_t size)
 {
-    snprintf(buf, size, STATE_TOPIC_FMT, settings.node.name, dev->uid);
+    snprintf(buf, size, STATE_TOPIC_FMT, settings.system.name, dev->uid);
     return buf;
 }
 
 static const char *device_command_topic(const device_t *dev, char *buf, size_t size)
 {
-    snprintf(buf, size, COMMAND_TOPIC_FMT, settings.node.name, dev->uid);
+    snprintf(buf, size, COMMAND_TOPIC_FMT, settings.system.name, dev->uid);
     return buf;
 }
 
@@ -47,7 +47,7 @@ static const char *device_discovery_topic(const device_t *dev, char *buf, size_t
     if (!strlen(type_name))
         return NULL;
 
-    snprintf(buf, size, DISCOVERY_TOPIC_FMT, type_name, settings.node.name, dev->uid);
+    snprintf(buf, size, DISCOVERY_TOPIC_FMT, type_name, settings.system.name, dev->uid);
     return buf;
 }
 
@@ -58,8 +58,8 @@ static cJSON *device_descriptor(const device_t *dev)
     if (strlen(dev->device_class))
         cJSON_AddStringToObject(res, "device_class", dev->device_class);
 
-    char uid[sizeof(dev->uid) + sizeof(settings.node.name) + 1] = { 0 };
-    snprintf(uid, sizeof(uid), "%s_%s", settings.node.name, dev->uid);
+    char uid[sizeof(dev->uid) + sizeof(settings.system.name) + 1] = { 0 };
+    snprintf(uid, sizeof(uid), "%s_%s", settings.system.name, dev->uid);
     cJSON_AddStringToObject(res, "object_id", uid);
     cJSON_AddStringToObject(res, "unique_id", uid);
 
@@ -104,11 +104,11 @@ static cJSON *device_descriptor(const device_t *dev)
     cJSON *device = cJSON_AddObjectToObject(res, "device");
 
     const char *ids[2] = {
-        settings.node.name,
+        settings.system.name,
         SYSTEM_ID,
     };
     cJSON_AddItemToObject(device, "identifiers",
-        cJSON_CreateStringArray(ids, strncmp(settings.node.name, SYSTEM_ID, sizeof(settings.node.name)) == 0 ? 1 : 2));
+        cJSON_CreateStringArray(ids, strncmp(settings.system.name, SYSTEM_ID, sizeof(settings.system.name)) == 0 ? 1 : 2));
 
     cJSON_AddStringToObject(device, "manufacturer", DEVICE_MANUFACTURER);
     cJSON_AddStringToObject(device, "name", DEVICE_NAME);

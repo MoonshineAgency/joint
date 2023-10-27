@@ -10,10 +10,12 @@ const settings_t defaults = {
     .system = {
         .safe_mode = true,
         .failsafe = true,
-    },
-    .node = {
         .name = { 0 },
-        .tz = CONFIG_NODE_TZ,
+    },
+    .sntp = {
+        .enabled = false,
+        .time_server = { 0 },
+        .tz = DEFAULT_TZ,
     },
     .mqtt = {
         .uri = CONFIG_NODE_MQTT_URI,
@@ -49,7 +51,10 @@ static const char *OPT_SYSTEM            = "system";
 static const char *OPT_SYSTEM_NAME       = "name";
 static const char *OPT_SYSTEM_FAILSAFE   = "failsafe";
 static const char *OPT_SYSTEM_SAFE_MODE  = "safe_mode";
-static const char *OPT_SYSTEM_TZ         = "timezone";
+static const char *OPT_SNTP              = "sntp";
+static const char *OPT_SNTP_ENABLED      = "enabled";
+static const char *OPT_SNTP_TIME_SERVER  = "timeserver";
+static const char *OPT_SNTP_TZ           = "timezone";
 static const char *OPT_MQTT              = "mqtt";
 static const char *OPT_MQTT_URI          = "uri";
 static const char *OPT_MQTT_USERNAME     = "username";
@@ -71,7 +76,8 @@ static const char *OPT_WIFI_STA_PASSWORD = "password";
 
 static const char *MSG_FIELD_ERR             = "Field `%s` not found or invalid";
 static const char *MSG_SYSTEM_NAME_ERR       = "Invalid system.name";
-static const char *MSG_SYSTEM_TZ_ERR         = "Invalid system.tz";
+static const char *MSG_SNTP_TZ_ERR           = "Invalid sntp.tz";
+static const char *MSG_SNTP_TIME_SERVER_ERR  = "Invalid sntp.time_server";
 static const char *MSG_MQTT_URI_ERR          = "Invalid mqtt.uri";
 static const char *MSG_MQTT_USERNAME_ERR     = "mqtt.username too long";
 static const char *MSG_MQTT_PASSWORD_ERR     = "mqtt.password too long";
@@ -159,8 +165,8 @@ esp_err_t settings_reset()
 {
     ESP_LOGW(TAG, "Resetting settings to defaults...");
     memcpy(&settings, &defaults, sizeof(settings_t));
-    memset(settings.node.name, 0, sizeof(settings.node.name));
-    strncpy(settings.node.name, SYSTEM_ID, sizeof(settings.node.name) - 1);
+    memset(settings.system.name, 0, sizeof(settings.system.name));
+    strncpy(settings.system.name, SYSTEM_ID, sizeof(settings.system.name) - 1);
     return settings_save();
 }
 
@@ -248,7 +254,11 @@ esp_err_t settings_from_json(cJSON *src, char *msg)
     GET_JSON_ITEM(sys_name_item, system, OPT_SYSTEM_NAME, cJSON_IsString);
     GET_JSON_ITEM(sys_failsafe_item, system, OPT_SYSTEM_FAILSAFE, cJSON_IsBool);
     GET_JSON_ITEM(sys_safe_mode_item, system, OPT_SYSTEM_SAFE_MODE, cJSON_IsBool);
-    GET_JSON_ITEM(sys_tz_item, system, OPT_SYSTEM_TZ, cJSON_IsString);
+
+    GET_JSON_ITEM(sntp, src, OPT_SNTP, );
+    GET_JSON_ITEM(sntp_enabled_item, sntp, OPT_SNTP_ENABLED, cJSON_IsBool);
+    GET_JSON_ITEM(sntp_time_server_item, sntp, OPT_SNTP_TIME_SERVER, cJSON_IsString);
+    GET_JSON_ITEM(sntp_tz_item, sntp, OPT_SNTP_TZ, cJSON_IsString);
 
     GET_JSON_ITEM(mqtt, src, OPT_MQTT, );
     GET_JSON_ITEM(mqtt_uri_item, mqtt, OPT_MQTT_URI, cJSON_IsString);
@@ -276,20 +286,29 @@ esp_err_t settings_from_json(cJSON *src, char *msg)
     // 2. Check
     const char *sys_name = cJSON_GetStringValue(sys_name_item);
     size_t len = strlen(sys_name);
-    if (!len || len >= sizeof(settings.node.name))
+    if (!len || len >= sizeof(settings.system.name))
     {
         report_err(MSG_SYSTEM_NAME_ERR, msg);
         return ESP_ERR_INVALID_ARG;
     }
-    const char *sys_tz = cJSON_GetStringValue(sys_tz_item);
-    len = strlen(sys_tz);
-    if (len >= sizeof(settings.node.name))
+
+    const char *sntp_time_server = cJSON_GetStringValue(sntp_time_server_item);
+    len = strlen(sntp_time_server);
+    if (!len || len >= sizeof(settings.sntp.time_server))
     {
-        report_err(MSG_SYSTEM_TZ_ERR, msg);
+        report_err(MSG_SNTP_TIME_SERVER_ERR, msg);
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    const char *sntp_tz = cJSON_GetStringValue(sntp_tz_item);
+    len = strlen(sntp_tz);
+    if (len >= sizeof(settings.sntp.tz))
+    {
+        report_err(MSG_SNTP_TZ_ERR, msg);
         return ESP_ERR_INVALID_ARG;
     }
     else if (!len)
-        sys_tz = CONFIG_NODE_TZ;
+        sntp_tz = DEFAULT_TZ;
 
     const char *mqtt_uri = cJSON_GetStringValue(mqtt_uri_item);
     len = strlen(mqtt_uri);
@@ -345,12 +364,15 @@ esp_err_t settings_from_json(cJSON *src, char *msg)
     }
 
     // 3. Update
-    strncpy(settings.node.name, sys_name, sizeof(settings.node.name) - 1);
-    settings.node.name[sizeof(settings.node.name) - 1] = '\0';
+    strncpy(settings.system.name, sys_name, sizeof(settings.system.name) - 1);
+    settings.system.name[sizeof(settings.system.name) - 1] = '\0';
     settings.system.failsafe = cJSON_IsTrue(sys_failsafe_item);
     settings.system.safe_mode = cJSON_IsTrue(sys_safe_mode_item);
-    strncpy(settings.node.tz, sys_tz, sizeof(settings.node.tz) - 1);
-    settings.node.name[sizeof(settings.node.tz) - 1] = '\0';
+
+    strncpy(settings.sntp.time_server, sntp_time_server, sizeof(settings.sntp.tz) - 1);
+    settings.sntp.time_server[sizeof(settings.sntp.time_server) - 1] = '\0';
+    strncpy(settings.sntp.tz, sntp_tz, sizeof(settings.sntp.tz) - 1);
+    settings.sntp.tz[sizeof(settings.sntp.tz) - 1] = '\0';
 
     strncpy(settings.mqtt.uri, mqtt_uri, sizeof(settings.mqtt.uri) - 1);
     settings.mqtt.uri[sizeof(settings.mqtt.uri) - 1] = '\0';
@@ -387,10 +409,14 @@ esp_err_t settings_to_json(cJSON **tgt)
     *tgt = cJSON_CreateObject();
 
     cJSON *system = cJSON_AddObjectToObject(*tgt, OPT_SYSTEM);
-    cJSON_AddStringToObject(system, OPT_SYSTEM_NAME, settings.node.name);
+    cJSON_AddStringToObject(system, OPT_SYSTEM_NAME, settings.system.name);
     cJSON_AddBoolToObject(system, OPT_SYSTEM_FAILSAFE, settings.system.failsafe);
     cJSON_AddBoolToObject(system, OPT_SYSTEM_SAFE_MODE, settings.system.safe_mode);
-    cJSON_AddStringToObject(system, OPT_SYSTEM_TZ, settings.node.tz);
+
+    cJSON *sntp = cJSON_AddObjectToObject(*tgt, OPT_SNTP);
+    cJSON_AddBoolToObject(sntp, OPT_SNTP_ENABLED, settings.sntp.enabled);
+    cJSON_AddStringToObject(sntp, OPT_SNTP_TIME_SERVER, settings.sntp.time_server);
+    cJSON_AddStringToObject(sntp, OPT_SNTP_TZ, settings.sntp.tz);
 
     cJSON *mqtt = cJSON_AddObjectToObject(*tgt, OPT_MQTT);
     cJSON_AddStringToObject(mqtt, OPT_MQTT_URI, settings.mqtt.uri);

@@ -6,7 +6,7 @@
 #include "cvector.h"
 
 #define DISCOVERY_TOPIC "homeassistant"
-#define MAX_TOPIC_LEN (sizeof(settings.node.name) + 100)
+#define MAX_TOPIC_LEN (sizeof(settings.system.name) + 100)
 
 static bool connected = false;
 static bool started = false;
@@ -108,7 +108,7 @@ static void handler(void *arg, esp_event_base_t event_base, int32_t event_id, vo
 
 inline static void full_topic(char *buf, const char *subtopic)
 {
-    snprintf(buf, MAX_TOPIC_LEN, "%s/%s", settings.node.name, subtopic);
+    snprintf(buf, MAX_TOPIC_LEN, "%s/%s", settings.system.name, subtopic);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -222,7 +222,7 @@ int mqtt_subscribe(const char *topic, mqtt_callback_t cb, int qos, void *ctx)
     strncpy(s.topic, topic, sizeof(s.topic) - 1);
     cvector_push_back(subs, s);
 
-    return subscribed ? 0 : esp_mqtt_client_subscribe(handle, topic, qos);
+    return subscribed ? 0 : esp_mqtt_client_subscribe(handle, (char *)topic, qos);
 }
 
 int mqtt_subscribe_subtopic(const char *subtopic, mqtt_callback_t cb, int qos, void *ctx)

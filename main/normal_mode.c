@@ -7,6 +7,7 @@
 #include "wifi.h"
 #include "webserver.h"
 #include "sntp.h"
+#include "settings.h"
 
 static void task(void *arg)
 {
@@ -39,6 +40,9 @@ static void task(void *arg)
             case MQTT_DISCONNECTED:
                 node_offline();
                 break;
+            case SETTINGS_RESET:
+                settings_reset();
+                esp_restart();
             default:
                 break;
         }

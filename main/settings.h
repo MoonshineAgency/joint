@@ -11,12 +11,14 @@ typedef struct
     struct {
         bool safe_mode;
         bool failsafe;
+        char name[32];
     } system;
 
     struct {
-        char name[32];
+        bool enabled;
+        char time_server[64];
         char tz[32];
-    } node;
+    } sntp;
 
     struct {
         char uri[64];

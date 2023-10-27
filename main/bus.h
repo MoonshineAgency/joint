@@ -10,6 +10,7 @@ typedef enum {
     MQTT_CONNECTED,
     MQTT_DISCONNECTED,
     MODE_SET,
+    SETTINGS_RESET,
 } event_type_t;
 
 typedef struct

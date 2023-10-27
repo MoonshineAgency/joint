@@ -57,7 +57,7 @@ static esp_err_t on_init(driver_t *self)
         device_t dev = { 0 };
         snprintf(dev.uid, sizeof(dev.uid), FMT_HUMIDITY_SENSOR_ID, i);
         dev.type = DEV_SENSOR;
-        snprintf(dev.name, sizeof(dev.name), FMT_HUMIDITY_SENSOR_NAME, settings.node.name, i);
+        snprintf(dev.name, sizeof(dev.name), FMT_HUMIDITY_SENSOR_NAME, settings.system.name, i);
         strncpy(dev.device_class, DEV_CLASS_HUMIDITY, sizeof(dev.device_class));
         strncpy(dev.sensor.measurement_unit, DEV_MU_HUMIDITY, sizeof(dev.sensor.measurement_unit));
         dev.sensor.precision = 1;
@@ -67,7 +67,7 @@ static esp_err_t on_init(driver_t *self)
         memset(&dev, 0, sizeof(device_t));
         snprintf(dev.uid, sizeof(dev.uid), FMT_TEMPERATURE_SENSOR_ID, i);
         dev.type = DEV_SENSOR;
-        snprintf(dev.name, sizeof(dev.name), FMT_TEMPERATURE_SENSOR_NAME, settings.node.name, i);
+        snprintf(dev.name, sizeof(dev.name), FMT_TEMPERATURE_SENSOR_NAME, settings.system.name, i);
         strncpy(dev.device_class, DEV_CLASS_TEMPERATURE, sizeof(dev.device_class));
         strncpy(dev.sensor.measurement_unit, DEV_MU_TEMPERATURE, sizeof(dev.sensor.measurement_unit));
         dev.sensor.precision = 1;

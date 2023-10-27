@@ -116,7 +116,7 @@ static esp_err_t on_init(driver_t *self)
         strncpy(dev.sensor.measurement_unit, DEV_MU_VOLTAGE, sizeof(dev.sensor.measurement_unit));
         strncpy(dev.device_class, DEV_CLASS_VOLTAGE, sizeof(dev.device_class));
         snprintf(dev.uid, sizeof(dev.uid), FMT_ADC_SENSOR_ID, c);
-        snprintf(dev.name, sizeof(dev.name), FMT_ADC_SENSOR_NAME, settings.node.name, c);
+        snprintf(dev.name, sizeof(dev.name), FMT_ADC_SENSOR_NAME, settings.system.name, c);
         cvector_push_back(self->devices, dev);
     }
 
@@ -130,7 +130,7 @@ static esp_err_t on_init(driver_t *self)
             strncpy(dev.sensor.measurement_unit, DEV_MU_MOISTURE, sizeof(dev.sensor.measurement_unit));
             strncpy(dev.device_class, DEV_CLASS_MOISTURE, sizeof(dev.device_class));
             snprintf(dev.uid, sizeof(dev.uid), FMT_MOISTURE_SENSOR_ID, c);
-            snprintf(dev.name, sizeof(dev.name), FMT_MOISTURE_SENSOR_NAME, settings.node.name, c);
+            snprintf(dev.name, sizeof(dev.name), FMT_MOISTURE_SENSOR_NAME, settings.system.name, c);
             cvector_push_back(self->devices, dev);
         }
 
@@ -141,7 +141,7 @@ static esp_err_t on_init(driver_t *self)
     strncpy(dev.sensor.measurement_unit, DEV_MU_VOLTAGE, sizeof(dev.sensor.measurement_unit));
     strncpy(dev.device_class, DEV_CLASS_VOLTAGE, sizeof(dev.device_class));
     strncpy(dev.uid, FMT_TDS_SENSOR_ID, sizeof(dev.uid));
-    snprintf(dev.name, sizeof(dev.name), FMT_TDS_SENSOR_NAME, settings.node.name);
+    snprintf(dev.name, sizeof(dev.name), FMT_TDS_SENSOR_NAME, settings.system.name);
     cvector_push_back(self->devices, dev);
 
     return ESP_OK;

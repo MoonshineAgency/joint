@@ -32,28 +32,6 @@ menu "*** Joint configuration ***"
 
     endmenu
 
-    menu "Date/Time"
-
-        config NODE_TZ
-            string "Timezone"
-            default "UTC"
-            help
-                Warning: POSIX-style timezone definition!
-                The offset specifies the time value you must add to the local time to get a
-                Coordinated Universal Time value.
-
-                E.g., if your timezone is UTC+5, you must use "UTC-5" and so on.
-
-        config SNTP_ENABLE
-            bool "Enable SNTP date/time sync"
-            default y
-
-        config SNTP_TIME_SERVER
-            string "SNTP time server"
-            default "pool.ntp.org"
-
-    endmenu
-
     menu "Default WiFi configuration"
         
         menu "Access point mode"

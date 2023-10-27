@@ -66,7 +66,7 @@ static esp_err_t on_init(driver_t *self)
     device_t dev = { 0 };
     strncpy(dev.uid, PH_METER_ID, sizeof(dev.uid));
     dev.type = DEV_SENSOR;
-    snprintf(dev.name, sizeof(dev.name), FMT_PH_METER_NAME, settings.node.name);
+    snprintf(dev.name, sizeof(dev.name), FMT_PH_METER_NAME, settings.system.name);
     strncpy(dev.sensor.measurement_unit, MU_PH_METER, sizeof(dev.sensor.measurement_unit));
     dev.sensor.precision = 2;
     dev.sensor.update_period = update_period;
@@ -75,7 +75,7 @@ static esp_err_t on_init(driver_t *self)
     memset(&dev, 0, sizeof(dev));
     strncpy(dev.uid, PH_RAW_ID, sizeof(dev.uid));
     dev.type = DEV_SENSOR;
-    snprintf(dev.name, sizeof(dev.name), FMT_PH_RAW_NAME, settings.node.name);
+    snprintf(dev.name, sizeof(dev.name), FMT_PH_RAW_NAME, settings.system.name);
     strncpy(dev.device_class, DEV_CLASS_VOLTAGE, sizeof(dev.device_class));
     strncpy(dev.sensor.measurement_unit, DEV_MU_VOLTAGE, sizeof(dev.sensor.measurement_unit));
     dev.sensor.precision = 4;

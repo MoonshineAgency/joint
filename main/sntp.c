@@ -1,9 +1,9 @@
 #include "sntp.h"
 #include "common.h"
 #include "hwrtc.h"
+#include "settings.h"
 #include <esp_sntp.h>
 
-#ifdef CONFIG_SNTP_ENABLE
 static void callback(struct timeval *tv)
 {
     ESP_LOGI(TAG, "Got time from SNTP, updating HW RTC");
@@ -11,16 +11,25 @@ static void callback(struct timeval *tv)
     if (r != ESP_OK)
         ESP_LOGW(TAG, "Error updating HW RTC: %d (%s)", r, esp_err_to_name(r));
 }
-#endif
 
 void sntp_iot_init()
 {
-#ifdef CONFIG_SNTP_ENABLE
+    if (!settings.sntp.enabled)
+    {
+        ESP_LOGW(TAG, "SNTP client disabled");
+        return;
+    }
+
+    if (!strlen(settings.sntp.time_server))
+    {
+        ESP_LOGE(TAG, "Invalid SNTP time server");
+        return;
+    }
+
     ESP_LOGI(TAG, "Initializing SNTP");
 
-    sntp_setoperatingmode(SNTP_OPMODE_POLL);
-    sntp_setservername(0, CONFIG_SNTP_TIME_SERVER);
+    esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);
+    esp_sntp_setservername(0, settings.sntp.time_server);
     sntp_set_time_sync_notification_cb(callback);
-    sntp_init();
-#endif
+    esp_sntp_init();
 }

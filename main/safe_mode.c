@@ -4,6 +4,7 @@
 #include "bus.h"
 #include "wifi.h"
 #include "webserver.h"
+#include "settings.h"
 
 static void task(void *arg)
 {
@@ -30,6 +31,9 @@ static void task(void *arg)
                 if (res != ESP_OK)
                     ESP_LOGW(TAG, "Could not restart webserver");
                 break;
+            case SETTINGS_RESET:
+                settings_reset();
+                esp_restart();
             default:
                 break;
         }

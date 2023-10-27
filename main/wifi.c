@@ -163,7 +163,7 @@ static esp_err_t init_sta()
     wifi_mode = WIFI_MODE_STA;
 
     iface = esp_netif_create_default_wifi_sta();
-    CHECK(esp_netif_set_hostname(iface, settings.node.name));
+    CHECK(esp_netif_set_hostname(iface, settings.system.name));
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     CHECK(esp_wifi_init(&cfg));

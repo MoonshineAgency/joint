@@ -1,0 +1,889 @@
+[
+    {
+        "id": "336585a001edb18c",
+        "type": "tab",
+        "label": "Освещение",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "4ae19e539c78155d",
+        "type": "tab",
+        "label": "Увлажнитель воздуха",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "29535e945c3090bf",
+        "type": "tab",
+        "label": "Влажность почвы",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "dd10557f.637be8",
+        "type": "server",
+        "name": "Home Assistant",
+        "addon": true
+    },
+    {
+        "id": "6211eb3ccddb62c0",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "127.0.0.1",
+        "port": "1883",
+        "clientid": "NODE_RED",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "b1c7d8795c4e014c",
+        "type": "bigtimer",
+        "z": "336585a001edb18c",
+        "outtopic": "",
+        "outpayload1": "",
+        "outpayload2": "",
+        "name": "Световой таймер",
+        "comment": "Расписание света",
+        "lat": 0,
+        "lon": 0,
+        "starttime": "480",
+        "endtime": "120",
+        "starttime2": 0,
+        "endtime2": 0,
+        "startoff": 0,
+        "endoff": 0,
+        "startoff2": 0,
+        "endoff2": 0,
+        "offs": 0,
+        "outtext1": "ON",
+        "outtext2": "OFF",
+        "timeout": 1440,
+        "sun": true,
+        "mon": true,
+        "tue": true,
+        "wed": true,
+        "thu": true,
+        "fri": true,
+        "sat": true,
+        "jan": true,
+        "feb": true,
+        "mar": true,
+        "apr": true,
+        "may": true,
+        "jun": true,
+        "jul": true,
+        "aug": true,
+        "sep": true,
+        "oct": true,
+        "nov": true,
+        "dec": true,
+        "day1": 0,
+        "month1": 0,
+        "day2": 0,
+        "month2": 0,
+        "day3": 0,
+        "month3": 0,
+        "day4": 0,
+        "month4": 0,
+        "day5": 0,
+        "month5": 0,
+        "day6": 0,
+        "month6": 0,
+        "day7": 0,
+        "month7": 0,
+        "day8": 0,
+        "month8": 0,
+        "day9": 0,
+        "month9": 0,
+        "day10": 0,
+        "month10": 0,
+        "day11": 0,
+        "month11": 0,
+        "day12": 0,
+        "month12": 0,
+        "d1": 0,
+        "w1": 0,
+        "d2": 0,
+        "w2": 0,
+        "d3": 0,
+        "w3": 0,
+        "d4": 0,
+        "w4": 0,
+        "d5": 0,
+        "w5": 0,
+        "d6": 0,
+        "w6": 0,
+        "xday1": 0,
+        "xmonth1": 0,
+        "xday2": 0,
+        "xmonth2": 0,
+        "xday3": 0,
+        "xmonth3": 0,
+        "xday4": 0,
+        "xmonth4": 0,
+        "xday5": 0,
+        "xmonth5": 0,
+        "xday6": 0,
+        "xmonth6": 0,
+        "xday7": 0,
+        "xmonth7": 0,
+        "xday8": 0,
+        "xmonth8": 0,
+        "xday9": 0,
+        "xmonth9": 0,
+        "xday10": 0,
+        "xmonth10": 0,
+        "xday11": 0,
+        "xmonth11": 0,
+        "xday12": 0,
+        "xmonth12": 0,
+        "xd1": 0,
+        "xw1": 0,
+        "xd2": 0,
+        "xw2": 0,
+        "xd3": 0,
+        "xw3": 0,
+        "xd4": 0,
+        "xw4": 0,
+        "xd5": 0,
+        "xw5": 0,
+        "xd6": 0,
+        "xw6": 0,
+        "suspend": false,
+        "random": false,
+        "randon1": false,
+        "randoff1": false,
+        "randon2": false,
+        "randoff2": false,
+        "repeat": true,
+        "atstart": true,
+        "odd": false,
+        "even": false,
+        "x": 150,
+        "y": 200,
+        "wires": [
+            [],
+            [
+                "6fa6ce3db0c4d112"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "53d028f3fce50284",
+        "type": "switch",
+        "z": "336585a001edb18c",
+        "name": "вкл/выкл",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "1",
+                "vt": "str"
+            },
+            {
+                "t": "neq",
+                "v": "1",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 780,
+        "y": 200,
+        "wires": [
+            [
+                "9ff5b65b1df1f5e5"
+            ],
+            [
+                "0b5662613e740b78"
+            ]
+        ]
+    },
+    {
+        "id": "0b5662613e740b78",
+        "type": "api-call-service",
+        "z": "336585a001edb18c",
+        "name": "Выключить реле 0",
+        "server": "dd10557f.637be8",
+        "version": 5,
+        "debugenabled": false,
+        "domain": "switch",
+        "service": "turn_off",
+        "areaId": [],
+        "deviceId": [],
+        "entityId": [
+            "switch.greenhouse_relay0"
+        ],
+        "data": "",
+        "dataType": "jsonata",
+        "mergeContext": "",
+        "mustacheAltTags": false,
+        "outputProperties": [],
+        "queue": "none",
+        "x": 1010,
+        "y": 240,
+        "wires": [
+            []
+        ],
+        "icon": "font-awesome/fa-power-off"
+    },
+    {
+        "id": "9ff5b65b1df1f5e5",
+        "type": "api-call-service",
+        "z": "336585a001edb18c",
+        "name": "Включить реле 0",
+        "server": "dd10557f.637be8",
+        "version": 5,
+        "debugenabled": false,
+        "domain": "switch",
+        "service": "turn_on",
+        "areaId": [],
+        "deviceId": [],
+        "entityId": [
+            "switch.greenhouse_relay0"
+        ],
+        "data": "",
+        "dataType": "jsonata",
+        "mergeContext": "",
+        "mustacheAltTags": false,
+        "outputProperties": [],
+        "queue": "none",
+        "x": 1010,
+        "y": 160,
+        "wires": [
+            []
+        ],
+        "icon": "node-red/light.svg"
+    },
+    {
+        "id": "a9cfd621f68cd9c2",
+        "type": "api-current-state",
+        "z": "336585a001edb18c",
+        "name": "Получение switch",
+        "server": "dd10557f.637be8",
+        "version": 3,
+        "outputs": 2,
+        "halt_if": "on",
+        "halt_if_type": "str",
+        "halt_if_compare": "is",
+        "entity_id": "input_boolean.greenhouse_light_control",
+        "state_type": "str",
+        "blockInputOverrides": true,
+        "outputProperties": [],
+        "for": "0",
+        "forType": "num",
+        "forUnits": "minutes",
+        "override_topic": false,
+        "state_location": "payload",
+        "override_payload": "msg",
+        "entity_location": "data",
+        "override_data": "msg",
+        "x": 570,
+        "y": 200,
+        "wires": [
+            [
+                "53d028f3fce50284"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "6fa6ce3db0c4d112",
+        "type": "delay",
+        "z": "336585a001edb18c",
+        "name": "",
+        "pauseType": "delay",
+        "timeout": "10",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 360,
+        "y": 200,
+        "wires": [
+            [
+                "a9cfd621f68cd9c2"
+            ]
+        ]
+    },
+    {
+        "id": "fba3b64f3b87c44d",
+        "type": "server-state-changed",
+        "z": "4ae19e539c78155d",
+        "name": "События изменения влажности воздуха и уставок",
+        "server": "dd10557f.637be8",
+        "version": 4,
+        "exposeToHomeAssistant": false,
+        "haConfig": [
+            {
+                "property": "name",
+                "value": ""
+            },
+            {
+                "property": "icon",
+                "value": ""
+            }
+        ],
+        "entityidfilter": [
+            "sensor.greenhouse_aht_rh0",
+            "input_number.greenhouse_air_rh_hyst",
+            "input_number.greenhouse_air_rh_target",
+            "input_boolean.greenhouse_rh_control"
+        ],
+        "entityidfiltertype": "list",
+        "outputinitially": false,
+        "state_type": "str",
+        "haltifstate": "",
+        "halt_if_type": "str",
+        "halt_if_compare": "is",
+        "outputs": 1,
+        "output_only_on_state_change": true,
+        "for": "0",
+        "forType": "num",
+        "forUnits": "minutes",
+        "ignorePrevStateNull": false,
+        "ignorePrevStateUnknown": false,
+        "ignorePrevStateUnavailable": false,
+        "ignoreCurrentStateUnknown": false,
+        "ignoreCurrentStateUnavailable": false,
+        "outputProperties": [],
+        "x": 250,
+        "y": 80,
+        "wires": [
+            [
+                "0d06955e4f725de4"
+            ]
+        ]
+    },
+    {
+        "id": "ceb29f1c4c7367f2",
+        "type": "switch",
+        "z": "4ae19e539c78155d",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "0",
+                "vt": "num"
+            },
+            {
+                "t": "eq",
+                "v": "1",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 490,
+        "y": 360,
+        "wires": [
+            [
+                "c109a2166c01ad0c"
+            ],
+            [
+                "870a71df09bab992"
+            ]
+        ]
+    },
+    {
+        "id": "8376d989b2bf50c1",
+        "type": "api-current-state",
+        "z": "4ae19e539c78155d",
+        "name": "Получение RH",
+        "server": "dd10557f.637be8",
+        "version": 3,
+        "outputs": 1,
+        "halt_if": "",
+        "halt_if_type": "str",
+        "halt_if_compare": "is",
+        "entity_id": "sensor.greenhouse_aht_rh0",
+        "state_type": "num",
+        "blockInputOverrides": true,
+        "outputProperties": [
+            {
+                "property": "value",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "entityState"
+            }
+        ],
+        "for": "0",
+        "forType": "num",
+        "forUnits": "minutes",
+        "override_topic": false,
+        "state_location": "payload",
+        "override_payload": "msg",
+        "entity_location": "data",
+        "override_data": "msg",
+        "x": 200,
+        "y": 200,
+        "wires": [
+            [
+                "82b3f12d95602a39"
+            ]
+        ]
+    },
+    {
+        "id": "82b3f12d95602a39",
+        "type": "api-current-state",
+        "z": "4ae19e539c78155d",
+        "name": "Получение TARGET",
+        "server": "dd10557f.637be8",
+        "version": 3,
+        "outputs": 1,
+        "halt_if": "",
+        "halt_if_type": "str",
+        "halt_if_compare": "is",
+        "entity_id": "input_number.greenhouse_air_rh_target",
+        "state_type": "num",
+        "blockInputOverrides": true,
+        "outputProperties": [
+            {
+                "property": "target",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "entityState"
+            }
+        ],
+        "for": "0",
+        "forType": "num",
+        "forUnits": "minutes",
+        "override_topic": false,
+        "state_location": "payload",
+        "override_payload": "msg",
+        "entity_location": "data",
+        "override_data": "msg",
+        "x": 400,
+        "y": 200,
+        "wires": [
+            [
+                "b8cfe11de750b3c0"
+            ]
+        ]
+    },
+    {
+        "id": "b8cfe11de750b3c0",
+        "type": "api-current-state",
+        "z": "4ae19e539c78155d",
+        "name": "Получение HYST",
+        "server": "dd10557f.637be8",
+        "version": 3,
+        "outputs": 1,
+        "halt_if": "",
+        "halt_if_type": "str",
+        "halt_if_compare": "is",
+        "entity_id": "input_number.greenhouse_air_rh_hyst",
+        "state_type": "num",
+        "blockInputOverrides": true,
+        "outputProperties": [
+            {
+                "property": "hyst",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "entityState"
+            }
+        ],
+        "for": "0",
+        "forType": "num",
+        "forUnits": "minutes",
+        "override_topic": false,
+        "state_location": "payload",
+        "override_payload": "msg",
+        "entity_location": "data",
+        "override_data": "msg",
+        "x": 610,
+        "y": 200,
+        "wires": [
+            [
+                "91d2f76c684b06a2"
+            ]
+        ]
+    },
+    {
+        "id": "0d06955e4f725de4",
+        "type": "api-current-state",
+        "z": "4ae19e539c78155d",
+        "name": "Получение SWITCH",
+        "server": "dd10557f.637be8",
+        "version": 3,
+        "outputs": 2,
+        "halt_if": "on",
+        "halt_if_type": "str",
+        "halt_if_compare": "is",
+        "entity_id": "input_boolean.greenhouse_rh_control",
+        "state_type": "str",
+        "blockInputOverrides": true,
+        "outputProperties": [
+            {
+                "property": "control",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "entityState"
+            }
+        ],
+        "for": "0",
+        "forType": "num",
+        "forUnits": "minutes",
+        "override_topic": false,
+        "state_location": "payload",
+        "override_payload": "msg",
+        "entity_location": "data",
+        "override_data": "msg",
+        "x": 560,
+        "y": 80,
+        "wires": [
+            [
+                "8376d989b2bf50c1"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "91d2f76c684b06a2",
+        "type": "function",
+        "z": "4ae19e539c78155d",
+        "name": "Гистерезис",
+        "func": "var $res = { payload: 2 };\n\nvar $low = Math.max(msg.target - msg.hyst / 2, 0);\nvar $hi = Math.min(msg.target + msg.hyst / 2, 100);\n\n// Влажность меньше или равна нижней границе\nif (msg.value <= $low)\n    $res.payload = 1;\n\n// Влажность больше или равна верхней границе\nif (msg.value >= $hi)\n    $res.payload = 0;\n\nreturn $res;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 270,
+        "y": 360,
+        "wires": [
+            [
+                "ceb29f1c4c7367f2"
+            ]
+        ]
+    },
+    {
+        "id": "c109a2166c01ad0c",
+        "type": "api-call-service",
+        "z": "4ae19e539c78155d",
+        "name": "Выключить увлажнитель",
+        "server": "dd10557f.637be8",
+        "version": 5,
+        "debugenabled": false,
+        "domain": "switch",
+        "service": "turn_off",
+        "areaId": [],
+        "deviceId": [],
+        "entityId": [
+            "switch.greenhouse_relay3"
+        ],
+        "data": "",
+        "dataType": "jsonata",
+        "mergeContext": "",
+        "mustacheAltTags": false,
+        "outputProperties": [],
+        "queue": "none",
+        "x": 710,
+        "y": 320,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "870a71df09bab992",
+        "type": "api-call-service",
+        "z": "4ae19e539c78155d",
+        "name": "Включить увлажнитель",
+        "server": "dd10557f.637be8",
+        "version": 5,
+        "debugenabled": false,
+        "domain": "switch",
+        "service": "turn_on",
+        "areaId": [],
+        "deviceId": [],
+        "entityId": [
+            "switch.greenhouse_relay3"
+        ],
+        "data": "",
+        "dataType": "jsonata",
+        "mergeContext": "",
+        "mustacheAltTags": false,
+        "outputProperties": [],
+        "queue": "none",
+        "x": 710,
+        "y": 400,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "4663533b6b1d7c42",
+        "type": "server-state-changed",
+        "z": "29535e945c3090bf",
+        "name": "События изменения влажности почвы и уставок",
+        "server": "dd10557f.637be8",
+        "version": 4,
+        "exposeToHomeAssistant": false,
+        "haConfig": [
+            {
+                "property": "name",
+                "value": ""
+            },
+            {
+                "property": "icon",
+                "value": ""
+            }
+        ],
+        "entityidfilter": [
+            "input_boolean.greenhouse_soil_moisture_alert",
+            "input_number.greenhouse_soil_moisture_min",
+            "sensor.greenhouse_ain_moisture0",
+            "sensor.greenhouse_ain_moisture1"
+        ],
+        "entityidfiltertype": "list",
+        "outputinitially": false,
+        "state_type": "str",
+        "haltifstate": "",
+        "halt_if_type": "str",
+        "halt_if_compare": "is",
+        "outputs": 1,
+        "output_only_on_state_change": true,
+        "for": "0",
+        "forType": "num",
+        "forUnits": "minutes",
+        "ignorePrevStateNull": false,
+        "ignorePrevStateUnknown": false,
+        "ignorePrevStateUnavailable": false,
+        "ignoreCurrentStateUnknown": false,
+        "ignoreCurrentStateUnavailable": false,
+        "outputProperties": [],
+        "x": 270,
+        "y": 80,
+        "wires": [
+            [
+                "a836498f2136d98e"
+            ]
+        ]
+    },
+    {
+        "id": "dd29acd3c2ec541a",
+        "type": "api-current-state",
+        "z": "29535e945c3090bf",
+        "name": "Получение value горшок 1",
+        "server": "dd10557f.637be8",
+        "version": 3,
+        "outputs": 2,
+        "halt_if": "min_val",
+        "halt_if_type": "msg",
+        "halt_if_compare": "lt",
+        "entity_id": "sensor.greenhouse_ain_moisture0",
+        "state_type": "num",
+        "blockInputOverrides": true,
+        "outputProperties": [
+            {
+                "property": "value",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "entityState"
+            },
+            {
+                "property": "entity",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "entity"
+            }
+        ],
+        "for": "0",
+        "forType": "num",
+        "forUnits": "minutes",
+        "override_topic": false,
+        "state_location": "payload",
+        "override_payload": "msg",
+        "entity_location": "data",
+        "override_data": "msg",
+        "x": 520,
+        "y": 200,
+        "wires": [
+            [
+                "c49321268ecfd937"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "2d2e6a718a3347fa",
+        "type": "api-current-state",
+        "z": "29535e945c3090bf",
+        "name": "Получение value горшок 2",
+        "server": "dd10557f.637be8",
+        "version": 3,
+        "outputs": 2,
+        "halt_if": "min_val",
+        "halt_if_type": "msg",
+        "halt_if_compare": "lt",
+        "entity_id": "sensor.greenhouse_ain_moisture1",
+        "state_type": "num",
+        "blockInputOverrides": true,
+        "outputProperties": [
+            {
+                "property": "value",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "entityState"
+            },
+            {
+                "property": "entity",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "entity"
+            }
+        ],
+        "for": "0",
+        "forType": "num",
+        "forUnits": "minutes",
+        "override_topic": false,
+        "state_location": "payload",
+        "override_payload": "msg",
+        "entity_location": "data",
+        "override_data": "msg",
+        "x": 520,
+        "y": 280,
+        "wires": [
+            [
+                "c49321268ecfd937"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "a836498f2136d98e",
+        "type": "api-current-state",
+        "z": "29535e945c3090bf",
+        "name": "Получение switch",
+        "server": "dd10557f.637be8",
+        "version": 3,
+        "outputs": 2,
+        "halt_if": "on",
+        "halt_if_type": "str",
+        "halt_if_compare": "is",
+        "entity_id": "input_boolean.greenhouse_soil_moisture_alert",
+        "state_type": "str",
+        "blockInputOverrides": true,
+        "outputProperties": [
+            {
+                "property": "switch",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "entityState"
+            }
+        ],
+        "for": "0",
+        "forType": "num",
+        "forUnits": "minutes",
+        "override_topic": false,
+        "state_location": "payload",
+        "override_payload": "msg",
+        "entity_location": "data",
+        "override_data": "msg",
+        "x": 570,
+        "y": 80,
+        "wires": [
+            [
+                "06d9978f502617a5"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "06d9978f502617a5",
+        "type": "api-current-state",
+        "z": "29535e945c3090bf",
+        "name": "Получение min_val",
+        "server": "dd10557f.637be8",
+        "version": 3,
+        "outputs": 1,
+        "halt_if": "",
+        "halt_if_type": "str",
+        "halt_if_compare": "is",
+        "entity_id": "input_number.greenhouse_soil_moisture_min",
+        "state_type": "num",
+        "blockInputOverrides": true,
+        "outputProperties": [
+            {
+                "property": "min_val",
+                "propertyType": "msg",
+                "value": "",
+                "valueType": "entityState"
+            }
+        ],
+        "for": "0",
+        "forType": "num",
+        "forUnits": "minutes",
+        "override_topic": false,
+        "state_location": "payload",
+        "override_payload": "msg",
+        "entity_location": "data",
+        "override_data": "msg",
+        "x": 250,
+        "y": 200,
+        "wires": [
+            [
+                "dd29acd3c2ec541a",
+                "2d2e6a718a3347fa"
+            ]
+        ]
+    },
+    {
+        "id": "c49321268ecfd937",
+        "type": "api-call-service",
+        "z": "29535e945c3090bf",
+        "name": "Извещение",
+        "server": "dd10557f.637be8",
+        "version": 5,
+        "debugenabled": false,
+        "domain": "notify",
+        "service": "persistent_notification",
+        "areaId": [],
+        "deviceId": [],
+        "entityId": [],
+        "data": "{ \"title\": \"Почва пересохла!\", \"message\": entity.attributes.friendly_name & \": Влажность почвы \" & value & \"%. Полейте растение!\" }",
+        "dataType": "jsonata",
+        "mergeContext": "",
+        "mustacheAltTags": false,
+        "outputProperties": [],
+        "queue": "none",
+        "x": 790,
+        "y": 200,
+        "wires": [
+            []
+        ]
+    }
+]

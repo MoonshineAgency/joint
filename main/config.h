@@ -19,12 +19,17 @@
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
+/// Date/Time
+
+#define DEFAULT_TZ "UTC"
+
+////////////////////////////////////////////////////////////////////////////////
 /// Settings
 
 #define SETTINGS_PARTITION "settings"
 #define SETTINGS_MAGIC_KEY "magic"
 #define SETTINGS_DATA_KEY "data"
-#define SETTINGS_MAGIC_VAL 0xC0DE0002
+#define SETTINGS_MAGIC_VAL 0xC0DE0004
 
 #if CONFIG_NODE_WIFI_DHCP
     #define DEFAULT_WIFI_DHCP true

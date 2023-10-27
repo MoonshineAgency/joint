@@ -9,6 +9,7 @@ idf_component_register(
         api.c
         webserver.c
         node.c
+        reset_button.c
         safe_mode.c
         normal_mode.c
         hwrtc.c
