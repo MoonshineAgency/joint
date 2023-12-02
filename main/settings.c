@@ -4,6 +4,8 @@
 #include <nvs_flash.h>
 #include <lwip/ip_addr.h>
 
+#define SETTINGS_JSON_MSG_SIZE 128
+
 settings_t settings;
 
 const settings_t defaults = {
