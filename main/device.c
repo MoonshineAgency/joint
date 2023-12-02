@@ -177,6 +177,7 @@ void device_publish_state(device_t *dev)
 
     char topic[128] = { 0 };
     mqtt_publish(device_state_topic(dev, topic, sizeof(topic)), data, strlen(data), qos, retain);
+    //ESP_LOGI(TAG, "Publish state to %s: %s", topic, data);
 }
 
 void device_publish_discovery(device_t *dev)

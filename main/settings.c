@@ -369,6 +369,7 @@ esp_err_t settings_from_json(cJSON *src, char *msg)
     settings.system.failsafe = cJSON_IsTrue(sys_failsafe_item);
     settings.system.safe_mode = cJSON_IsTrue(sys_safe_mode_item);
 
+    settings.sntp.enabled = cJSON_IsTrue(sntp_enabled_item);
     strncpy(settings.sntp.time_server, sntp_time_server, sizeof(settings.sntp.tz) - 1);
     settings.sntp.time_server[sizeof(settings.sntp.time_server) - 1] = '\0';
     strncpy(settings.sntp.tz, sntp_tz, sizeof(settings.sntp.tz) - 1);

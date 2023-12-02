@@ -2,7 +2,7 @@ menu "*** Joint configuration ***"
 
     choice BOARD
         prompt "Target board"
-        default BOARD_GH_3X
+        default BOARD_GH_4DEV
 
         config BOARD_GH_3X
             bool "Greenhouse v3.x"

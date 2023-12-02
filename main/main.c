@@ -14,14 +14,15 @@ void app_main()
     // Init basic system
     ESP_ERROR_CHECK(system_init());
 
-    esp_err_t r = hw_rtc_init();
-    if (r != ESP_OK)
-        ESP_LOGW(TAG, "Error initializing HW RTC: %d (%s)", r, esp_err_to_name(r));
-
     // Init settings storage, reset if storage is not formatted
     ESP_ERROR_CHECK(settings_init());
     // Load settings
     ESP_ERROR_CHECK(settings_load());
+
+    esp_err_t r = hw_rtc_init();
+    if (r != ESP_OK)
+        ESP_LOGW(TAG, "Error initializing HW RTC: %d (%s)", r, esp_err_to_name(r));
+
     // Init system bus
     ESP_ERROR_CHECK(bus_init());
     ESP_ERROR_CHECK(reset_button_init());

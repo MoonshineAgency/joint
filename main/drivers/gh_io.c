@@ -10,12 +10,13 @@
 #define FMT_RELAY_ID    "relay%d"
 #define FMT_INPUT_ID    "input%d"
 #define FMT_SWITCH_ID   "switch%d"
+#define FMT_LED_ID      "led%d"
 
 #define FMT_RELAY_NAME  "%s relay %d"
 #define FMT_INPUT_NAME  "%s isolated input %d"
 #define FMT_SWITCH_NAME "%s input switch %d"
+#define FMT_LED_NAME    "%s LED %d"
 
-#define RELAYS_COUNT 7
 #define SWITCHES_COUNT 4
 #define INPUTS_COUNT 4
 #define PORT_MODE 0xff00 // low 8 bits = input, high 8 bits = output
@@ -95,7 +96,7 @@ static esp_err_t on_init(driver_t *self)
 
     device_t dev;
 
-    for (uint32_t i = 0; i < RELAYS_COUNT; i++)
+    for (uint32_t i = 0; i < DRIVER_GH_IO_RELAY_COUNT; i++)
     {
         memset(&dev, 0, sizeof(dev));
         dev.type = DEV_BINARY_SWITCH;
@@ -106,7 +107,7 @@ static esp_err_t on_init(driver_t *self)
         cvector_push_back(self->devices, dev);
     }
 
-    inputs = self->devices + RELAYS_COUNT;
+    inputs = self->devices + DRIVER_GH_IO_RELAY_COUNT;
     for (int i = 0; i < INPUTS_COUNT; i++)
     {
         memset(&dev, 0, sizeof(dev));
@@ -125,6 +126,26 @@ static esp_err_t on_init(driver_t *self)
         snprintf(dev.name, sizeof(dev.name), FMT_SWITCH_NAME, settings.system.name, i);
         cvector_push_back(self->devices, dev);
     }
+
+#if DRIVER_GH_IO_LED0_PIN
+    memset(&dev, 0, sizeof(dev));
+    dev.type = DEV_BINARY_SWITCH;
+    dev.internal[0] = (void *)DRIVER_GH_IO_LED0_PIN;
+    dev.binary_switch.on_write = on_relay_command;
+    snprintf(dev.uid, sizeof(dev.uid), FMT_LED_ID, 0);
+    snprintf(dev.name, sizeof(dev.name), FMT_LED_NAME, settings.system.name, 0);
+    cvector_push_back(self->devices, dev);
+#endif
+
+#if DRIVER_GH_IO_LED1_PIN
+    memset(&dev, 0, sizeof(dev));
+    dev.type = DEV_BINARY_SWITCH;
+    dev.internal[0] = (void *)DRIVER_GH_IO_LED1_PIN;
+    dev.binary_switch.on_write = on_relay_command;
+    snprintf(dev.uid, sizeof(dev.uid), FMT_LED_ID, 1);
+    snprintf(dev.name, sizeof(dev.name), FMT_LED_NAME, settings.system.name, 1);
+    cvector_push_back(self->devices, dev);
+#endif
 
     return ESP_OK;
 }

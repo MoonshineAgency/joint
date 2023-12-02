@@ -120,7 +120,7 @@ esp_err_t node_init()
 {
     ESP_LOGI(TAG, "Initializing node %s...", settings.system.name);
 
-    node_queue = xQueueCreate(40, sizeof(driver_event_t));
+    node_queue = xQueueCreate(100, sizeof(driver_event_t));
     if (!node_queue)
     {
         ESP_LOGE(TAG, "Error creating node queue");

@@ -50,6 +50,9 @@
 #define DRIVER_GH_IO_INTR_GPIO 27
 #define DRIVER_GH_IO_FREQUENCY 0 // default
 #define DRIVER_GH_IO_ADDRESS 0x20
+#define DRIVER_GH_IO_RELAY_COUNT 7
+//#define DRIVER_GH_IO_LED0_PIN
+//#define DRIVER_GH_IO_LED1_PIN
 
 ////////////////////////////////////////////
 #define DRIVER_GH_PH_METER
