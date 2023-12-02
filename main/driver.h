@@ -10,6 +10,7 @@
 #include <cJSON.h>
 #include <device.h>
 #include <cvector.h>
+#include <calibration.h>
 
 #define DRIVER_BIT_INITIALIZED BIT(0)
 #define DRIVER_BIT_RUNNING     BIT(1)
@@ -78,5 +79,7 @@ int driver_config_get_int(cJSON *item, int def);
 float driver_config_get_float(cJSON *item, float def);
 gpio_num_t driver_config_get_gpio(cJSON *item, gpio_num_t def);
 bool driver_config_get_bool(cJSON *item, bool def);
+esp_err_t driver_config_read_calibration(driver_t *self, cJSON *item, const char *code_field, const char *val_field,
+    calibration_handle_t *c, const calibration_point_t *def, size_t def_points);
 
 #endif // ESP_IOT_NODE_PLUS_DRIVER_H_

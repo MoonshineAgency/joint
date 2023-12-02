@@ -5,20 +5,10 @@
 #include <esp_check.h>
 #include <esp_timer.h>
 #include <ads111x.h>
+#include <calibration.h>
 #include "settings.h"
 
 #define GAIN ADS111X_GAIN_0V512
-
-static i2c_dev_t adc = { 0 };
-static int samples;
-static float gain;
-static float e1, slope;
-static float ph;
-static uint32_t last_update_time;
-static int update_period;
-
-#define OPT_PH7_VOLTAGE "ph7_voltage"
-#define OPT_PH4_VOLTAGE "ph4_voltage"
 
 #define PH_METER_ID  "ph0"
 #define PH_RAW_ID    "ph0_raw"
@@ -28,6 +18,20 @@ static int update_period;
 
 #define MU_PH_METER "pH"
 
+static i2c_dev_t adc = { 0 };
+static int samples;
+static float gain;
+static float ph;
+static calibration_handle_t calib = { 0 };
+static uint32_t last_update_time;
+static int update_period;
+
+static const calibration_point_t def_calibration[]= {
+    { .code = 0.0f, .value = 7.0f },
+    { .code = 0.17143f, .value = 4.01f, },
+};
+static const size_t def_calibration_points = sizeof(def_calibration) / sizeof(calibration_point_t);
+
 static esp_err_t on_init(driver_t *self)
 {
     cvector_free(self->devices);
@@ -35,10 +39,8 @@ static esp_err_t on_init(driver_t *self)
     samples = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_SAMPLES), 32);
     update_period = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_PERIOD), 1000);
 
-    e1 = driver_config_get_float(cJSON_GetObjectItem(self->config, OPT_PH7_VOLTAGE), 0.0f);
-    float e2 = driver_config_get_float(cJSON_GetObjectItem(self->config, OPT_PH4_VOLTAGE), 0.17143f);
-
-    slope = (4.0f - 7.0f) / (e2 - e1);
+    CHECK(driver_config_read_calibration(self, cJSON_GetObjectItem(self->config, OPT_CALIBRATION), OPT_VOLTAGE, OPT_PH,
+            &calib, def_calibration, def_calibration_points));
 
     gain = ads111x_gain_values[GAIN] / ADS111X_MAX_VALUE;
 
@@ -67,6 +69,7 @@ static esp_err_t on_init(driver_t *self)
     strncpy(dev.uid, PH_METER_ID, sizeof(dev.uid));
     dev.type = DEV_SENSOR;
     snprintf(dev.name, sizeof(dev.name), FMT_PH_METER_NAME, settings.system.name);
+    strncpy(dev.device_class, DEV_CLASS_PH, sizeof(dev.device_class));
     strncpy(dev.sensor.measurement_unit, MU_PH_METER, sizeof(dev.sensor.measurement_unit));
     dev.sensor.precision = 2;
     dev.sensor.update_period = update_period;
@@ -106,33 +109,34 @@ static inline bool wait_adc_busy(driver_t *self)
 
 static void task(driver_t *self)
 {
-    uint32_t interval = (esp_timer_get_time() / 1000) - last_update_time;
-    last_update_time += interval;
-
     TickType_t period = pdMS_TO_TICKS(update_period);
+    esp_err_t r;
 
     while (true)
     {
         TickType_t start = xTaskGetTickCount();
 
+        uint32_t interval = (esp_timer_get_time() / 1000) - last_update_time;
+        last_update_time += interval;
+
         float voltage = 0;
         for (int i = 0; i < samples; i++)
         {
-            esp_err_t r = ads111x_start_conversion(&adc);
+            r = ads111x_start_conversion(&adc);
             if (r != ESP_OK)
             {
                 ESP_LOGE(self->name, "Error starting conversion: %d (%s)", r, esp_err_to_name(r));
-                return;
+                goto next;
             }
             if (!wait_adc_busy(self))
-                return;
+                goto next;
 
             int16_t v;
             r = ads111x_get_value(&adc, &v);
             if (r != ESP_OK)
             {
                 ESP_LOGE(self->name, "Error reading ADC value: %d (%s)", r, esp_err_to_name(r));
-                return;
+                goto next;
             }
 
             voltage += gain * (float)v;
@@ -141,13 +145,21 @@ static void task(driver_t *self)
 
         float dt = (float)interval / 1000.0f;
         float alpha = 1.0f - dt / (dt + 2.0f);
-        ph = alpha * ph + (1.0f - alpha) * (7.0f + (voltage - e1) * slope);
+        float new_ph = 0;
+        r = calibration_get_value(&calib, voltage, &new_ph);
+        if (r != ESP_OK)
+        {
+            ESP_LOGE(self->name, "Error getting calibrated pH value: %d (%s)", r, esp_err_to_name(r));
+            goto next;
+        }
+        ph = alpha * ph + (1.0f - alpha) * new_ph;
 
         self->devices[0].sensor.value = ph;
         driver_send_device_update(self, &self->devices[0]);
         self->devices[1].sensor.value = voltage;
         driver_send_device_update(self, &self->devices[1]);
 
+    next:
         while (xTaskGetTickCount() - start < period)
         {
             if (!(xEventGroupGetBits(self->eg) & DRIVER_BIT_START))
@@ -162,6 +174,9 @@ static esp_err_t on_stop(driver_t *self)
     esp_err_t r = ads111x_free_desc(&adc);
     if (r != ESP_OK)
         ESP_LOGW(self->name, "Device descriptor free error: %d (%s)", r, esp_err_to_name(r));
+    r = calibration_free(&calib);
+    if (r != ESP_OK)
+        ESP_LOGW(self->name, "Calibration data free error: %d (%s)", r, esp_err_to_name(r));
 
     return ESP_OK;
 }
@@ -170,7 +185,8 @@ driver_t drv_ph_meter = {
     .name = "gh_ph_meter",
     .stack_size = DRIVER_GH_PH_METER_STACK_SIZE,
     .priority = tskIDLE_PRIORITY + 1,
-    .defconfig = "{ \"" OPT_PERIOD "\": 5000, \"" OPT_PH7_VOLTAGE "\": 0, \"" OPT_PH4_VOLTAGE "\": 0.17143, \"" OPT_SAMPLES "\": 32 }",
+    .defconfig = "{ \"" OPT_PERIOD "\": 5000, \"" OPT_SAMPLES "\": 32, \"" OPT_CALIBRATION "\": " \
+        "[{\"" OPT_VOLTAGE "\": 0, \"" OPT_PH "\": 7}, {\"" OPT_VOLTAGE "\": 0.17143, \"" OPT_PH "\": 4.01}] }",
 
     .config = NULL,
     .state = DRIVER_NEW,
