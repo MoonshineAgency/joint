@@ -5,6 +5,18 @@
 
 #ifdef DRIVER_DHTXX
 
+/*
+{
+  "period": 5000,            // ms
+  "sensors": [
+    {
+        "gpio": 21,          // GPIO number
+        "type": 0..2,        // sensor type: 0 -  dht11, 1 - dht22, 2 - Itead Si7021
+        "pullup": false,     // enable/disable internal pull-up
+    }
+  ]
+}
+*/
 #include "driver.h"
 #include "std_strings.h"
 

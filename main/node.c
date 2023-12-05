@@ -47,6 +47,21 @@ static void publish_driver(const driver_t *drv)
     mqtt_publish_json_subtopic(topic, drv->config, 2, 1);
 }
 
+static void on_driver_start(driver_t *driver)
+{
+    if (driver->state != DRIVER_RUNNING)
+        return;
+    for (size_t d = 0; d < cvector_size(driver->devices); d++)
+    {
+        device_subscribe(&driver->devices[d]);
+        vTaskDelay(1);
+        device_publish_discovery(&driver->devices[d]);
+        vTaskDelay(1);
+        device_publish_state(&driver->devices[d]);
+        vTaskDelay(1);
+    }
+}
+
 static void on_set_config(const char *topic, const char *data, size_t data_len, void *ctx)
 {
     if (data_len > sizeof(buf) - 1)
@@ -85,7 +100,11 @@ static void on_set_config(const char *topic, const char *data, size_t data_len, 
         if (r != ESP_OK)
             ESP_LOGW(TAG, "Error initializing driver %s: %d (%s)", drv->name, r, esp_err_to_name(r));
 
+        // publish driver config
         publish_driver(drv);
+
+        // resend devices discovery and resub
+        on_driver_start(drv);
     }
 }
 
@@ -207,19 +226,7 @@ void node_online()
 
     // resend devices discovery and resub
     for (size_t i = 0; i < cvector_size(drivers); i++)
-    {
-        if (drivers[i]->state != DRIVER_RUNNING)
-            continue;
-        for (size_t d = 0; d < cvector_size(drivers[i]->devices); d++)
-        {
-            device_subscribe(&drivers[i]->devices[d]);
-            vTaskDelay(1);
-            device_publish_discovery(&drivers[i]->devices[d]);
-            vTaskDelay(1);
-            device_publish_state(&drivers[i]->devices[d]);
-            vTaskDelay(1);
-        }
-    }
+        on_driver_start(drivers[i]);
 }
 
 void node_offline()

@@ -41,6 +41,7 @@ static const adc_channel_t ain_channels[AIN_COUNT] = {
 
 static size_t samples;
 static int update_period;
+static bool moisture_enabled;
 
 static calibration_handle_t moisture_calib = { 0 };
 static calibration_handle_t tds_calib = { 0 };
@@ -74,9 +75,12 @@ static esp_err_t on_init(driver_t *self)
     adc_atten_t atten = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_ATTEN), ADC_ATTEN_DB_11);
     samples = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_SAMPLES), 64);
     update_period = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_PERIOD), 1000);
+    moisture_enabled = driver_config_get_bool(cJSON_GetObjectItem(self->config, OPT_MOISTURE), false);
 
-    CHECK(driver_config_read_calibration(self, cJSON_GetObjectItem(self->config, OPT_MOISTURE_CALIBRATION),
-        OPT_VOLTAGE, OPT_MOISTURE, &moisture_calib, def_moisture_calib, def_moisture_calib_points));
+    if (moisture_enabled)
+        CHECK(driver_config_read_calibration(self, cJSON_GetObjectItem(self->config, OPT_MOISTURE_CALIBRATION),
+            OPT_VOLTAGE, OPT_MOISTURE, &moisture_calib, def_moisture_calib, def_moisture_calib_points));
+
     CHECK(driver_config_read_calibration(self, cJSON_GetObjectItem(self->config, OPT_TDS_CALIBRATION),
         OPT_VOLTAGE, OPT_TDS, &tds_calib, def_tds_calib, def_tds_calib_points));
 
@@ -132,18 +136,19 @@ static esp_err_t on_init(driver_t *self)
         cvector_push_back(self->devices, dev);
     }
 
-    for (size_t c = 0; c < AIN_COUNT; c++)
-    {
-        memset(&dev, 0, sizeof(dev));
-        dev.type = DEV_SENSOR;
-        dev.sensor.precision = 1;
-        dev.sensor.update_period = update_period;
-        strncpy(dev.sensor.measurement_unit, DEV_MU_MOISTURE, sizeof(dev.sensor.measurement_unit));
-        strncpy(dev.device_class, DEV_CLASS_MOISTURE, sizeof(dev.device_class));
-        snprintf(dev.uid, sizeof(dev.uid), FMT_MOISTURE_SENSOR_ID, c);
-        snprintf(dev.name, sizeof(dev.name), FMT_MOISTURE_SENSOR_NAME, settings.system.name, c);
-        cvector_push_back(self->devices, dev);
-    }
+    if (moisture_enabled)
+        for (size_t c = 0; c < AIN_COUNT; c++)
+        {
+            memset(&dev, 0, sizeof(dev));
+            dev.type = DEV_SENSOR;
+            dev.sensor.precision = 1;
+            dev.sensor.update_period = update_period;
+            strncpy(dev.sensor.measurement_unit, DEV_MU_MOISTURE, sizeof(dev.sensor.measurement_unit));
+            strncpy(dev.device_class, DEV_CLASS_MOISTURE, sizeof(dev.device_class));
+            snprintf(dev.uid, sizeof(dev.uid), FMT_MOISTURE_SENSOR_ID, c);
+            snprintf(dev.name, sizeof(dev.name), FMT_MOISTURE_SENSOR_NAME, settings.system.name, c);
+            cvector_push_back(self->devices, dev);
+        }
 
     memset(&dev, 0, sizeof(dev));
     dev.type = DEV_SENSOR;
@@ -218,34 +223,41 @@ static void task(driver_t *self)
             driver_send_device_update(self, &self->devices[c]);
         }
 
+        device_t *dev;
+
         // Calculate and write moisture values
-        for (size_t c = 0; c < AIN_COUNT; c++)
-        {
-            float moisture;
-            r = calibration_get_value(&moisture_calib, self->devices[c].sensor.value, &moisture);
-            if (r != ESP_OK)
+        if (moisture_enabled)
+            for (size_t c = 0; c < AIN_COUNT; c++)
             {
-                ESP_LOGE(self->name, "Error getting calibrated moisture value: %d (%s)", r, esp_err_to_name(r));
-                goto next;
+                float moisture;
+                r = calibration_get_value(&moisture_calib, self->devices[c].sensor.value, &moisture);
+                if (r != ESP_OK)
+                {
+                    ESP_LOGE(self->name, "Error getting calibrated moisture value: %d (%s)", r, esp_err_to_name(r));
+                    goto next;
+                }
+                dev = &self->devices[c + AIN_COUNT];
+                dev->sensor.value = moisture;
+                driver_send_device_update(self, dev);
             }
-            self->devices[c + AIN_COUNT].sensor.value = moisture;
-            driver_send_device_update(self, &self->devices[c + AIN_COUNT]);
-        }
 
         // Write raw TDS voltage
-        self->devices[TDS_RAW_DEV_IDX].sensor.value = (float)tds_voltage / (float)samples / 1000.0f;
-        driver_send_device_update(self, &self->devices[TDS_RAW_DEV_IDX]);
+        float tds_raw = (float)tds_voltage / (float)samples / 1000.0f;
+        dev = &self->devices[cvector_size(self->devices) - 2];
+        dev->sensor.value = tds_raw;
+        driver_send_device_update(self, dev);
 
         // Calculate and write TDS
         float tds;
-        r = calibration_get_value(&tds_calib, self->devices[TDS_RAW_DEV_IDX].sensor.value, &tds);
+        r = calibration_get_value(&tds_calib, tds_raw, &tds);
         if (r != ESP_OK)
         {
             ESP_LOGE(self->name, "Error getting calibrated TDS value: %d (%s)", r, esp_err_to_name(r));
             goto next;
         }
-        self->devices[TDS_RAW_DEV_IDX + 1].sensor.value = tds;
-        driver_send_device_update(self, &self->devices[TDS_RAW_DEV_IDX + 1]);
+        dev = &self->devices[cvector_size(self->devices) - 1];
+        dev->sensor.value = tds;
+        driver_send_device_update(self, dev);
 
     next:
         while (xTaskGetTickCount() - start < period)
@@ -274,8 +286,10 @@ driver_t drv_gh_adc = {
     .stack_size = DRIVER_GH_ADC_STACK_SIZE,
     .priority = tskIDLE_PRIORITY + 1,
     .defconfig = "{ \"" OPT_PERIOD "\": 2000, \"" OPT_SAMPLES "\": 64, \"" OPT_ATTEN "\": 3, " \
+        "\"" OPT_MOISTURE "\": true, " \
         "\"" OPT_MOISTURE_CALIBRATION "\": [{\"" OPT_VOLTAGE "\": 2.2, \"" OPT_MOISTURE "\": 0}, " \
-        "{\"" OPT_VOLTAGE "\": 0.9, \"" OPT_MOISTURE "\": 100}], \"" OPT_TDS_CALIBRATION "\": " \
+        "{\"" OPT_VOLTAGE "\": 0.9, \"" OPT_MOISTURE "\": 100}], " \
+        "\"" OPT_TDS_CALIBRATION "\": " \
         "[{\"" OPT_VOLTAGE "\": 0, \"" OPT_TDS "\": 0}, {\"" OPT_VOLTAGE "\": 1, \"" OPT_TDS "\": 1}]}",
 
     .config = NULL,

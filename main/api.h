@@ -8,10 +8,8 @@
  * GET  /api/info
  * GET  /api/reboot
  * GET  /api/settings/reset
- * GET  /api/settings/wifi
- * POST /api/settings/wifi
- * GET  /api/settings/mqtt
- * POST /api/settings/mqtt
+ * GET  /api/settings
+ * POST /api/settings
  */
 
 esp_err_t api_init(httpd_handle_t server);

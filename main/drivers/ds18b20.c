@@ -8,6 +8,8 @@
 
 #define SENSOR_ADDR_FMT "%08lX%08lX"
 #define SENSOR_ADDR(addr) (uint32_t)(addr >> 32), (uint32_t)addr
+
+#define SENSOR_UID_FMT SENSOR_ADDR_FMT
 #define SENSOR_NAME_FMT "%s temperature (DS18x20 " SENSOR_ADDR_FMT ")"
 
 static size_t scan_interval;
@@ -84,7 +86,7 @@ static void scan(driver_t *self)
     {
         device_t dev = { 0 };
         dev.type = DEV_SENSOR;
-        snprintf(dev.uid, sizeof(dev.uid), SENSOR_ADDR_FMT, SENSOR_ADDR(scan_result[i]));
+        snprintf(dev.uid, sizeof(dev.uid), SENSOR_UID_FMT, SENSOR_ADDR(scan_result[i]));
         snprintf(dev.name, sizeof(dev.name), SENSOR_NAME_FMT, settings.system.name, SENSOR_ADDR(scan_result[i]));
         strncpy(dev.device_class, DEV_CLASS_TEMPERATURE, sizeof(dev.device_class));
         strncpy(dev.sensor.measurement_unit, DEV_MU_TEMPERATURE, sizeof(dev.sensor.measurement_unit));

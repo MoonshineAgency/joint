@@ -6,8 +6,8 @@
 #include "settings.h"
 #include <aht.h>
 
-#define FMT_HUMIDITY_SENSOR_ID      "aht_rh%d"
-#define FMT_TEMPERATURE_SENSOR_ID   "aht_t%d"
+#define FMT_HUMIDITY_SENSOR_ID      "aht%d_rh"
+#define FMT_TEMPERATURE_SENSOR_ID   "aht%d_t"
 
 #define FMT_HUMIDITY_SENSOR_NAME    "%s humidity (AHT %d)"
 #define FMT_TEMPERATURE_SENSOR_NAME "%s temperature (AHT %d)"

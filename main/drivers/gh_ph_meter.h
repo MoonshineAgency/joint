@@ -5,6 +5,23 @@
 
 #ifdef DRIVER_GH_PH_METER
 
+/*
+{
+  "period": 5000,         // ms
+  "samples": 32,
+  "calibration": [
+    {
+      "voltage": 0,
+      "ph": 7
+    },
+    {
+      "voltage": 0.17143,
+      "ph": 4.01
+    }
+  ]
+}
+*/
+
 #include "driver.h"
 #include "std_strings.h"
 

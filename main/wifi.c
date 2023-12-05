@@ -182,7 +182,7 @@ static esp_err_t init_sta()
     ESP_LOGI(TAG, "WiFi station settings:");
     ESP_LOGI(TAG, "--------------------------------------------------");
     ESP_LOGI(TAG, "SSID: %s", wifi_cfg.sta.ssid);
-    ESP_LOGI(TAG, "Passwd: %s", wifi_cfg.sta.password);
+    //ESP_LOGI(TAG, "Passwd: %s", wifi_cfg.sta.password);
     ESP_LOGI(TAG, "--------------------------------------------------");
 
     CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
