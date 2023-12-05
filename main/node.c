@@ -202,6 +202,7 @@ void node_online()
         char topic[128] = {0};
         snprintf(topic, sizeof(topic), DRIVER_SET_CONFIG_TOPIC_FMT, drivers[i]->name);
         mqtt_subscribe_subtopic(topic, on_set_config, 2, drivers[i]);
+        vTaskDelay(1);
     }
 
     // resend devices discovery and resub
@@ -212,7 +213,11 @@ void node_online()
         for (size_t d = 0; d < cvector_size(drivers[i]->devices); d++)
         {
             device_subscribe(&drivers[i]->devices[d]);
+            vTaskDelay(1);
             device_publish_discovery(&drivers[i]->devices[d]);
+            vTaskDelay(1);
+            device_publish_state(&drivers[i]->devices[d]);
+            vTaskDelay(1);
         }
     }
 }

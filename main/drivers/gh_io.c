@@ -150,14 +150,6 @@ static esp_err_t on_init(driver_t *self)
     return ESP_OK;
 }
 
-static esp_err_t on_start(driver_t *self)
-{
-    for (size_t i = 0; i < cvector_size(self->devices); i++)
-        driver_send_device_update(self, &self->devices[i]);
-
-    return ESP_OK;
-}
-
 static void task(driver_t *self)
 {
     while (true)
@@ -230,7 +222,7 @@ driver_t drv_gh_io = {
     .eg = NULL,
 
     .on_init = on_init,
-    .on_start = on_start,
+    .on_start = NULL,
     .on_stop = on_stop,
 
     .task = task

@@ -1,5 +1,5 @@
-#ifndef __RTC_PCF8574_H__
-#define __RTC_PCF8574_H__
+#ifndef __RTC_DS3231_H__
+#define __RTC_DS3231_H__
 
 #include "common.h"
 #include <sys/time.h>
@@ -28,4 +28,4 @@ static inline esp_err_t rtc_update(const struct tm *time)
     return ds3231_set_time(&dev, (struct tm *)time);
 }
 
-#endif /* __RTC_PCF8574_H__ */
+#endif /* __RTC_DS3231_H__ */

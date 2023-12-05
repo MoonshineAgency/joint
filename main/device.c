@@ -12,10 +12,10 @@
 #define QOS_SENSOR_STATE 0
 #define RETAIN_SENSOR_STATE 0
 
-#define QOS_EFFECTOR_STATE 2
+#define QOS_EFFECTOR_STATE 1
 #define RETAIN_EFFECTOR_STATE 1
 
-#define QOS_DISCOVERY 2
+#define QOS_DISCOVERY 1
 #define RETAIN_DISCOVERY 1
 
 #define EXPIRES_AFTER_PERIODS 5
@@ -189,6 +189,7 @@ void device_publish_discovery(device_t *dev)
     cJSON *json = device_descriptor(dev);
     mqtt_publish_json(topic, json, QOS_DISCOVERY, RETAIN_DISCOVERY);
     cJSON_Delete(json);
+    ESP_LOGI(TAG, "Published discovery data for device '%s'", dev->uid);
 }
 
 void device_unpublish_discovery(device_t *dev)
@@ -197,6 +198,7 @@ void device_unpublish_discovery(device_t *dev)
     if (!device_discovery_topic(dev, topic, sizeof(topic)))
         return;
     mqtt_publish(topic, "", 0, QOS_DISCOVERY, RETAIN_DISCOVERY);
+    ESP_LOGI(TAG, "Removed discovery data for device '%s'", dev->uid);
 }
 
 void device_subscribe(device_t *dev)

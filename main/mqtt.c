@@ -129,7 +129,8 @@ esp_err_t mqtt_init()
     config.credentials.username = settings.mqtt.username;
     config.credentials.authentication.password = settings.mqtt.password;
     config.credentials.client_id = SYSTEM_ID;
-    config.buffer.out_size = 8192;
+    config.buffer.size = 8192;
+    config.buffer.out_size = 16384;
     config.network.timeout_ms = 5000;
     //config.disable_auto_reconnect = true;
 
