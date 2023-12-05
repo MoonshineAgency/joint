@@ -9,7 +9,7 @@
 #include "settings.h"
 
 #define FMT_ADC_SENSOR_ID        "ain%d"
-#define FMT_MOISTURE_SENSOR_ID   "ain_moisture%d"
+#define FMT_MOISTURE_SENSOR_ID   "ain%d_moisture"
 #define FMT_TDS_RAW_SENSOR_ID    "tds0_raw"
 #define FMT_TDS_SENSOR_ID        "tds0"
 
