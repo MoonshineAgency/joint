@@ -18,6 +18,7 @@ const settings_t defaults = {
         .enabled = false,
         .time_server = { 0 },
         .tz = DEFAULT_TZ,
+        .interval = DEFAULT_SNTP_INTERVAL,
     },
     .mqtt = {
         .uri = CONFIG_NODE_MQTT_URI,
@@ -57,6 +58,7 @@ static const char *OPT_SNTP              = "sntp";
 static const char *OPT_SNTP_ENABLED      = "enabled";
 static const char *OPT_SNTP_TIME_SERVER  = "timeserver";
 static const char *OPT_SNTP_TZ           = "timezone";
+static const char *OPT_SNTP_INTERVAL     = "interval";
 static const char *OPT_MQTT              = "mqtt";
 static const char *OPT_MQTT_URI          = "uri";
 static const char *OPT_MQTT_USERNAME     = "username";
@@ -80,6 +82,7 @@ static const char *MSG_FIELD_ERR             = "Field `%s` not found or invalid"
 static const char *MSG_SYSTEM_NAME_ERR       = "Invalid system.name";
 static const char *MSG_SNTP_TZ_ERR           = "Invalid sntp.tz";
 static const char *MSG_SNTP_TIME_SERVER_ERR  = "Invalid sntp.time_server";
+static const char *MSG_SNTP_INTERVAL_ERR     = "sntp.interval too short";
 static const char *MSG_MQTT_URI_ERR          = "Invalid mqtt.uri";
 static const char *MSG_MQTT_USERNAME_ERR     = "mqtt.username too long";
 static const char *MSG_MQTT_PASSWORD_ERR     = "mqtt.password too long";
@@ -261,6 +264,7 @@ esp_err_t settings_from_json(cJSON *src, char *msg)
     GET_JSON_ITEM(sntp_enabled_item, sntp, OPT_SNTP_ENABLED, cJSON_IsBool);
     GET_JSON_ITEM(sntp_time_server_item, sntp, OPT_SNTP_TIME_SERVER, cJSON_IsString);
     GET_JSON_ITEM(sntp_tz_item, sntp, OPT_SNTP_TZ, cJSON_IsString);
+    GET_JSON_ITEM(sntp_interval_item, sntp, OPT_SNTP_INTERVAL, cJSON_IsNumber);
 
     GET_JSON_ITEM(mqtt, src, OPT_MQTT, );
     GET_JSON_ITEM(mqtt_uri_item, mqtt, OPT_MQTT_URI, cJSON_IsString);
@@ -311,6 +315,13 @@ esp_err_t settings_from_json(cJSON *src, char *msg)
     }
     else if (!len)
         sntp_tz = DEFAULT_TZ;
+
+    int sntp_interval = (int)cJSON_GetNumberValue(sntp_interval_item);
+    if (sntp_interval < 15)
+    {
+        report_err(MSG_SNTP_INTERVAL_ERR, msg);
+        return ESP_ERR_INVALID_ARG;
+    }
 
     const char *mqtt_uri = cJSON_GetStringValue(mqtt_uri_item);
     len = strlen(mqtt_uri);
@@ -376,6 +387,7 @@ esp_err_t settings_from_json(cJSON *src, char *msg)
     settings.sntp.time_server[sizeof(settings.sntp.time_server) - 1] = '\0';
     strncpy(settings.sntp.tz, sntp_tz, sizeof(settings.sntp.tz) - 1);
     settings.sntp.tz[sizeof(settings.sntp.tz) - 1] = '\0';
+    settings.sntp.interval = sntp_interval;
 
     strncpy(settings.mqtt.uri, mqtt_uri, sizeof(settings.mqtt.uri) - 1);
     settings.mqtt.uri[sizeof(settings.mqtt.uri) - 1] = '\0';
@@ -420,6 +432,7 @@ esp_err_t settings_to_json(cJSON **tgt)
     cJSON_AddBoolToObject(sntp, OPT_SNTP_ENABLED, settings.sntp.enabled);
     cJSON_AddStringToObject(sntp, OPT_SNTP_TIME_SERVER, settings.sntp.time_server);
     cJSON_AddStringToObject(sntp, OPT_SNTP_TZ, settings.sntp.tz);
+    cJSON_AddNumberToObject(sntp, OPT_SNTP_INTERVAL, settings.sntp.interval);
 
     cJSON *mqtt = cJSON_AddObjectToObject(*tgt, OPT_MQTT);
     cJSON_AddStringToObject(mqtt, OPT_MQTT_URI, settings.mqtt.uri);

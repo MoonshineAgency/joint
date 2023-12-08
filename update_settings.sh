@@ -12,7 +12,8 @@ curl -X POST -i 'http://192.168.1.1/api/settings' --data '{
         "sntp": {
                 "enabled":      true,
                 "timeserver":   "0.ru.pool.ntp.org",
-                "timezone":     "UTC-5"
+                "timezone":     "UTC-5",
+                "interval":     600
         },
         "mqtt": {
                 "uri":  "mqtt://192.168.88.10:1883",

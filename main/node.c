@@ -18,8 +18,8 @@
 #include "drivers/gh_ph_meter.h"
 #endif
 
-#ifdef DRIVER_AHTXX
-#include "drivers/ahtxx.h"
+#ifdef DRIVER_RHT
+#include "drivers/rht.h"
 #endif
 
 #ifdef DRIVER_DS18B20
@@ -139,7 +139,7 @@ esp_err_t node_init()
 {
     ESP_LOGI(TAG, "Initializing node %s...", settings.system.name);
 
-    node_queue = xQueueCreate(100, sizeof(driver_event_t));
+    node_queue = xQueueCreate(NODE_QUEUE_SIZE, sizeof(driver_event_t));
     if (!node_queue)
     {
         ESP_LOGE(TAG, "Error creating node queue");
@@ -161,8 +161,8 @@ esp_err_t node_init()
 #ifdef DRIVER_GH_PH_METER
     cvector_push_back(drivers, &drv_ph_meter);
 #endif
-#ifdef DRIVER_AHTXX
-    cvector_push_back(drivers, &drv_aht);
+#ifdef DRIVER_RHT
+    cvector_push_back(drivers, &drv_rht);
 #endif
 #ifdef DRIVER_DS18B20
     cvector_push_back(drivers, &drv_ds18b20);

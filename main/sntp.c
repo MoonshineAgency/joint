@@ -29,6 +29,7 @@ void sntp_iot_init()
     ESP_LOGI(TAG, "Initializing SNTP");
 
     esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);
+    esp_sntp_set_sync_interval(settings.sntp.interval * 1000);
     esp_sntp_setservername(0, settings.sntp.time_server);
     sntp_set_time_sync_notification_cb(callback);
     esp_sntp_init();

@@ -18,7 +18,7 @@ idf_component_register(
         device.c
         driver.c
 
-        drivers/ahtxx.c
+        drivers/rht.c
         drivers/ds18b20.c
         drivers/gh_io.c
         drivers/gh_adc.c

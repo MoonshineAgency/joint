@@ -18,6 +18,7 @@ typedef struct
         bool enabled;
         char time_server[64];
         char tz[32];
+        int interval;
     } sntp;
 
     struct {

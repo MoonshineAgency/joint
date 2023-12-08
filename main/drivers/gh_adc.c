@@ -21,11 +21,11 @@
 #define ADC_WIDTH ADC_BITWIDTH_12
 #define TDS_ATTEN ADC_ATTEN_DB_6 // 1.75V max
 #define AIN_COUNT 4
-#define TDS_RAW_DEV_IDX (AIN_COUNT * 2)
 #define TDS_CHANNEL ADC_CHANNEL_3
 
 static adc_oneshot_unit_handle_t adc_handle = NULL;
-static adc_cali_handle_t cali_handle = NULL;
+static adc_cali_handle_t adc_cal_handle = NULL;
+static adc_cali_handle_t tds_cal_handle = NULL;
 
 static const adc_oneshot_unit_init_cfg_t unit_cfg = {
     .unit_id = ADC_UNIT_1,
@@ -58,6 +58,20 @@ static const calibration_point_t def_tds_calib[]= {
 };
 static const size_t def_tds_calib_points = sizeof(def_tds_calib) / sizeof(calibration_point_t);
 
+static esp_err_t create_adc_cali_scheme(adc_atten_t atten, adc_cali_handle_t *cal_handle)
+{
+    adc_cali_line_fitting_efuse_val_t efuse_cal = ADC_CALI_LINE_FITTING_EFUSE_VAL_EFUSE_VREF;
+    adc_cali_scheme_line_fitting_check_efuse(&efuse_cal);
+
+    adc_cali_line_fitting_config_t cal_cfg = {
+        .atten = atten,
+        .bitwidth = ADC_WIDTH,
+        .unit_id = unit_cfg.unit_id,
+        .default_vref = efuse_cal == ADC_CALI_LINE_FITTING_EFUSE_VAL_DEFAULT_VREF ? 1100 : 0,
+    };
+    return adc_cali_create_scheme_line_fitting(&cal_cfg, cal_handle);
+}
+
 static esp_err_t on_init(driver_t *self)
 {
     cvector_free(self->devices);
@@ -66,10 +80,15 @@ static esp_err_t on_init(driver_t *self)
         adc_oneshot_del_unit(adc_handle);
         adc_handle = NULL;
     }
-    if (cali_handle)
+    if (adc_cal_handle)
     {
-        adc_cali_delete_scheme_line_fitting(cali_handle);
-        cali_handle = NULL;
+        adc_cali_delete_scheme_line_fitting(adc_cal_handle);
+        adc_cal_handle = NULL;
+    }
+    if (tds_cal_handle)
+    {
+        adc_cali_delete_scheme_line_fitting(tds_cal_handle);
+        tds_cal_handle = NULL;
     }
 
     adc_atten_t atten = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_ATTEN), ADC_ATTEN_DB_11);
@@ -89,7 +108,7 @@ static esp_err_t on_init(driver_t *self)
         self->name, "Error initializing ADC UNIT 1: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
     );
 
-    // four free to use ADC channels
+    // configure four ADC channels
     adc_oneshot_chan_cfg_t chan_cfg = {
         .atten = atten,
         .bitwidth = ADC_WIDTH,
@@ -100,26 +119,22 @@ static esp_err_t on_init(driver_t *self)
             self->name, "Error configuring ADC channel: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
         );
 
-    // TDS measure channel
+    // configure TDS measure channel
     chan_cfg.atten = TDS_ATTEN;
     ESP_RETURN_ON_ERROR(
         adc_oneshot_config_channel(adc_handle, TDS_CHANNEL, &chan_cfg),
         self->name, "Error configuring ADC channel: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
     );
 
-    // calibration
-    adc_cali_line_fitting_efuse_val_t efuse_cali = ADC_CALI_LINE_FITTING_EFUSE_VAL_EFUSE_VREF;
-    adc_cali_scheme_line_fitting_check_efuse(&efuse_cali);
-
-    adc_cali_line_fitting_config_t cail_cfg = {
-        .atten = atten,
-        .bitwidth = ADC_WIDTH,
-        .unit_id = unit_cfg.unit_id,
-        .default_vref = efuse_cali == ADC_CALI_LINE_FITTING_EFUSE_VAL_DEFAULT_VREF ? 1100 : 0,
-    };
+    // ADC calibration
     ESP_RETURN_ON_ERROR(
-        adc_cali_create_scheme_line_fitting(&cail_cfg, &cali_handle),
+        create_adc_cali_scheme(atten, &adc_cal_handle),
         self->name, "Error creating ADC calibration scheme: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
+    );
+    // TDS calibration
+    ESP_RETURN_ON_ERROR(
+        create_adc_cali_scheme(TDS_ATTEN, &tds_cal_handle),
+        self->name, "Error creating TDS calibration scheme: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
     );
 
     device_t dev = { 0 };
@@ -172,7 +187,7 @@ static esp_err_t on_init(driver_t *self)
     return ESP_OK;
 }
 
-static int adc_read_voltage(driver_t *self, adc_channel_t channel)
+static int adc_read_voltage(driver_t *self, adc_channel_t channel, adc_cali_handle_t cal_handle)
 {
     int raw, res;
     esp_err_t r = adc_oneshot_read(adc_handle, channel, &raw);
@@ -181,7 +196,7 @@ static int adc_read_voltage(driver_t *self, adc_channel_t channel)
         ESP_LOGE(self->name, "Error reading ADC1 channel %d: %d (%s)", channel, r, esp_err_to_name(r));
         return 0;
     }
-    r = adc_cali_raw_to_voltage(cali_handle, raw, &res);
+    r = adc_cali_raw_to_voltage(cal_handle, raw, &res);
     if (r != ESP_OK)
     {
         ESP_LOGE(self->name, "Error converting raw ADC value to voltage: %d (%s)", r, esp_err_to_name(r));
@@ -210,9 +225,9 @@ static void task(driver_t *self)
         for (size_t i = 0; i < samples; i++)
         {
             for (size_t c = 0; c < AIN_COUNT; c++)
-                ain_voltages[c] += adc_read_voltage(self, ain_channels[c]);
+                ain_voltages[c] += adc_read_voltage(self, ain_channels[c], adc_cal_handle);
 
-            tds_voltage += adc_read_voltage(self, TDS_CHANNEL);
+            tds_voltage += adc_read_voltage(self, TDS_CHANNEL, tds_cal_handle);
         }
 
         // Write raw ADC values

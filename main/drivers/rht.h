@@ -3,7 +3,7 @@
 
 #include "common.h"
 
-#ifdef DRIVER_AHTXX
+#ifdef DRIVER_RHT
 /*
 {
   "period": 5000, // ms
@@ -11,7 +11,7 @@
   "temp_bad_threshold": 120,
   "sensors": [
     {
-      "type": 0,     // 0 - AHT10/AHT15, 1 - AHT20
+      "type": 0,     // 0 - AHT10/AHT15, 1 - AHT20, 2 - DHT2x/Si70xx
       "address": 56,
       "frequency": 100000 // I2C frequency, Hz, optional
     }
@@ -21,7 +21,7 @@
 #include "driver.h"
 #include "std_strings.h"
 
-extern driver_t drv_aht;
+extern driver_t drv_rht;
 
 #endif
 

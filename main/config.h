@@ -23,6 +23,7 @@
 
 #define DEFAULT_TZ "UTC"
 #define DEFAULT_DT_FMT "%a %d.%m.%Y %H:%M:%S"
+#define DEFAULT_SNTP_INTERVAL (60 * 10)
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Settings
@@ -30,7 +31,7 @@
 #define SETTINGS_PARTITION "settings"
 #define SETTINGS_MAGIC_KEY "magic"
 #define SETTINGS_DATA_KEY "data"
-#define SETTINGS_MAGIC_VAL 0xC0DE0004
+#define SETTINGS_MAGIC_VAL 0xC0DE0005
 
 #if CONFIG_NODE_WIFI_DHCP
     #define DEFAULT_WIFI_DHCP true
@@ -64,11 +65,12 @@
 
 #define NODE_TASK_STACK_SIZE 8192
 #define NODE_TASK_PRIORITY (tskIDLE_PRIORITY + 1)
+#define NODE_QUEUE_SIZE 20
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Webserver
 
-#define HTTPD_STACK_SIZE 32768
+#define HTTPD_STACK_SIZE 16384
 #define MAX_POST_SIZE 4096
 
 #endif /* MAIN_CONFIG_H_ */
