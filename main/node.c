@@ -9,40 +9,35 @@
 #ifdef DRIVER_GH_IO
 #include "drivers/gh_io.h"
 #endif
-
 #ifdef DRIVER_GH_ADC
 #include "drivers/gh_adc.h"
 #endif
-
 #ifdef DRIVER_GH_PH_METER
 #include "drivers/gh_ph_meter.h"
 #endif
-
 #ifdef DRIVER_RHT
 #include "drivers/rht.h"
 #endif
-
 #ifdef DRIVER_DS18B20
 #include "drivers/ds18b20.h"
 #endif
-
 #ifdef DRIVER_DHTXX
 #include "drivers/dhtxx.h"
 #endif
 
-#define DRIVER_CONFIG_TOPIC_FMT      "drivers/%s/config"
-#define DRIVER_SET_CONFIG_TOPIC_FMT  "drivers/%s/set_config"
+#define DRIVER_CONFIG_TOPIC_FMT     "drivers/%s/config"
+#define DRIVER_SET_CONFIG_TOPIC_FMT "drivers/%s/set_config"
 
 static char buf[1024];
-static cvector_vector_type(driver_t *)drivers = NULL;
 static QueueHandle_t node_queue = NULL;
+static cvector_vector_type(driver_t *) drivers = NULL;
 
 static void publish_driver(const driver_t *drv)
 {
     if (!drv->config)
         return;
 
-    char topic[128] = {0};
+    char topic[128] = { 0 };
     snprintf(topic, sizeof(topic), DRIVER_CONFIG_TOPIC_FMT, drv->name);
     mqtt_publish_json_subtopic(topic, drv->config, 2, 1);
 }
@@ -218,7 +213,7 @@ void node_online()
         publish_driver(drivers[i]);
 
         // subscribe on driver config
-        char topic[128] = {0};
+        char topic[128] = { 0 };
         snprintf(topic, sizeof(topic), DRIVER_SET_CONFIG_TOPIC_FMT, drivers[i]->name);
         mqtt_subscribe_subtopic(topic, on_set_config, 2, drivers[i]);
         vTaskDelay(1);

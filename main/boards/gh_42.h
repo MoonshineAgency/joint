@@ -1,5 +1,5 @@
-#ifndef BOARD_GH_3X_H_
-#define BOARD_GH_3X_H_
+#ifndef BOARD_GH_42_H_
+#define BOARD_GH_42_H_
 
 ////////////////////////////////////////////
 #define HW_INTERNAL_SDA_GPIO 16
@@ -43,8 +43,8 @@
 ////////////////////////////////////////////
 #define DRIVER_GH_ADC
 #define DRIVER_GH_ADC_STACK_SIZE 4096
+#define DRIVER_GH_ADC_TDS_ATTEN ADC_ATTEN_DB_11
 #define DRIVER_GH_ADC_TDS_ENABLE
-#define DRIVER_GH_ADC_TDS_ATTEN ADC_ATTEN_DB_6
 
 ////////////////////////////////////////////
 #define DRIVER_GH_IO
@@ -52,9 +52,9 @@
 #define DRIVER_GH_IO_INTR_GPIO 27
 #define DRIVER_GH_IO_FREQUENCY 0 // default
 #define DRIVER_GH_IO_ADDRESS 0x20
-#define DRIVER_GH_IO_RELAY_COUNT 7
-//#define DRIVER_GH_IO_LED0_PIN
-//#define DRIVER_GH_IO_LED1_PIN
+#define DRIVER_GH_IO_RELAY_COUNT 6
+#define DRIVER_GH_IO_LED0_PIN 6
+#define DRIVER_GH_IO_LED1_PIN 7
 
 ////////////////////////////////////////////
 #define DRIVER_GH_PH_METER
@@ -63,5 +63,9 @@
 #define DRIVER_GH_PH_METER_FREQUENCY 0 // default
 
 ////////////////////////////////////////////
+#define DRIVER_GH_DIMMER
+#define DRIVER_GH_DIMMER_STACK_SIZE 4096
+#define DRIVER_GH_DIMMER_ZERO_GPIO 26
+#define DRIVER_GH_DIMMER_CTRL_GPIO 25
 
-#endif /* BOARD_GH_3X_H_ */
+#endif /* BOARD_GH_42_H_ */

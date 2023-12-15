@@ -5,9 +5,6 @@
 #include "system.h"
 #include "cvector.h"
 
-#define DISCOVERY_TOPIC "homeassistant"
-#define MAX_TOPIC_LEN (sizeof(settings.system.name) + 100)
-
 static bool connected = false;
 static bool started = false;
 static esp_mqtt_client_handle_t handle = NULL;
@@ -18,7 +15,7 @@ static char *msg_topic = NULL;
 
 typedef struct
 {
-    char topic[MAX_TOPIC_LEN];
+    char topic[MQTT_MAX_TOPIC_LEN];
     int qos;
     mqtt_callback_t callback;
     void *ctx;
@@ -54,7 +51,7 @@ static void on_data(esp_mqtt_event_handle_t event)
     {
         // time to callback
         for (size_t i = 0; i < cvector_size(subs); i++)
-            if (!strncmp(msg_topic, subs[i].topic, MAX_TOPIC_LEN - 1))
+            if (!strncmp(msg_topic, subs[i].topic, MQTT_MAX_TOPIC_LEN - 1))
                 subs[i].callback(msg_topic, msg_data, msg_data_size + 1, subs[i].ctx);
 
         // free memory
@@ -66,7 +63,7 @@ static void on_data(esp_mqtt_event_handle_t event)
 inline static bool find_topic(const char *topic, cvector_vector_type(const char *) topics)
 {
     for (size_t i = 0; i < cvector_size(topics); i++)
-        if (!strncmp(topic, topics[i], MAX_TOPIC_LEN - 1))
+        if (!strncmp(topic, topics[i], MQTT_MAX_TOPIC_LEN - 1))
             return true;
     return false;
 }
@@ -108,7 +105,7 @@ static void handler(void *arg, esp_event_base_t event_base, int32_t event_id, vo
 
 inline static void full_topic(char *buf, const char *subtopic)
 {
-    snprintf(buf, MAX_TOPIC_LEN, "%s/%s", settings.system.name, subtopic);
+    snprintf(buf, MQTT_MAX_TOPIC_LEN, "%s/%s", settings.system.name, subtopic);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -129,9 +126,9 @@ esp_err_t mqtt_init()
     config.credentials.username = settings.mqtt.username;
     config.credentials.authentication.password = settings.mqtt.password;
     config.credentials.client_id = SYSTEM_ID;
-    config.buffer.size = 8192;
-    config.buffer.out_size = 16384;
-    config.network.timeout_ms = 5000;
+    config.buffer.size = MQTT_BUFFER_SIZE;
+    config.buffer.out_size = MQTT_OUT_BUFFER_SIZE;
+    config.network.timeout_ms = MQTT_TIMEOUT_MS;
     //config.disable_auto_reconnect = true;
 
     handle = esp_mqtt_client_init(&config);
@@ -189,7 +186,7 @@ int mqtt_publish_json(const char *topic, const cJSON *json, int qos, int retain)
 
 int mqtt_publish_subtopic(const char *subtopic, const char *data, int len, int qos, int retain)
 {
-    char topic[MAX_TOPIC_LEN] = { 0 };
+    char topic[MQTT_MAX_TOPIC_LEN] = { 0 };
     full_topic(topic, subtopic);
 
     return esp_mqtt_client_publish(handle, topic, data, len, qos, retain);
@@ -197,7 +194,7 @@ int mqtt_publish_subtopic(const char *subtopic, const char *data, int len, int q
 
 int mqtt_publish_json_subtopic(const char *subtopic, const cJSON *json, int qos, int retain)
 {
-    char topic[MAX_TOPIC_LEN] = { 0 };
+    char topic[MQTT_MAX_TOPIC_LEN] = { 0 };
     full_topic(topic, subtopic);
 
     return mqtt_publish_json(topic, json, qos, retain);
@@ -207,7 +204,7 @@ int mqtt_subscribe(const char *topic, mqtt_callback_t cb, int qos, void *ctx)
 {
     bool subscribed = false;
     for (size_t i = 0; i < cvector_size(subs); i++)
-        if (!strncmp(topic, subs[i].topic, MAX_TOPIC_LEN - 1))
+        if (!strncmp(topic, subs[i].topic, MQTT_MAX_TOPIC_LEN - 1))
         {
             if (cb == subs[i].callback)
                 return -1;
@@ -228,7 +225,7 @@ int mqtt_subscribe(const char *topic, mqtt_callback_t cb, int qos, void *ctx)
 
 int mqtt_subscribe_subtopic(const char *subtopic, mqtt_callback_t cb, int qos, void *ctx)
 {
-    char topic[MAX_TOPIC_LEN] = { 0 };
+    char topic[MQTT_MAX_TOPIC_LEN] = { 0 };
     full_topic(topic, subtopic);
 
     return mqtt_subscribe(topic, cb, qos, ctx);
@@ -237,7 +234,7 @@ int mqtt_subscribe_subtopic(const char *subtopic, mqtt_callback_t cb, int qos, v
 void mqtt_unsubscribe(const char *topic, mqtt_callback_t cb, void *ctx)
 {
     for (size_t i = 0; i < cvector_size(subs); i++)
-        if (!strncmp(topic, subs[i].topic, MAX_TOPIC_LEN - 1) && cb == subs[i].callback && ctx == subs[i].ctx)
+        if (!strncmp(topic, subs[i].topic, MQTT_MAX_TOPIC_LEN - 1) && cb == subs[i].callback && ctx == subs[i].ctx)
         {
             cvector_erase(subs, i);
             return;
@@ -246,7 +243,7 @@ void mqtt_unsubscribe(const char *topic, mqtt_callback_t cb, void *ctx)
 
 void mqtt_unsubscribe_subtopic(const char *subtopic, mqtt_callback_t cb, void *ctx)
 {
-    char topic[MAX_TOPIC_LEN] = { 0 };
+    char topic[MQTT_MAX_TOPIC_LEN] = { 0 };
     full_topic(topic, subtopic);
 
     mqtt_unsubscribe(topic, cb, ctx);

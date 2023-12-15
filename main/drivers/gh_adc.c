@@ -19,19 +19,14 @@
 #define FMT_TDS_SENSOR_NAME      "%s TDS input 0"
 
 #define ADC_WIDTH ADC_BITWIDTH_12
-#define TDS_ATTEN ADC_ATTEN_DB_6 // 1.75V max
 #define AIN_COUNT 4
 #define TDS_CHANNEL ADC_CHANNEL_3
 
 static adc_oneshot_unit_handle_t adc_handle = NULL;
-static adc_cali_handle_t adc_cal_handle = NULL;
-static adc_cali_handle_t tds_cal_handle = NULL;
-
 static const adc_oneshot_unit_init_cfg_t unit_cfg = {
     .unit_id = ADC_UNIT_1,
     .ulp_mode = ADC_ULP_MODE_DISABLE,
 };
-
 static const adc_channel_t ain_channels[AIN_COUNT] = {
     ADC_CHANNEL_4,
     ADC_CHANNEL_5,
@@ -43,20 +38,23 @@ static size_t samples;
 static int update_period;
 static bool moisture_enabled;
 
+static adc_cali_handle_t adc_cal_handle = NULL;
 static calibration_handle_t moisture_calib = { 0 };
-static calibration_handle_t tds_calib = { 0 };
-
 static const calibration_point_t def_moisture_calib[]= {
     { .code = 2.2f, .value = 0.0f },
     { .code = 0.9f, .value = 100.0f, },
 };
 static const size_t def_moisture_calib_points = sizeof(def_moisture_calib) / sizeof(calibration_point_t);
 
+#ifdef DRIVER_GH_ADC_TDS_ENABLE
+static adc_cali_handle_t tds_cal_handle = NULL;
+static calibration_handle_t tds_calib = { 0 };
 static const calibration_point_t def_tds_calib[]= {
     { .code = 0.0f, .value = 0.0f },
     { .code = 1.0f, .value = 1.0f, },
 };
 static const size_t def_tds_calib_points = sizeof(def_tds_calib) / sizeof(calibration_point_t);
+#endif
 
 static esp_err_t create_adc_cali_scheme(adc_atten_t atten, adc_cali_handle_t *cal_handle)
 {
@@ -85,12 +83,13 @@ static esp_err_t on_init(driver_t *self)
         adc_cali_delete_scheme_line_fitting(adc_cal_handle);
         adc_cal_handle = NULL;
     }
+#ifdef DRIVER_GH_ADC_TDS_ENABLE
     if (tds_cal_handle)
     {
         adc_cali_delete_scheme_line_fitting(tds_cal_handle);
         tds_cal_handle = NULL;
     }
-
+#endif
     adc_atten_t atten = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_ATTEN), ADC_ATTEN_DB_11);
     samples = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_SAMPLES), 64);
     update_period = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_PERIOD), 1000);
@@ -100,8 +99,10 @@ static esp_err_t on_init(driver_t *self)
         CHECK(driver_config_read_calibration(self, cJSON_GetObjectItem(self->config, OPT_MOISTURE_CALIBRATION),
             OPT_VOLTAGE, OPT_MOISTURE, &moisture_calib, def_moisture_calib, def_moisture_calib_points));
 
+#ifdef DRIVER_GH_ADC_TDS_ENABLE
     CHECK(driver_config_read_calibration(self, cJSON_GetObjectItem(self->config, OPT_TDS_CALIBRATION),
         OPT_VOLTAGE, OPT_TDS, &tds_calib, def_tds_calib, def_tds_calib_points));
+#endif
 
     ESP_RETURN_ON_ERROR(
         adc_oneshot_new_unit(&unit_cfg, &adc_handle),
@@ -118,24 +119,25 @@ static esp_err_t on_init(driver_t *self)
             adc_oneshot_config_channel(adc_handle, ain_channels[c], &chan_cfg),
             self->name, "Error configuring ADC channel: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
         );
-
-    // configure TDS measure channel
-    chan_cfg.atten = TDS_ATTEN;
-    ESP_RETURN_ON_ERROR(
-        adc_oneshot_config_channel(adc_handle, TDS_CHANNEL, &chan_cfg),
-        self->name, "Error configuring ADC channel: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
-    );
-
     // ADC calibration
     ESP_RETURN_ON_ERROR(
         create_adc_cali_scheme(atten, &adc_cal_handle),
         self->name, "Error creating ADC calibration scheme: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
     );
+
+#ifdef DRIVER_GH_ADC_TDS_ENABLE
+    // configure TDS measure channel
+    chan_cfg.atten = DRIVER_GH_ADC_TDS_ATTEN;
+    ESP_RETURN_ON_ERROR(
+        adc_oneshot_config_channel(adc_handle, TDS_CHANNEL, &chan_cfg),
+        self->name, "Error configuring ADC channel: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
+    );
     // TDS calibration
     ESP_RETURN_ON_ERROR(
-        create_adc_cali_scheme(TDS_ATTEN, &tds_cal_handle),
+        create_adc_cali_scheme(DRIVER_GH_ADC_TDS_ATTEN, &tds_cal_handle),
         self->name, "Error creating TDS calibration scheme: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
     );
+#endif
 
     device_t dev = { 0 };
     for (size_t c = 0; c < AIN_COUNT; c++)
@@ -165,6 +167,7 @@ static esp_err_t on_init(driver_t *self)
             cvector_push_back(self->devices, dev);
         }
 
+#ifdef DRIVER_GH_ADC_TDS_ENABLE
     memset(&dev, 0, sizeof(dev));
     dev.type = DEV_SENSOR;
     dev.sensor.precision = 3;
@@ -183,6 +186,7 @@ static esp_err_t on_init(driver_t *self)
     strncpy(dev.uid, FMT_TDS_SENSOR_ID, sizeof(dev.uid));
     snprintf(dev.name, sizeof(dev.name), FMT_TDS_SENSOR_NAME, settings.system.name);
     cvector_push_back(self->devices, dev);
+#endif
 
     return ESP_OK;
 }
@@ -219,7 +223,9 @@ static void task(driver_t *self)
         TickType_t start = xTaskGetTickCount();
 
         memset(ain_voltages, 0, sizeof(ain_voltages));
+#ifdef DRIVER_GH_ADC_TDS_ENABLE
         tds_voltage = 0;
+#endif
 
         // Read raw ADC values
         for (size_t i = 0; i < samples; i++)
@@ -227,7 +233,9 @@ static void task(driver_t *self)
             for (size_t c = 0; c < AIN_COUNT; c++)
                 ain_voltages[c] += adc_read_voltage(self, ain_channels[c], adc_cal_handle);
 
+#ifdef DRIVER_GH_ADC_TDS_ENABLE
             tds_voltage += adc_read_voltage(self, TDS_CHANNEL, tds_cal_handle);
+#endif
         }
 
         // Write raw ADC values
@@ -256,6 +264,7 @@ static void task(driver_t *self)
                 driver_send_device_update(self, dev);
             }
 
+#ifdef DRIVER_GH_ADC_TDS_ENABLE
         // Write raw TDS voltage
         float tds_raw = (float)tds_voltage / (float)samples / 1000.0f;
         dev = &self->devices[cvector_size(self->devices) - 2];
@@ -273,6 +282,7 @@ static void task(driver_t *self)
         dev = &self->devices[cvector_size(self->devices) - 1];
         dev->sensor.value = tds;
         driver_send_device_update(self, dev);
+#endif
 
     next:
         while (xTaskGetTickCount() - start < period)
@@ -289,9 +299,11 @@ static esp_err_t on_stop(driver_t *self)
     esp_err_t r = calibration_free(&moisture_calib);
     if (r != ESP_OK)
         ESP_LOGW(self->name, "Moisture calibration data free error: %d (%s)", r, esp_err_to_name(r));
+#ifdef DRIVER_GH_ADC_TDS_ENABLE
     r = calibration_free(&tds_calib);
     if (r != ESP_OK)
         ESP_LOGW(self->name, "TDS calibration data free error: %d (%s)", r, esp_err_to_name(r));
+#endif
 
     return ESP_OK;
 }
@@ -300,12 +312,19 @@ driver_t drv_gh_adc = {
     .name = "gh_adc",
     .stack_size = DRIVER_GH_ADC_STACK_SIZE,
     .priority = tskIDLE_PRIORITY + 1,
+#ifdef DRIVER_GH_ADC_TDS_ENABLE
     .defconfig = "{ \"" OPT_PERIOD "\": 2000, \"" OPT_SAMPLES "\": 64, \"" OPT_ATTEN "\": 3, " \
         "\"" OPT_MOISTURE "\": true, " \
         "\"" OPT_MOISTURE_CALIBRATION "\": [{\"" OPT_VOLTAGE "\": 2.2, \"" OPT_MOISTURE "\": 0}, " \
         "{\"" OPT_VOLTAGE "\": 0.9, \"" OPT_MOISTURE "\": 100}], " \
         "\"" OPT_TDS_CALIBRATION "\": " \
         "[{\"" OPT_VOLTAGE "\": 0, \"" OPT_TDS "\": 0}, {\"" OPT_VOLTAGE "\": 1, \"" OPT_TDS "\": 1}]}",
+#else
+    .defconfig = "{ \"" OPT_PERIOD "\": 2000, \"" OPT_SAMPLES "\": 64, \"" OPT_ATTEN "\": 3, " \
+        "\"" OPT_MOISTURE "\": true, " \
+        "\"" OPT_MOISTURE_CALIBRATION "\": [{\"" OPT_VOLTAGE "\": 2.2, \"" OPT_MOISTURE "\": 0}, " \
+        "{\"" OPT_VOLTAGE "\": 0.9, \"" OPT_MOISTURE "\": 100}]}",
+#endif
 
     .config = NULL,
     .state = DRIVER_NEW,

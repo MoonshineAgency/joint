@@ -43,6 +43,8 @@
 ////////////////////////////////////////////
 #define DRIVER_GH_ADC
 #define DRIVER_GH_ADC_STACK_SIZE 4096
+#define DRIVER_GH_ADC_TDS_ENABLE
+#define DRIVER_GH_ADC_TDS_ATTEN ADC_ATTEN_DB_6
 
 ////////////////////////////////////////////
 #define DRIVER_GH_IO

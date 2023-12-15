@@ -73,4 +73,12 @@
 #define HTTPD_STACK_SIZE 16384
 #define MAX_POST_SIZE 4096
 
+////////////////////////////////////////////////////////////////////////////////
+/// MQTT
+
+#define MQTT_BUFFER_SIZE 8192
+#define MQTT_OUT_BUFFER_SIZE 16384
+#define MQTT_TIMEOUT_MS 5000
+#define MQTT_MAX_TOPIC_LEN 256
+
 #endif /* MAIN_CONFIG_H_ */

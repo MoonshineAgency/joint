@@ -61,7 +61,7 @@ static esp_err_t on_init(driver_t *self)
     port_event = xEventGroupCreate();
     if (!port_event)
     {
-        ESP_LOGE(self->name, "Error creating zc_group group");
+        ESP_LOGE(self->name, "Error creating event group");
         return ESP_ERR_NO_MEM;
     }
 
