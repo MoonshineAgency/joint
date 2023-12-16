@@ -19,6 +19,7 @@
 #define OPT_TDS_CALIBRATION      "tds_calibration"
 #define OPT_MOISTURE_CALIBRATION "moisture_calibration"
 #define OPT_TDS                  "tds"
+#define OPT_VALUE                "value"
 
 
 // device classes

@@ -39,8 +39,8 @@ static esp_err_t on_init(driver_t *self)
     samples = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_SAMPLES), 32);
     update_period = driver_config_get_int(cJSON_GetObjectItem(self->config, OPT_PERIOD), 1000);
 
-    CHECK(driver_config_read_calibration(self, cJSON_GetObjectItem(self->config, OPT_CALIBRATION), OPT_VOLTAGE, OPT_PH,
-            &calib, def_calibration, def_calibration_points));
+    CHECK(driver_config_read_calibration(self->name, cJSON_GetObjectItem(self->config, OPT_CALIBRATION),
+        &calib, def_calibration, def_calibration_points));
 
     gain = ads111x_gain_values[GAIN] / ADS111X_MAX_VALUE;
 
@@ -186,7 +186,7 @@ driver_t drv_ph_meter = {
     .stack_size = DRIVER_GH_PH_METER_STACK_SIZE,
     .priority = tskIDLE_PRIORITY + 1,
     .defconfig = "{ \"" OPT_PERIOD "\": 5000, \"" OPT_SAMPLES "\": 32, \"" OPT_CALIBRATION "\": " \
-        "[{\"" OPT_VOLTAGE "\": 0, \"" OPT_PH "\": 7}, {\"" OPT_VOLTAGE "\": 0.17143, \"" OPT_PH "\": 4.01}] }",
+        "[{\"" OPT_VOLTAGE "\": 0, \"" OPT_VALUE "\": 7}, {\"" OPT_VOLTAGE "\": 0.17143, \"" OPT_VALUE "\": 4.01}] }",
 
     .config = NULL,
     .state = DRIVER_NEW,

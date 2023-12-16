@@ -1,6 +1,7 @@
 #include "driver.h"
 #include "common.h"
 #include "node.h"
+#include "drivers/std_strings.h"
 
 #define ERR_INVALID_STATE "[%s] Driver in invalid state"
 
@@ -238,11 +239,6 @@ int driver_config_get_int(cJSON *item, int def)
     return cJSON_IsNumber(item) ? (int)cJSON_GetNumberValue(item) : def;
 }
 
-float driver_config_get_float(cJSON *item, float def)
-{
-    return cJSON_IsNumber(item) ? (float)cJSON_GetNumberValue(item) : def;
-}
-
 gpio_num_t driver_config_get_gpio(cJSON *item, gpio_num_t def)
 {
     int res = driver_config_get_int(item, def);
@@ -254,41 +250,42 @@ bool driver_config_get_bool(cJSON *item, bool def)
     return cJSON_IsBool(item) ? cJSON_IsTrue(item) : def;
 }
 
-esp_err_t driver_config_read_calibration(driver_t *self, cJSON *item, const char *code_field, const char *val_field,
-    calibration_handle_t *c, const calibration_point_t *def, size_t def_points)
+esp_err_t driver_config_read_calibration(const char *tag, cJSON *item, calibration_handle_t *c,
+    const calibration_point_t *def, size_t def_points)
 {
-    CHECK_ARG(c && code_field && val_field && def && def_points >= 2);
+    CHECK_ARG(c && def && def_points >= 2);
 
     memset(c, 0, sizeof(calibration_handle_t));
 
     if (!item || !cJSON_IsArray(item) || cJSON_GetArraySize(item) < 2)
     {
-        ESP_LOGW(self->name, "Invalid calibration data, using default");
+        ESP_LOGW(tag, "Invalid calibration data, using default");
         ESP_RETURN_ON_ERROR(
             calibration_init(c, def_points, CALIBRATION_LINEAR),
-            self->name, "Error initializing calibration handler: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
+            tag, "Error initializing calibration handler: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
         );
         ESP_RETURN_ON_ERROR(
             calibration_add_points(c, def, def_points),
-            self->name, "Error adding calibration points: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
+            tag, "Error adding default calibration points: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
         );
     }
     else
     {
+        ESP_LOGI(tag, "Reading calibration from '%s'", item->string);
         int num_points = cJSON_GetArraySize(item);
         ESP_RETURN_ON_ERROR(
             calibration_init(c, num_points, CALIBRATION_LINEAR),
-            self->name, "Error initializing calibration handler: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
+            tag, "Error initializing calibration handler: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
         );
         for (int i = 0; i < num_points; i++)
         {
             cJSON *obj = cJSON_GetArrayItem(item, i);
-            float code = (float)cJSON_GetNumberValue(cJSON_GetObjectItem(obj, code_field));
-            float value = (float)cJSON_GetNumberValue(cJSON_GetObjectItem(obj, val_field));
-            ESP_LOGI(self->name, "Calibration point: %.2f ~ %.2f", code, value);
+            float code = (float)cJSON_GetNumberValue(cJSON_GetObjectItem(obj, OPT_VOLTAGE));
+            float value = (float)cJSON_GetNumberValue(cJSON_GetObjectItem(obj, OPT_VALUE));
+            ESP_LOGI(tag, "Calibration point: %.2f Volts ~ %.2f", code, value);
             ESP_RETURN_ON_ERROR(
                 calibration_add_point(c, code, value),
-                self->name, "Error adding calibration point: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
+                tag, "Error adding calibration point: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
             );
         }
     }

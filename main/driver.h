@@ -76,10 +76,9 @@ void driver_send_device_add(driver_t *drv, const device_t *dev);
 void driver_send_device_remove(driver_t *drv, const device_t *dev);
 
 int driver_config_get_int(cJSON *item, int def);
-float driver_config_get_float(cJSON *item, float def);
 gpio_num_t driver_config_get_gpio(cJSON *item, gpio_num_t def);
 bool driver_config_get_bool(cJSON *item, bool def);
-esp_err_t driver_config_read_calibration(driver_t *self, cJSON *item, const char *code_field, const char *val_field,
-    calibration_handle_t *c, const calibration_point_t *def, size_t def_points);
+esp_err_t driver_config_read_calibration(const char *tag, cJSON *item, calibration_handle_t *c,
+    const calibration_point_t *def, size_t def_points);
 
 #endif // ESP_IOT_NODE_PLUS_DRIVER_H_

@@ -40,6 +40,7 @@ static void publish_driver(const driver_t *drv)
     char topic[128] = { 0 };
     snprintf(topic, sizeof(topic), DRIVER_CONFIG_TOPIC_FMT, drv->name);
     mqtt_publish_json_subtopic(topic, drv->config, 2, 1);
+    vTaskDelay(1);
 }
 
 static void on_driver_start(driver_t *driver)

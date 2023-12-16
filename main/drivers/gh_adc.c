@@ -96,12 +96,12 @@ static esp_err_t on_init(driver_t *self)
     moisture_enabled = driver_config_get_bool(cJSON_GetObjectItem(self->config, OPT_MOISTURE), false);
 
     if (moisture_enabled)
-        CHECK(driver_config_read_calibration(self, cJSON_GetObjectItem(self->config, OPT_MOISTURE_CALIBRATION),
-            OPT_VOLTAGE, OPT_MOISTURE, &moisture_calib, def_moisture_calib, def_moisture_calib_points));
+        CHECK(driver_config_read_calibration(self->name, cJSON_GetObjectItem(self->config, OPT_MOISTURE_CALIBRATION),
+            &moisture_calib, def_moisture_calib, def_moisture_calib_points));
 
 #ifdef DRIVER_GH_ADC_TDS_ENABLE
-    CHECK(driver_config_read_calibration(self, cJSON_GetObjectItem(self->config, OPT_TDS_CALIBRATION),
-        OPT_VOLTAGE, OPT_TDS, &tds_calib, def_tds_calib, def_tds_calib_points));
+    CHECK(driver_config_read_calibration(self->name, cJSON_GetObjectItem(self->config, OPT_TDS_CALIBRATION),
+        &tds_calib, def_tds_calib, def_tds_calib_points));
 #endif
 
     ESP_RETURN_ON_ERROR(
@@ -315,15 +315,15 @@ driver_t drv_gh_adc = {
 #ifdef DRIVER_GH_ADC_TDS_ENABLE
     .defconfig = "{ \"" OPT_PERIOD "\": 2000, \"" OPT_SAMPLES "\": 64, \"" OPT_ATTEN "\": 3, " \
         "\"" OPT_MOISTURE "\": true, " \
-        "\"" OPT_MOISTURE_CALIBRATION "\": [{\"" OPT_VOLTAGE "\": 2.2, \"" OPT_MOISTURE "\": 0}, " \
-        "{\"" OPT_VOLTAGE "\": 0.9, \"" OPT_MOISTURE "\": 100}], " \
+        "\"" OPT_MOISTURE_CALIBRATION "\": [{\"" OPT_VOLTAGE "\": 2.2, \"" OPT_VALUE "\": 0}, " \
+        "{\"" OPT_VOLTAGE "\": 0.9, \"" OPT_VALUE "\": 100}], " \
         "\"" OPT_TDS_CALIBRATION "\": " \
-        "[{\"" OPT_VOLTAGE "\": 0, \"" OPT_TDS "\": 0}, {\"" OPT_VOLTAGE "\": 1, \"" OPT_TDS "\": 1}]}",
+        "[{\"" OPT_VOLTAGE "\": 0, \"" OPT_VALUE "\": 0}, {\"" OPT_VOLTAGE "\": 1, \"" OPT_VALUE "\": 1}]}",
 #else
     .defconfig = "{ \"" OPT_PERIOD "\": 2000, \"" OPT_SAMPLES "\": 64, \"" OPT_ATTEN "\": 3, " \
         "\"" OPT_MOISTURE "\": true, " \
-        "\"" OPT_MOISTURE_CALIBRATION "\": [{\"" OPT_VOLTAGE "\": 2.2, \"" OPT_MOISTURE "\": 0}, " \
-        "{\"" OPT_VOLTAGE "\": 0.9, \"" OPT_MOISTURE "\": 100}]}",
+        "\"" OPT_MOISTURE_CALIBRATION "\": [{\"" OPT_VOLTAGE "\": 2.2, \"" OPT_VALUE "\": 0}, " \
+        "{\"" OPT_VOLTAGE "\": 0.9, \"" OPT_VALUE "\": 100}]}",
 #endif
 
     .config = NULL,
