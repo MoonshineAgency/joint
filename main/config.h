@@ -67,6 +67,8 @@
 #define NODE_TASK_PRIORITY (tskIDLE_PRIORITY + 1)
 #define NODE_QUEUE_SIZE 20
 
+#define DRIVER_MAX_CONFIG_LEN 1024
+
 #define DRIVER_CONFIG_TOPIC_FMT     "drivers/%s/config"
 #define DRIVER_SET_CONFIG_TOPIC_FMT "drivers/%s/set_config"
 

@@ -25,7 +25,7 @@
 #include "drivers/dhtxx.h"
 #endif
 
-static char buf[1024];
+static char buf[DRIVER_MAX_CONFIG_LEN];
 static QueueHandle_t node_queue = NULL;
 static cvector_vector_type(driver_t *) drivers = NULL;
 
@@ -34,7 +34,7 @@ static void publish_driver(const driver_t *drv)
     if (!drv->config)
         return;
 
-    char topic[128] = { 0 };
+    char topic[MQTT_MAX_TOPIC_LEN] = { 0 };
     snprintf(topic, sizeof(topic), DRIVER_CONFIG_TOPIC_FMT, drv->name);
     mqtt_publish_json_subtopic(topic, drv->config, 2, 1);
     vTaskDelay(1);
@@ -215,7 +215,7 @@ void node_online()
         publish_driver(drivers[i]);
 
         // subscribe on driver config
-        char topic[128] = { 0 };
+        char topic[MQTT_MAX_TOPIC_LEN] = { 0 };
         snprintf(topic, sizeof(topic), DRIVER_SET_CONFIG_TOPIC_FMT, drivers[i]->name);
         mqtt_subscribe_subtopic(topic, on_set_config, 2, drivers[i]);
         vTaskDelay(1);
