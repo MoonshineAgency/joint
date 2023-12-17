@@ -1,7 +1,7 @@
 #include "driver.h"
 #include "common.h"
 #include "node.h"
-#include "drivers/std_strings.h"
+#include "std_strings.h"
 
 #define ERR_INVALID_STATE "[%s] Driver in invalid state"
 
