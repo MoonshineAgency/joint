@@ -61,11 +61,14 @@
 #define SAFEMODE_TASK_PRIORITY 5
 
 ////////////////////////////////////////////////////////////////////////////////
-/// Node task
+/// Node
 
 #define NODE_TASK_STACK_SIZE 8192
 #define NODE_TASK_PRIORITY (tskIDLE_PRIORITY + 1)
 #define NODE_QUEUE_SIZE 20
+
+#define DRIVER_CONFIG_TOPIC_FMT     "drivers/%s/config"
+#define DRIVER_SET_CONFIG_TOPIC_FMT "drivers/%s/set_config"
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Webserver
@@ -80,5 +83,22 @@
 #define MQTT_OUT_BUFFER_SIZE 16384
 #define MQTT_TIMEOUT_MS 5000
 #define MQTT_MAX_TOPIC_LEN 256
+
+////////////////////////////////////////////////////////////////////////////////
+/// Device
+
+#define DEVICE_STATE_TOPIC_FMT     "%s/%s/state"
+#define DEVICE_COMMAND_TOPIC_FMT   "%s/%s/command"
+#define DEVICE_DISCOVERY_TOPIC_FMT "homeassistant/%s/%s/%s/config"
+
+#define DEVICE_SENSOR_STATE_QOS    0
+#define DEVICE_SENSOR_STATE_RETAIN 0
+
+#define DEVICE_EFFECTOR_STATE_QOS    1
+#define DEVICE_EFFECTOR_STATE_RETAIN 1
+
+#define DEVICE_DISCOVERY_QOS    1
+#define DEVICE_DISCOVERY_RETAIN 1
+
 
 #endif /* MAIN_CONFIG_H_ */

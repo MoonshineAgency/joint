@@ -25,9 +25,6 @@
 #include "drivers/dhtxx.h"
 #endif
 
-#define DRIVER_CONFIG_TOPIC_FMT     "drivers/%s/config"
-#define DRIVER_SET_CONFIG_TOPIC_FMT "drivers/%s/set_config"
-
 static char buf[1024];
 static QueueHandle_t node_queue = NULL;
 static cvector_vector_type(driver_t *) drivers = NULL;
@@ -60,6 +57,8 @@ static void on_driver_start(driver_t *driver)
 
 static void on_set_config(const char *topic, const char *data, size_t data_len, void *ctx)
 {
+    (void)topic;
+
     if (data_len > sizeof(buf) - 1)
     {
         ESP_LOGE(TAG, "Data too big: %d", data_len);
@@ -106,6 +105,8 @@ static void on_set_config(const char *topic, const char *data, size_t data_len, 
 
 static void node_task(void *arg)
 {
+    (void)arg;
+
     driver_event_t e;
     while (true)
     {

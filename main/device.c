@@ -5,19 +5,6 @@
 #include "cJSON.h"
 #include "common.h"
 
-#define STATE_TOPIC_FMT     "%s/%s/state"
-#define DISCOVERY_TOPIC_FMT "homeassistant/%s/%s/%s/config"
-#define COMMAND_TOPIC_FMT   "%s/%s/command"
-
-#define QOS_SENSOR_STATE 0
-#define RETAIN_SENSOR_STATE 0
-
-#define QOS_EFFECTOR_STATE 1
-#define RETAIN_EFFECTOR_STATE 1
-
-#define QOS_DISCOVERY 1
-#define RETAIN_DISCOVERY 1
-
 #define EXPIRES_AFTER_PERIODS 5
 
 static const char * const dev_type_names [] = {
@@ -29,13 +16,13 @@ static const char * const dev_type_names [] = {
 
 static const char *device_state_topic(const device_t *dev, char *buf, size_t size)
 {
-    snprintf(buf, size, STATE_TOPIC_FMT, settings.system.name, dev->uid);
+    snprintf(buf, size, DEVICE_STATE_TOPIC_FMT, settings.system.name, dev->uid);
     return buf;
 }
 
 static const char *device_command_topic(const device_t *dev, char *buf, size_t size)
 {
-    snprintf(buf, size, COMMAND_TOPIC_FMT, settings.system.name, dev->uid);
+    snprintf(buf, size, DEVICE_COMMAND_TOPIC_FMT, settings.system.name, dev->uid);
     return buf;
 }
 
@@ -47,7 +34,7 @@ static const char *device_discovery_topic(const device_t *dev, char *buf, size_t
     if (!strlen(type_name))
         return NULL;
 
-    snprintf(buf, size, DISCOVERY_TOPIC_FMT, type_name, settings.system.name, dev->uid);
+    snprintf(buf, size, DEVICE_DISCOVERY_TOPIC_FMT, type_name, settings.system.name, dev->uid);
     return buf;
 }
 
@@ -121,11 +108,6 @@ static cJSON *device_descriptor(const device_t *dev)
     return res;
 }
 
-//static cJSON *trigger_descriptor(const device_t *dev)
-//{
-//    if (dev
-//}
-
 static void on_write_cb(const char *topic, const char *data, size_t data_len, void *ctx)
 {
     device_t *dev = (device_t *)ctx;
@@ -154,56 +136,56 @@ void device_publish_state(device_t *dev)
     switch (dev->type)
     {
         case DEV_SENSOR:
-            qos = QOS_SENSOR_STATE;
-            retain = RETAIN_SENSOR_STATE;
+            qos = DEVICE_SENSOR_STATE_QOS;
+            retain = DEVICE_SENSOR_STATE_RETAIN;
             snprintf(data, sizeof(data), "%.*f", dev->sensor.precision, dev->sensor.value);
             break;
         case DEV_BINARY_SENSOR:
-            qos = QOS_SENSOR_STATE;
-            retain = RETAIN_SENSOR_STATE;
+            qos = DEVICE_SENSOR_STATE_QOS;
+            retain = DEVICE_SENSOR_STATE_RETAIN;
             snprintf(data, sizeof(data), "%d", dev->binary_sensor.value);
             break;
         case DEV_NUMBER:
-            qos = QOS_EFFECTOR_STATE;
-            retain = RETAIN_EFFECTOR_STATE;
+            qos = DEVICE_EFFECTOR_STATE_QOS;
+            retain = DEVICE_EFFECTOR_STATE_RETAIN;
             snprintf(data, sizeof(data), "%f", dev->number.value);
             break;
         case DEV_BINARY_SWITCH:
-            qos = QOS_EFFECTOR_STATE;
-            retain = RETAIN_EFFECTOR_STATE;
+            qos = DEVICE_EFFECTOR_STATE_QOS;
+            retain = DEVICE_EFFECTOR_STATE_RETAIN;
             snprintf(data, sizeof(data), "%d", dev->binary_switch.value);
             break;
     }
 
-    char topic[128] = { 0 };
-    mqtt_publish(device_state_topic(dev, topic, sizeof(topic)), data, strlen(data), qos, retain);
-    //ESP_LOGI(TAG, "Publish state to %s: %s", topic, data);
+    char topic[MQTT_MAX_TOPIC_LEN] = { 0 };
+    mqtt_publish(device_state_topic(dev, topic, sizeof(topic)), data, (int)strlen(data), qos, retain);
+    ESP_LOGV(TAG, "Publish state to %s: %s", topic, data);
 }
 
 void device_publish_discovery(device_t *dev)
 {
-    char topic[128] = { 0 };
+    char topic[MQTT_MAX_TOPIC_LEN] = { 0 };
     if (!device_discovery_topic(dev, topic, sizeof(topic)))
         return;
 
     cJSON *json = device_descriptor(dev);
-    mqtt_publish_json(topic, json, QOS_DISCOVERY, RETAIN_DISCOVERY);
+    mqtt_publish_json(topic, json, DEVICE_DISCOVERY_QOS, DEVICE_DISCOVERY_RETAIN);
     cJSON_Delete(json);
     ESP_LOGI(TAG, "Published discovery data for device '%s'", dev->uid);
 }
 
 void device_unpublish_discovery(device_t *dev)
 {
-    char topic[128] = { 0 };
+    char topic[MQTT_MAX_TOPIC_LEN] = { 0 };
     if (!device_discovery_topic(dev, topic, sizeof(topic)))
         return;
-    mqtt_publish(topic, "", 0, QOS_DISCOVERY, RETAIN_DISCOVERY);
+    mqtt_publish(topic, "", 0, DEVICE_DISCOVERY_QOS, DEVICE_DISCOVERY_RETAIN);
     ESP_LOGI(TAG, "Removed discovery data for device '%s'", dev->uid);
 }
 
 void device_subscribe(device_t *dev)
 {
-    char topic[128] = { 0 };
+    char topic[MQTT_MAX_TOPIC_LEN] = { 0 };
     switch (dev->type)
     {
         case DEV_SENSOR:
@@ -218,6 +200,6 @@ void device_subscribe(device_t *dev)
 
 void device_unsubscribe(device_t *dev)
 {
-    char topic[128] = { 0 };
+    char topic[MQTT_MAX_TOPIC_LEN] = { 0 };
     mqtt_unsubscribe(device_command_topic(dev, topic, sizeof(topic)), on_write_cb, dev);
 }

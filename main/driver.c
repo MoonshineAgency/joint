@@ -271,7 +271,7 @@ esp_err_t driver_config_read_calibration(const char *tag, cJSON *item, calibrati
     }
     else
     {
-        ESP_LOGI(tag, "Reading calibration from '%s'", item->string);
+        ESP_LOGI(tag, "Loading calibration data from '%s'", item->string);
         int num_points = cJSON_GetArraySize(item);
         ESP_RETURN_ON_ERROR(
             calibration_init(c, num_points, CALIBRATION_LINEAR),
@@ -282,7 +282,7 @@ esp_err_t driver_config_read_calibration(const char *tag, cJSON *item, calibrati
             cJSON *obj = cJSON_GetArrayItem(item, i);
             float code = (float)cJSON_GetNumberValue(cJSON_GetObjectItem(obj, OPT_VOLTAGE));
             float value = (float)cJSON_GetNumberValue(cJSON_GetObjectItem(obj, OPT_VALUE));
-            ESP_LOGI(tag, "Calibration point: %.2f Volts ~ %.2f", code, value);
+            ESP_LOGI(tag, "Calibration point: %.4f Volts ~ %.4f", code, value);
             ESP_RETURN_ON_ERROR(
                 calibration_add_point(c, code, value),
                 tag, "Error adding calibration point: %d (%s)", err_rc_, esp_err_to_name(err_rc_)
