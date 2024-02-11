@@ -10,6 +10,9 @@ menu "*** Joint configuration ***"
         config BOARD_GH_4DEV
             bool "Greenhouse v4DEV"
 
+        config BOARD_GH_42
+            bool "Greenhouse v4.2"
+
     endchoice
 
     menu "System configuration"
@@ -17,18 +20,6 @@ menu "*** Joint configuration ***"
         config NODE_SYS_ID
             string "System ID template"
             default "NODE_%02X%02X%02X%02X%02X%02X"
-
-        config DEVICE_MANUFACTURER
-            string "Device manufacturer"
-            default "UncleRus"
-
-        config DEVICE_NAME
-            string "Device name"
-            default "Greenhouse controller"
-
-        config DEVICE_MODEL
-            string "Device model"
-            default "GH-3.3"
 
     endmenu
 

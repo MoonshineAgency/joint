@@ -3,7 +3,7 @@
 [ $# -ne 2 ] && echo "Usage: script.sh SSID password" && exit
 
 #curl -X POST -i 'http://192.168.88.17/api/settings' --data '{
-curl -X POST -i 'http://192.168.1.1/api/settings' --data '{
+curl -X POST -i 'http://192.168.88.254/api/settings' --data '{
         "system":       {
                 "name": "GH-4",
                 "failsafe":     true,
@@ -11,12 +11,12 @@ curl -X POST -i 'http://192.168.1.1/api/settings' --data '{
         },
         "sntp": {
                 "enabled":      true,
-                "timeserver":   "0.ru.pool.ntp.org",
+                "timeserver":   "ru.pool.ntp.org",
                 "timezone":     "UTC-5",
                 "interval":     600
         },
         "mqtt": {
-                "uri":  "mqtt://192.168.88.10:1883",
+                "uri":  "mqtt://192.168.88.165:1883",
                 "username":     "node",
                 "password":     "node"
         },

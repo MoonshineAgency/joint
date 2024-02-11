@@ -6,7 +6,7 @@
 #include "mqtt.h"
 #include "wifi.h"
 #include "webserver.h"
-#include "sntp.h"
+#include "system_clock.h"
 #include "settings.h"
 
 static void task(void *arg)
@@ -27,7 +27,7 @@ static void task(void *arg)
         switch (e.type)
         {
             case NETWORK_UP:
-                sntp_iot_init();
+                system_clock_sntp_init();
                 mqtt_disconnect();
                 mqtt_connect();
                 res = webserver_restart();

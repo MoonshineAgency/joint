@@ -1,6 +1,6 @@
 #include <i2cdev.h>
 #include "common.h"
-#include "hwrtc.h"
+#include "system_clock.h"
 #include "system.h"
 #include "settings.h"
 #include "bus.h"
@@ -18,10 +18,8 @@ void app_main()
     ESP_ERROR_CHECK(settings_init());
     // Load settings
     ESP_ERROR_CHECK(settings_load());
-
-    esp_err_t r = hw_rtc_init();
-    if (r != ESP_OK)
-        ESP_LOGW(TAG, "Error initializing HW RTC: %d (%s)", r, esp_err_to_name(r));
+    // Init system clock
+    ESP_ERROR_CHECK(system_clock_init());
 
     // Init system bus
     ESP_ERROR_CHECK(bus_init());

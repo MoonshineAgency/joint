@@ -12,8 +12,7 @@ idf_component_register(
         reset_button.c
         safe_mode.c
         normal_mode.c
-        hwrtc.c
-        sntp.c
+        system_clock.c
         main.c
         device.c
         driver.c

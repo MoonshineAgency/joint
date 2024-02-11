@@ -1,6 +1,10 @@
 #ifndef BOARD_GH_4DEV_H_
 #define BOARD_GH_4DEV_H_
 
+#define BOARD_MANUFACTURER "UncleRus"
+#define BOARD_NAME "Greenhouse controller"
+#define BOARD_MODEL "4DEV"
+
 ////////////////////////////////////////////
 #define HW_INTERNAL_SDA_GPIO 16
 #define HW_INTERNAL_SCL_GPIO 17
